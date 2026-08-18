@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/offer.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Offer",
+  "description": "Публичное предложение в выдаче. Снимок наблюдения, а не запись в базе площадки.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "category_id": {
+      "x-funora-type": "entity_id"
+    },
+    "seller": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json"
+    },
+    "price": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+    },
+    "display_title": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Локализованный заголовок предложения, свободный текст. В diff не участвует."
+    },
+    "stock": {
+      "type": "integer",
+      "minimum": 0,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Доступный остаток. ОТСУТСТВИЕ ПОЛЯ НЕ РАВНО НУЛЮ: площадка показывает остаток не везде. Подстановка 0 по умолчанию запрещена - на этом поле ошибка стоит продавцу всего ассортимента."
+    },
+    "auto_delivery": {
+      "type": "boolean",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Признак автоматической выдачи, если показан."
+    },
+    "seller_online": {
+      "type": "boolean",
+      "x-funora-observability": "unobserved-possible"
+    },
+    "position_in_result": {
+      "type": "integer",
+      "minimum": 1,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Позиция в конкретной выдаче. Не свойство предложения: имеет смысл только вместе с query_fingerprint того же снимка, между разными запросами несравнима."
+    },
+    "observed_at": {
+      "x-funora-type": "instant"
+    }
+  },
+  "required": [
+    "id",
+    "category_id",
+    "seller",
+    "price",
+    "observed_at"
+  ]
+}

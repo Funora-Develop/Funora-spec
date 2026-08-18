@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/money.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Money",
+  "description": "Денежная сумма в минорных единицах. Арифметика - только через helper SDK, не в сгенерированном коде.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "amount_minor": {
+      "type": "integer",
+      "description": "Сумма в минорных единицах. 1234.10 RUB это 123410 при scale 2."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "Код валюты ISO 4217."
+    },
+    "scale": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "Число знаков после запятой. Хранится в записи, а не выводится из валюты."
+    }
+  },
+  "required": [
+    "amount_minor",
+    "currency",
+    "scale"
+  ]
+}

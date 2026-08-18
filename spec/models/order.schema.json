@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/order.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Order",
+  "description": "Заказ. Статус нормализован до перечисления с обязательным запасным вариантом.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "created",
+        "paid",
+        "delivered",
+        "confirmed",
+        "refunded",
+        "partially_refunded",
+        "reopened",
+        "unknown"
+      ],
+      "x-funora-unknown-fallback": "unknown",
+      "description": "Нормализованный статус. Вариант unknown обязателен: без него каждый новый статус на стороне площадки ломает пользователей без нашего участия."
+    },
+    "status_raw": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Исходная строка статуса, свободный текст. Нужна, чтобы unknown можно было расследовать, не поднимая сырой ответ."
+    },
+    "buyer": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json"
+    },
+    "seller": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json"
+    },
+    "amount": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json",
+      "description": "Сумма заказа."
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 1,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Количество единиц товара в заказе, штук."
+    },
+    "lot_id": {
+      "x-funora-type": "entity_id",
+      "x-funora-observability": "unobserved-possible"
+    },
+    "chat_id": {
+      "x-funora-type": "entity_id",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Чат, связанный с заказом."
+    },
+    "created_at": {
+      "x-funora-type": "instant",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Момент создания. Часто наблюдается относительной меткой, поэтому precision может быть не exact."
+    },
+    "observed_at": {
+      "x-funora-type": "instant"
+    }
+  },
+  "required": [
+    "id",
+    "status",
+    "buyer",
+    "seller",
+    "amount",
+    "observed_at"
+  ]
+}

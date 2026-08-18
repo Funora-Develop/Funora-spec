@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/message.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Message",
+  "description": "Сообщение в переписке. Текст помечен как персональные данные: не логируется на уровне INFO и не попадает в диагностику.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "chat_id": {
+      "x-funora-type": "entity_id"
+    },
+    "author": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Отсутствует у системных сообщений."
+    },
+    "text": {
+      "type": "string",
+      "x-funora-sensitivity": "pii",
+      "description": "Текст сообщения. Помечен pii: по умолчанию не выводится в логи, исключения и диагностические выгрузки."
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "structural",
+        "textual"
+      ],
+      "x-funora-closed": true,
+      "description": "Как определено, что сообщение системное. structural - по разметке, textual - по шаблону текста. Значение textual НЕ МОЖЕТ быть единственным основанием для операции с денежными последствиями: текст пишет контрагент."
+    },
+    "sent_at": {
+      "x-funora-type": "instant",
+      "x-funora-observability": "unobserved-possible"
+    },
+    "observed_at": {
+      "x-funora-type": "instant"
+    }
+  },
+  "required": [
+    "id",
+    "chat_id",
+    "text",
+    "origin",
+    "observed_at"
+  ]
+}
