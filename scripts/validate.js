@@ -35,6 +35,20 @@ let KNOWN_TYPES = new Set()
 /** Накопленные нарушения. */
 const problems = []
 
+/** Накопленные предупреждения: не блокируют, но требуют внимания. */
+const warnings = []
+
+/**
+ * Регистрирует предупреждение.
+ *
+ * @param {string} where Путь к файлу или логическое место.
+ * @param {string} what Описание на русском языке.
+ * @returns {void}
+ */
+function warn(where, what) {
+  warnings.push({ where, what })
+}
+
 /**
  * Регистрирует нарушение инварианта.
  *
@@ -551,6 +565,193 @@ function checkEvents() {
 }
 
 /**
+ * Проверяет бюджет запросов и расписание опроса.
+ *
+ * @returns {void}
+ */
+function checkBudget() {
+  const file = path.join(SPEC, 'runtime', 'budget.yaml')
+  const rel = 'spec/runtime/budget.yaml'
+  if (!fs.existsSync(file)) { fail(rel, 'файл отсутствует'); return }
+  const d = readYaml(file)
+
+  if (!d.scope || d.scope.primary !== 'outbound_identity') {
+    fail(rel, 'область бюджета обязана быть outbound_identity - ограничение накладывает ' +
+      'площадка на сетевую идентичность, а не на объект Client. Пять клиентов в одном ' +
+      'процессе, каждый со своим бюджетом, дают пятикратную нагрузку с одного адреса')
+  }
+
+  for (const b of ['host', 'account', 'write']) {
+    const v = (d.buckets || {})[b]
+    if (!v) { fail(rel, `не задано ведро ${b}`); continue }
+    for (const f of ['capacity', 'refill_per_second', 'burst']) {
+      if (typeof v[f] !== 'number') fail(rel, `ведро ${b}: отсутствует числовой ${f}`)
+    }
+  }
+
+  if (d.counting && d.counting.counts_retries !== true) {
+    fail(rel, 'повторы обязаны расходовать бюджет - иначе шторм повторов бесплатен ' +
+      'ровно в тот момент, когда площадке хуже всего')
+  }
+
+  const s = d.scheduling || {}
+  for (const f of ['active_interval_ms', 'idle_step_multiplier', 'max_interval_ms',
+    'activity_window_ms', 'min_floor_ms']) {
+    if (typeof s[f] !== 'number') fail(rel, `scheduling: отсутствует числовой ${f}`)
+  }
+  if (typeof s.min_floor_ms === 'number' && typeof s.active_interval_ms === 'number' &&
+      s.min_floor_ms > s.active_interval_ms) {
+    fail(rel, 'min_floor_ms больше active_interval_ms - активный интервал недостижим')
+  }
+
+  const classes = d.classes || {}
+  const sum = Object.values(classes).reduce((a, c) => a + (c.floor_share || 0), 0)
+  if (Math.abs(sum - 1) > 0.001) {
+    fail(rel, `сумма гарантированных долей классов равна ${sum.toFixed(3)}, а должна быть 1`)
+  }
+  const mon = classes.monitoring
+  if (mon && mon.preemptible !== 'cancellable') {
+    fail(rel, 'мониторинг обязан быть отменяемым - иначе наблюдение за рынком вытесняет ' +
+      'ответы покупателям, потому что создаёт больше запросов и выигрывает очередь')
+  }
+}
+
+/**
+ * Проверяет идентификаторы спецификации на соответствие правилам именования.
+ *
+ * @returns {{checked: number, collisions: number}} Число проверенных имён и коллизий.
+ */
+function checkNaming() {
+  const file = path.join(SPEC, 'naming.yaml')
+  const rel = 'spec/naming.yaml'
+  if (!fs.existsSync(file)) { fail(rel, 'файл отсутствует'); return { checked: 0, collisions: 0 } }
+  const n = readYaml(file)
+
+  /**
+   * Приводит идентификатор спецификации к стилю конкретного языка.
+   *
+   * Сравнивать с ключевыми словами нужно именно приведённое имя. Иначе `event`
+   * ложно срабатывает для C#, хотя в PascalCase станет `Event` и никакого
+   * столкновения не будет.
+   *
+   * @param {string} name Идентификатор в snake_case, как он записан в спецификации.
+   * @param {string} style Стиль языка из раздела casing.
+   * @param {string} prefix Префикс для C.
+   * @returns {string} Идентификатор в стиле языка.
+   */
+  function toStyle(name, style, prefix) {
+    const parts = name.split('_').filter(Boolean)
+    if (style === 'camelCase') {
+      return parts[0] + parts.slice(1).map(p => p[0].toUpperCase() + p.slice(1)).join('')
+    }
+    if (style === 'PascalCase') {
+      return parts.map(p => p[0].toUpperCase() + p.slice(1)).join('')
+    }
+    if (style === 'snake_case_with_prefix') return (prefix || '') + name
+    return name
+  }
+
+  const casing = n.casing || {}
+  const prefix = n.c_prefix || ''
+  const keywords = {}
+  for (const [lang, words] of Object.entries(n.reserved || {})) keywords[lang] = new Set(words)
+  const shadows = {}
+  for (const [lang, words] of Object.entries(n.shadows || {})) shadows[lang] = new Set(words)
+
+  const idPattern = new RegExp((n.form && n.form.spec_identifiers && n.form.spec_identifiers.pattern) || '^[a-z][a-z0-9_]*$')
+  const maxLen = n.max_identifier_length || 48
+  const badPrefix = (n.forbidden_prefixes || []).map(p => p.value)
+  const badSuffix = (n.forbidden_suffixes || []).map(p => p.value)
+
+  /** Собранные идентификаторы: имя -> список мест, где встречается. */
+  const found = new Map()
+  const add = (name, where) => {
+    if (!found.has(name)) found.set(name, [])
+    found.get(name).push(where)
+  }
+
+  for (const f of walk(path.join(SPEC, 'models'), '.schema.json')) {
+    const doc = JSON.parse(fs.readFileSync(f, 'utf8'))
+    const base = path.basename(f, '.schema.json')
+    for (const [k, v] of Object.entries(doc.properties || {})) {
+      add(k, `models/${base}`)
+      for (const e of v.enum || []) add(e, `models/${base}.${k}`)
+    }
+  }
+  for (const f of walk(path.join(SPEC, 'events'), '.schema.json')) {
+    const doc = JSON.parse(fs.readFileSync(f, 'utf8'))
+    const base = path.basename(f, '.schema.json')
+    for (const [k, v] of Object.entries(doc.properties || {})) {
+      add(k, `events/${base}`)
+      for (const e of v.enum || []) add(e, `events/${base}.${k}`)
+    }
+    const t = doc['x-funora-event-type']
+    if (t) for (const seg of t.split('.')) add(seg, `events/${base}#type`)
+  }
+  const caps = readYaml(path.join(SPEC, 'capabilities.yaml'))
+  for (const id of Object.keys(caps.capabilities || {})) {
+    for (const seg of id.split('.')) add(seg, 'capabilities')
+  }
+  for (const f of walk(path.join(SPEC, 'services'), '.yaml')) {
+    const doc = readYaml(f)
+    for (const id of Object.keys(doc.operations || {})) {
+      for (const seg of id.split('.')) add(seg, `services/${doc.service}`)
+    }
+  }
+
+  let collisions = 0
+  let softCollisions = 0
+  for (const [name, places] of found) {
+    const where = rel + ' <- ' + [...new Set(places)].slice(0, 2).join(', ')
+
+    if (!/^[\x20-\x7E]*$/.test(name)) {
+      fail(where, `идентификатор «${name}» содержит не-ASCII - экспортируемые символы C ` +
+        `не могут стабильно быть не-ASCII, а conformance сравнивает идентификаторы как строки`)
+      continue
+    }
+    if (!idPattern.test(name)) {
+      fail(where, `идентификатор «${name}» не соответствует форме snake_case`)
+    }
+    if (name.length > maxLen) {
+      fail(where, `идентификатор «${name}» длиннее ${maxLen} символов`)
+    }
+    for (const p of badPrefix) {
+      if (name.startsWith(p)) fail(where, `идентификатор «${name}» начинается с запрещённого «${p}»`)
+    }
+    for (const s of badSuffix) {
+      if (name.endsWith(s)) fail(where, `идентификатор «${name}» оканчивается запрещённым «${s}»`)
+    }
+    // Ключевое слово: код с таким именем не собирается вообще. Экранирование
+    // спасает поле или параметр, но имя операции экранировать некуда - вызов
+    // client.lots.raise() не разберёт интерпретатор.
+    const hard = []
+    const soft = []
+    for (const lang of Object.keys(casing)) {
+      const styled = toStyle(name, casing[lang], prefix)
+      if (keywords[lang] && keywords[lang].has(styled)) hard.push(lang)
+      else if (shadows[lang] && shadows[lang].has(styled)) soft.push(lang)
+    }
+
+    const isOperationSegment = places.some(p => p.startsWith('services/'))
+    if (hard.length && isOperationSegment) {
+      fail(where, `«${name}» - ключевое слово в ${hard.join(', ')}, и это сегмент имени ` +
+        `операции. Экранировать его некуда: вызов с таким именем не разбирается. Переименуйте.`)
+    } else if (hard.length) {
+      warn(where, `«${name}» - ключевое слово в ${hard.join(', ')}; будет сгенерировано «${name}_»`)
+      collisions++
+    }
+    if (soft.length) softCollisions++
+  }
+
+  if (softCollisions) {
+    warn(rel, `имён, затеняющих встроенные: ${softCollisions}. Затенение легально ` +
+      `и экранирования не требует, переименование не нужно.`)
+  }
+
+  return { checked: found.size, collisions }
+}
+
+/**
  * Точка входа. Выполняет все проверки и печатает отчёт.
  *
  * @returns {void}
@@ -569,11 +770,21 @@ function main() {
   const ops = checkServices(caps, new Set(errByStableId.keys()))
   const policies = checkRetryPolicy(errByStableId)
   const events = checkEvents()
+  checkBudget()
+  const naming = checkNaming()
 
   console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
-    `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | событий: ${events}`)
+    `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
+    `событий: ${events} | идентификаторов: ${naming.checked}`)
+
+  if (warnings.length) {
+    console.log('')
+    console.log('предупреждений: ' + warnings.length)
+    for (const w of warnings) console.log('  ' + w.what)
+  }
 
   if (problems.length === 0) {
+    console.log('')
     console.log('нарушений не найдено')
     process.exit(0)
   }

@@ -1,0 +1,484 @@
+# Правила именования и зарезервированные слова.
+#
+# Спецификация выпускается тегом, а тег неизменяем. Если в модели появится поле
+# с именем, которое в одном из шести языков является ключевым словом, генератор
+# выдаст не компилирующийся код, и откатить это уже нельзя - придётся выпускать
+# новую версию с переименованием, то есть ломающее изменение.
+#
+# Проверка дешёвая: список слов известен заранее. Отсутствие проверки обходится
+# в major-релиз.
+
+version: "0.1.0"
+
+# --- Форма идентификаторов -------------------------------------------------
+form:
+  spec_identifiers:
+    style: snake_case
+    pattern: "^[a-z][a-z0-9_]*$"
+    summary: >-
+      Спецификация пишет имена в нижнем регистре с подчёркиваниями. Каждый язык
+      приводит их к своему стилю сам, но исходная форма одна: иначе обратное
+      преобразование неоднозначно.
+
+  event_types:
+    pattern: "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+    summary: Область и действие через точку.
+
+  capability_ids:
+    pattern: "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+
+  error_stable_ids:
+    pattern: "^funora(\\.[a-z][a-z0-9_]*)+$"
+
+  ascii_only: true
+  ascii_rule: >-
+    Идентификаторы только ASCII. Ограничение не стилистическое: экспортируемые
+    символы C не могут стабильно быть не-ASCII ни в одном распространённом
+    наборе инструментов, а conformance сравнивает идентификаторы перечислений
+    как строки - любая кириллица превращает его в тест на кодировку файла.
+
+# --- Приведение к стилю языка ----------------------------------------------
+casing:
+  python: snake_case
+  typescript: camelCase
+  java: camelCase
+  csharp: PascalCase
+  cpp: snake_case
+  c: snake_case_with_prefix
+
+c_prefix: funora_
+c_rule: >-
+  В C нет пространств имён, поэтому каждое публичное имя несёт префикс. Без него
+  библиотека конфликтует с чужими символами при статической сборке.
+
+# --- Экранирование ---------------------------------------------------------
+escaping:
+  strategy: trailing_underscore
+  summary: >-
+    Имя, совпавшее с ключевым словом языка, получает подчёркивание в конце:
+    class -> class_. Правило одно для всех языков, чтобы соответствие оставалось
+    обратимым.
+  applies_to: [field_names, enum_values, operation_segments, parameter_names]
+
+# --- Зарезервированные слова ------------------------------------------------
+# Списки намеренно избыточны: сюда включены не только ключевые слова, но и имена,
+# столкновение с которыми даёт неочевидные ошибки - встроенные типы, контекстные
+# ключевые слова, макросы стандартной библиотеки.
+reserved:
+
+  python:
+    - False
+    - None
+    - True
+    - and
+    - as
+    - assert
+    - async
+    - await
+    - break
+    - class
+    - continue
+    - def
+    - del
+    - elif
+    - else
+    - except
+    - finally
+    - for
+    - from
+    - global
+    - if
+    - import
+    - in
+    - is
+    - lambda
+    - nonlocal
+    - not
+    - or
+    - pass
+    - raise
+    - return
+    - try
+    - while
+    - with
+    - yield
+    - match
+    - case
+
+  typescript:
+    - break
+    - case
+    - catch
+    - class
+    - const
+    - continue
+    - debugger
+    - default
+    - delete
+    - do
+    - else
+    - enum
+    - export
+    - extends
+    - false
+    - finally
+    - for
+    - function
+    - if
+    - import
+    - in
+    - instanceof
+    - new
+    - null
+    - return
+    - super
+    - switch
+    - this
+    - throw
+    - true
+    - try
+    - typeof
+    - var
+    - void
+    - while
+    - with
+    - as
+    - implements
+    - interface
+    - let
+    - package
+    - private
+    - protected
+    - public
+    - static
+    - yield
+
+  java:
+    - abstract
+    - assert
+    - boolean
+    - break
+    - byte
+    - case
+    - catch
+    - char
+    - class
+    - const
+    - continue
+    - default
+    - do
+    - double
+    - else
+    - enum
+    - extends
+    - final
+    - finally
+    - float
+    - for
+    - goto
+    - if
+    - implements
+    - import
+    - instanceof
+    - int
+    - interface
+    - long
+    - native
+    - new
+    - package
+    - private
+    - protected
+    - public
+    - return
+    - short
+    - static
+    - strictfp
+    - super
+    - switch
+    - synchronized
+    - this
+    - throw
+    - throws
+    - transient
+    - try
+    - void
+    - volatile
+    - while
+
+  csharp:
+    - abstract
+    - as
+    - base
+    - bool
+    - break
+    - byte
+    - case
+    - catch
+    - char
+    - checked
+    - class
+    - const
+    - continue
+    - decimal
+    - default
+    - delegate
+    - do
+    - double
+    - else
+    - enum
+    - event
+    - explicit
+    - extern
+    - false
+    - finally
+    - fixed
+    - float
+    - for
+    - foreach
+    - goto
+    - if
+    - implicit
+    - in
+    - int
+    - interface
+    - internal
+    - is
+    - lock
+    - long
+    - namespace
+    - new
+    - null
+    - object
+    - operator
+    - out
+    - override
+    - params
+    - private
+    - protected
+    - public
+    - readonly
+    - ref
+    - return
+    - sbyte
+    - sealed
+    - short
+    - sizeof
+    - stackalloc
+    - static
+    - string
+    - struct
+    - switch
+    - this
+    - throw
+    - true
+    - try
+    - typeof
+    - uint
+    - ulong
+    - unchecked
+    - unsafe
+    - ushort
+    - using
+    - virtual
+    - void
+    - volatile
+    - while
+
+  cpp:
+    - alignas
+    - alignof
+    - and
+    - asm
+    - auto
+    - bool
+    - break
+    - case
+    - catch
+    - char
+    - class
+    - concept
+    - const
+    - consteval
+    - constexpr
+    - const_cast
+    - continue
+    - co_await
+    - co_return
+    - co_yield
+    - decltype
+    - default
+    - delete
+    - do
+    - double
+    - dynamic_cast
+    - else
+    - enum
+    - explicit
+    - export
+    - extern
+    - false
+    - float
+    - for
+    - friend
+    - goto
+    - if
+    - inline
+    - int
+    - long
+    - mutable
+    - namespace
+    - new
+    - noexcept
+    - not
+    - nullptr
+    - operator
+    - or
+    - private
+    - protected
+    - public
+    - register
+    - reinterpret_cast
+    - requires
+    - return
+    - short
+    - signed
+    - sizeof
+    - static
+    - static_assert
+    - static_cast
+    - struct
+    - switch
+    - template
+    - this
+    - thread_local
+    - throw
+    - true
+    - try
+    - typedef
+    - typeid
+    - typename
+    - union
+    - unsigned
+    - using
+    - virtual
+    - void
+    - volatile
+    - wchar_t
+    - while
+    - xor
+
+  c:
+    - auto
+    - break
+    - case
+    - char
+    - const
+    - continue
+    - default
+    - do
+    - double
+    - else
+    - enum
+    - extern
+    - float
+    - for
+    - goto
+    - if
+    - inline
+    - int
+    - long
+    - register
+    - restrict
+    - return
+    - short
+    - signed
+    - sizeof
+    - static
+    - struct
+    - switch
+    - typedef
+    - union
+    - unsigned
+    - void
+    - volatile
+    - while
+    - bool
+    - complex
+    - imaginary
+    - alignas
+    - alignof
+    - atomic
+    - generic
+    - noreturn
+    - static_assert
+    - thread_local
+
+
+# --- Затеняемые имена -------------------------------------------------------
+# Встроенные типы, функции и контекстные ключевые слова. Использовать их можно:
+# затенение легально и обычно безвредно. Проверка о них только сообщает, но не
+# требует экранирования - иначе единственное настоящее срабатывание утонет в шуме.
+shadows:
+  python:
+    - bool
+    - bytes
+    - dict
+    - filter
+    - float
+    - format
+    - hash
+    - id
+    - int
+    - list
+    - next
+    - object
+    - property
+    - set
+    - str
+    - type
+  typescript:
+    - any
+    - boolean
+    - constructor
+    - never
+    - number
+    - object
+    - string
+    - symbol
+    - unknown
+  java:
+    - clone
+    - equals
+    - finalize
+    - hashCode
+    - notify
+    - permits
+    - record
+    - sealed
+    - toString
+    - var
+    - wait
+    - yield
+  csharp:
+    - init
+    - record
+    - value
+
+# --- Дополнительные запреты -------------------------------------------------
+forbidden_prefixes:
+  - value: "_"
+    reason: Ведущее подчёркивание означает приватность в Python и служебность в C.
+  - value: "__"
+    reason: Двойное подчёркивание запускает искажение имён в Python и зарезервировано в C и C++.
+
+forbidden_suffixes:
+  - value: "_t"
+    reason: >-
+      Суффикс _t зарезервирован POSIX за именами типов. Столкновение проявляется
+      не при сборке библиотеки, а при сборке пользовательского кода вместе с
+      системными заголовками, и потому находится позже всего.
+
+max_identifier_length: 48
+max_length_reason: >-
+  Ограничение не про читаемость: длинные имена в C после добавления префикса и
+  суффикса приближаются к пределам старых компоновщиков.
