@@ -238,12 +238,47 @@ function diffErrors(was, now) {
 function diffService(rel, was, now) {
   const a = was.operations || {}
   const b = now.operations || {}
+  // Поля сравниваются по явному перечню, а не общим обходом. Общий обход поднял
+  // бы шум на каждое добавленное пояснение, а перечень заставляет осознанно
+  // решить судьбу нового поля в тот момент, когда оно появляется.
+  //
+  // Перечень появился после того, как классификатор пропустил смену типа
+  // возврата операции с Order[] на OrderListEntry[]: сравнивалась только
+  // safety, всё остальное менялось молча.
+  const SCALAR_FIELDS = [
+    ['safety', 'change_operation_safety',
+      'меняет решение о повторе на стороне транспорта'],
+    ['returns', 'change_operation_returns',
+      'у потребителя меняется тип результата'],
+    ['capability', 'change_operation_capability',
+      'операция стала зависеть от другой возможности'],
+    ['pagination', 'change_operation_pagination',
+      'меняется ответ на вопрос, полон ли результат'],
+    ['request_class', 'change_operation_request_class',
+      'меняется распределение бюджета и очерёдность'],
+  ]
+
   for (const [id, op] of Object.entries(b)) {
     if (!(id in a)) { change('add_operation', rel, `добавлена операция ${id}`); continue }
-    if (a[id].safety !== op.safety) {
-      change('change_operation_safety', rel,
-        `${id}: safety изменилась с ${a[id].safety} на ${op.safety} - меняет решение ` +
-        `о повторе на стороне транспорта`)
+
+    for (const [field, kind, why] of SCALAR_FIELDS) {
+      if (a[id][field] === op[field]) continue
+      change(kind, rel,
+        `${id}: ${field} изменилось с ${JSON.stringify(a[id][field])} на ` +
+        `${JSON.stringify(op[field])} - ${why}`)
+    }
+
+    const wasErrors = new Set(a[id].errors || [])
+    const nowErrors = new Set(op.errors || [])
+    for (const e of nowErrors) {
+      if (!wasErrors.has(e)) {
+        change('add_operation_error', rel, `${id}: объявлен новый вид отказа ${e}`)
+      }
+    }
+    for (const e of wasErrors) {
+      if (!nowErrors.has(e)) {
+        change('remove_operation_error', rel, `${id}: вид отказа ${e} больше не объявлен`)
+      }
     }
   }
   for (const id of Object.keys(a)) {
