@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/order-status-changed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "order.status_changed",
+  "title": "OrderStatusChangedEvent",
+  "description": "Статус заказа изменился.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "order": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/order.schema.json"
+    },
+    "previous_status": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Прежний статус. Отсутствует, если заказ наблюдается впервые: это не то же самое, что переход из created."
+    },
+    "previous_known": {
+      "type": "boolean",
+      "description": "Был ли прежний статус известен. false означает первое наблюдение заказа, а не переход с начала."
+    },
+    "transitions_possibly_skipped": {
+      "type": "boolean",
+      "description": "Между двумя опросами могли пройти промежуточные статусы. Опрос не даёт непрерывной истории, и обработчик обязан это учитывать."
+    }
+  },
+  "required": [
+    "order",
+    "previous_known",
+    "transitions_possibly_skipped"
+  ]
+}

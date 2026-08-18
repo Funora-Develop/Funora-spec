@@ -457,6 +457,100 @@ function checkRetryPolicy(errByStableId) {
 }
 
 /**
+ * Проверяет схемы событий и их согласованность с контрактом доставки.
+ *
+ * @returns {number} Количество проверенных типов событий.
+ */
+function checkEvents() {
+  const dir = path.join(SPEC, 'events')
+  const rel = 'spec/events/delivery.yaml'
+  const files = walk(dir, '.schema.json')
+  if (files.length === 0) { fail('spec/events', 'не найдено ни одной схемы события'); return 0 }
+
+  // Конверт: ключ упорядочивания обязателен. Опциональный ключ означает, что часть
+  // событий не имеет порядка ни с чем и может быть обработана в любой момент,
+  // в том числе после события, которое логически следует за ней.
+  const envFile = path.join(dir, 'envelope.schema.json')
+  if (!fs.existsSync(envFile)) {
+    fail('spec/events/envelope.schema.json', 'конверт события отсутствует')
+  } else {
+    const env = JSON.parse(fs.readFileSync(envFile, 'utf8'))
+    const req = new Set(env.required || [])
+    for (const f of ['id', 'type', 'account_id', 'ordering_key', 'observed_at', 'origin', 'payload']) {
+      if (!req.has(f)) {
+        fail('spec/events/envelope.schema.json', `поле ${f} обязано входить в required`)
+      }
+    }
+    const ar = (env.properties || {}).adapter_revision
+    if (ar && !/диагностик/i.test(ar.description || '')) {
+      fail('spec/events/envelope.schema.json',
+        'adapter_revision обязан быть помечен как исключительно диагностический - ' +
+        'адаптер обновляется при каждом исправлении разметки, и его участие в ' +
+        'идентичности события обнулит ключи идемпотентности у пользователей')
+    }
+  }
+
+  if (!fs.existsSync(path.join(SPEC, 'events', 'delivery.yaml'))) {
+    fail(rel, 'контракт доставки отсутствует')
+    return files.length
+  }
+  const d = readYaml(path.join(SPEC, 'events', 'delivery.yaml'))
+
+  if (!d.guarantee || !['at_least_once', 'at_most_once'].includes(d.guarantee.kind)) {
+    fail(rel, 'не зафиксирована гарантия доставки - без неё обе реализации законны, ' +
+      'и одна теряет оплаченный заказ, а другая выдаёт товар дважды')
+  }
+  if (d.ordering && d.ordering.key_required !== true) {
+    fail(rel, 'ordering.key_required обязано быть true')
+  }
+  if (d.deduplication && d.deduplication.durability_required !== true) {
+    fail(rel, 'кэш дедупликации обязан переживать рестарт - иначе после каждого ' +
+      'перезапуска повторно приходит всё, что успело прийти до него')
+  }
+
+  // Каждому типу события ровно одно правило вывода ключа, и наоборот.
+  const declared = new Set()
+  for (const file of files) {
+    if (path.basename(file) === 'envelope.schema.json') continue
+    const r = path.relative(ROOT, file).replace(/\\/g, '/')
+    const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+    const t = doc['x-funora-event-type']
+    if (!t) { fail(r, 'отсутствует x-funora-event-type'); continue }
+    if (!/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/.test(t)) {
+      fail(r, `идентификатор типа «${t}» не соответствует форме область.действие`)
+    }
+    if (declared.has(t)) fail(r, `тип события «${t}» объявлен повторно`)
+    declared.add(t)
+  }
+
+  const derivation = new Set(Object.keys((d.ordering && d.ordering.derivation) || {}))
+  for (const t of declared) {
+    if (!derivation.has(t)) fail(rel, `для типа «${t}» не задано правило вывода ключа упорядочивания`)
+  }
+  for (const t of derivation) {
+    if (!declared.has(t)) fail(rel, `правило вывода ключа задано для несуществующего типа «${t}»`)
+  }
+
+  // Полосы обслуживания ссылаются только на существующие типы, и каждый тип
+  // отнесён ровно к одной полосе: иначе политика переполнения для него не определена.
+  const lanes = (d.backpressure && d.backpressure.lanes) || {}
+  const seen = new Map()
+  for (const [lane, cfg] of Object.entries(lanes)) {
+    for (const t of cfg.carries || []) {
+      if (!declared.has(t)) fail(rel, `полоса ${lane} ссылается на несуществующий тип «${t}»`)
+      if (seen.has(t)) fail(rel, `тип «${t}» отнесён и к полосе ${seen.get(t)}, и к ${lane}`)
+      seen.set(t, lane)
+    }
+  }
+  for (const t of declared) {
+    if (!seen.has(t)) fail(rel, `тип «${t}» не отнесён ни к одной полосе - политика ` +
+      `переполнения для него не определена`)
+  }
+
+  return declared.size
+}
+
+/**
  * Точка входа. Выполняет все проверки и печатает отчёт.
  *
  * @returns {void}
@@ -474,9 +568,10 @@ function main() {
   )
   const ops = checkServices(caps, new Set(errByStableId.keys()))
   const policies = checkRetryPolicy(errByStableId)
+  const events = checkEvents()
 
   console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
-    `возможностей: ${caps.size} | операций: ${ops} | политик повтора: ${policies}`)
+    `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | событий: ${events}`)
 
   if (problems.length === 0) {
     console.log('нарушений не найдено')

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/envelope.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "EventEnvelope",
+  "description": "Общая оболочка любого события. Полезная нагрузка лежит в payload и типизирована отдельной схемой.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id",
+      "description": "Идентификатор события. Устойчив к рестарту: не содержит момента наблюдения и версии адаптера."
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$",
+      "description": "Стабильный идентификатор типа события в форме область.действие."
+    },
+    "account_id": {
+      "x-funora-type": "entity_id",
+      "description": "Аккаунт, в контексте которого наблюдено событие."
+    },
+    "ordering_key": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Ключ упорядочивания. Обязателен. Внутри одного ключа порядок сохраняется, разные ключи обрабатываются параллельно. Правило вывода задано в delivery.yaml."
+    },
+    "occurred_at": {
+      "x-funora-type": "instant",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Момент, когда событие произошло на стороне площадки. Часто наблюдается относительной меткой, поэтому точность может быть не exact."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа адаптером. Точка отсчёта для относительных меток этого ответа."
+    },
+    "entity_revision": {
+      "x-funora-type": "revision",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Версия состояния сущности на момент наблюдения. Участвует в отпечатке события."
+    },
+    "adapter_revision": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Версия протокольного адаптера. ТОЛЬКО диагностика. Запрещено участвовать в идентичности события, отпечатке, дедупликации и ключах идемпотентности: адаптер обновляется при каждом исправлении разметки, и включение его версии обнулило бы сохранённые пользователями ключи."
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "structural",
+        "textual"
+      ],
+      "x-funora-closed": true,
+      "description": "Как распознано событие. structural - по разметке, textual - по шаблону текста. Значение textual не может быть единственным основанием для операции с денежными последствиями: текст пишет контрагент."
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Метаданные доставки. Нужны обработчику, чтобы отличить повтор от нового события и сжатое от одиночного.",
+      "properties": {
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Номер попытки доставки, штук. Значение больше единицы означает повтор после сбоя."
+        },
+        "coalesced": {
+          "type": "boolean",
+          "description": "Событие получено сжатием нескольких наблюдений."
+        },
+        "coalesced_count": {
+          "type": "integer",
+          "minimum": 1,
+          "x-funora-observability": "unobserved-possible",
+          "description": "Сколько наблюдений сжато в это событие, штук."
+        }
+      },
+      "required": [
+        "attempt",
+        "coalesced"
+      ]
+    },
+    "diagnostics_ref": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Ссылка на отредактированную диагностику. Никогда не содержит сырой разметки и текста переписки."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Полезная нагрузка, типизированная схемой конкретного типа события."
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "account_id",
+    "ordering_key",
+    "observed_at",
+    "origin",
+    "delivery",
+    "payload"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/market-price-changed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "market.price_changed",
+  "title": "MarketPriceChangedEvent",
+  "description": "Цена наблюдаемого чужого предложения изменилась.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "watch_id": {
+      "x-funora-type": "entity_id"
+    },
+    "offer_id": {
+      "x-funora-type": "entity_id"
+    },
+    "before": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+    },
+    "after": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Сводка по сжатым наблюдениям. Обязательна, если событие получено сжатием: без неё пороговый фильтр пользователя получит не тот вход, на который рассчитан.",
+      "properties": {
+        "min": {
+          "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+        },
+        "max": {
+          "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Число наблюдений в окне, штук."
+        },
+        "threshold_crossings": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Сколько раз в окне пересечён порог, штук."
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "samples"
+      ]
+    }
+  },
+  "required": [
+    "watch_id",
+    "offer_id",
+    "before",
+    "after"
+  ]
+}

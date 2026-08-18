@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/watch-primed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "watch.primed",
+  "title": "WatchPrimedEvent",
+  "description": "Наблюдение получило первый снимок. Событий на каждую сущность при этом не порождается: холодный старт иначе даёт лавину ложных изменений по всему наблюдаемому множеству.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "watch_id": {
+      "x-funora-type": "entity_id"
+    },
+    "entities": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько сущностей вошло в опорный снимок, штук."
+    }
+  },
+  "required": [
+    "watch_id",
+    "entities"
+  ]
+}

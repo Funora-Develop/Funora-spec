@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/event-loss.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "event.loss",
+  "title": "EventLossEvent",
+  "description": "События были потеряны. Событие управляющего слоя, не выбрасывается никогда: выбросить сообщение о потере значит потерять и сам факт потери.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "ordering_key": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Ключ, в котором произошла потеря."
+    },
+    "lost": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Сколько событий потеряно, штук."
+    },
+    "reason_code": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина."
+    }
+  },
+  "required": [
+    "ordering_key",
+    "lost",
+    "reason_code"
+  ]
+}

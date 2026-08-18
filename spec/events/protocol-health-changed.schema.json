@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/protocol-health-changed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "protocol.health_changed",
+  "title": "ProtocolHealthChangedEvent",
+  "description": "Состояние доступа к площадке изменилось. Событие управляющего слоя: не выбрасывается при переполнении очереди никогда.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "before": {
+      "type": "string",
+      "enum": [
+        "authenticated",
+        "degraded",
+        "protocol_changed",
+        "rate_limited",
+        "challenged",
+        "blocked"
+      ],
+      "x-funora-closed": true,
+      "description": "Прежнее состояние."
+    },
+    "after": {
+      "type": "string",
+      "enum": [
+        "authenticated",
+        "degraded",
+        "protocol_changed",
+        "rate_limited",
+        "challenged",
+        "blocked"
+      ],
+      "x-funora-closed": true,
+      "description": "Текущее состояние."
+    },
+    "reason_code": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина перехода."
+    },
+    "writes_paused": {
+      "type": "boolean",
+      "description": "Приостановлена ли автоматика записи. При degraded, protocol_changed, rate_limited, challenged и blocked приостанавливается."
+    }
+  },
+  "required": [
+    "after",
+    "reason_code",
+    "writes_paused"
+  ]
+}
