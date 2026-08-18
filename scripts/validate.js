@@ -288,6 +288,175 @@ function checkVersion() {
 }
 
 /**
+ * Загружает идентификаторы объявленных возможностей.
+ *
+ * @returns {Set<string>} Множество идентификаторов из spec/capabilities.yaml.
+ */
+function loadCapabilities() {
+  const file = path.join(SPEC, 'capabilities.yaml')
+  if (!fs.existsSync(file)) {
+    fail('spec/capabilities.yaml', 'файл отсутствует')
+    return new Set()
+  }
+  const doc = readYaml(file)
+  const ids = Object.keys(doc.capabilities || {})
+  const rel = 'spec/capabilities.yaml'
+
+  // Пять состояний обязаны быть объявлены целиком: реализация, знающая только про
+  // supported и unsupported, молча схлопнет остальные три в одно из двух.
+  const required = ['supported', 'unsupported', 'experimental', 'degraded', 'unknown']
+  for (const s of required) {
+    if (!doc.states || !doc.states[s]) fail(rel, `не объявлено состояние «${s}»`)
+  }
+  // unknown обязан быть usable: иначе вызов блокируется до пробы, и молчаливый
+  // уход в else-ветку становится возможен.
+  if (doc.states && doc.states.unknown && doc.states.unknown.usable !== true) {
+    fail(rel, 'состояние unknown обязано быть usable - иначе неудачная проба ' +
+      'блокирует вызов и пользовательский код тихо идёт по ветке «не поддерживается»')
+  }
+  if (doc.states && doc.states.unsupported && doc.states.unsupported.usable !== false) {
+    fail(rel, 'состояние unsupported обязано быть не usable')
+  }
+
+  for (const [id, c] of Object.entries(doc.capabilities || {})) {
+    if (!c.summary) fail(rel, `${id}: отсутствует summary`)
+    if (!['static', 'probe', 'derived'].includes(c.source)) {
+      fail(rel, `${id}: source должен быть static, probe или derived`)
+    }
+    if (c.source === 'derived' && !c.derived_from) {
+      fail(rel, `${id}: source=derived требует derived_from`)
+    }
+    if (c.derived_from && !ids.includes(c.derived_from)) {
+      fail(rel, `${id}: derived_from ссылается на несуществующую возможность «${c.derived_from}»`)
+    }
+    if (c.source === 'probe' && c.initial !== 'unknown') {
+      fail(rel, `${id}: возможность, зависящая от аккаунта, обязана стартовать с unknown, ` +
+        `а не с «${c.initial}» - до пробы её состояние неизвестно`)
+    }
+  }
+  return new Set(ids)
+}
+
+/**
+ * Проверяет описания операций сервисов.
+ *
+ * @param {Set<string>} caps Идентификаторы объявленных возможностей.
+ * @param {Set<string>} errIds Идентификаторы объявленных ошибок.
+ * @returns {number} Количество проверенных операций.
+ */
+function checkServices(caps, errIds) {
+  const dir = path.join(SPEC, 'services')
+  const files = walk(dir, '.yaml')
+  if (files.length === 0) { fail('spec/services', 'не найдено ни одного сервиса'); return 0 }
+
+  const SAFETY = ['safe', 'idempotent', 'unsafe']
+  const CLASS = ['interactive', 'poll', 'automation', 'monitoring']
+  // Формулировки, которыми в прозе прячут необязательность функции. Каждая обязана
+  // быть привязана к идентификатору возможности, иначе шесть реализаций разрешат
+  // её по-своему, а conformance этого не увидит.
+  const CONDITIONAL = /если|там,? где|при наличии|когда доступн|если удаётся|если интерфейс/i
+
+  let count = 0
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).replace(/\\/g, '/')
+    const doc = readYaml(file)
+    for (const [id, op] of Object.entries(doc.operations || {})) {
+      count++
+      if (!op.summary) fail(rel, `${id}: отсутствует summary`)
+      if (!SAFETY.includes(op.safety)) {
+        fail(rel, `${id}: safety должен быть safe, idempotent или unsafe - от него ` +
+          `зависит решение о повторе`)
+      }
+      if (!CLASS.includes(op.request_class)) {
+        fail(rel, `${id}: request_class должен быть interactive, poll, automation или monitoring`)
+      }
+      if (op.capability && !caps.has(op.capability)) {
+        fail(rel, `${id}: ссылается на необъявленную возможность «${op.capability}»`)
+      }
+      if (!op.capability) fail(rel, `${id}: не привязана ни к одной возможности`)
+
+      if (op.safety === 'idempotent' && !Array.isArray(op.idempotency_key_from)) {
+        fail(rel, `${id}: operation объявлена idempotent, но не задан idempotency_key_from - ` +
+          `без ключа она ведёт себя как unsafe`)
+      }
+      if (op.safety === 'unsafe' && op.requires_reconciliation !== true) {
+        fail(rel, `${id}: небезопасная операция обязана объявить requires_reconciliation - ` +
+          `при неоднозначном исходе повтор недопустим, нужна сверка состояния`)
+      }
+      if (op.safety === 'safe' && op.idempotency_key_from) {
+        fail(rel, `${id}: у операции чтения не может быть ключа идемпотентности`)
+      }
+
+      for (const e of op.errors || []) {
+        if (!errIds.has(e)) fail(rel, `${id}: ссылается на несуществующий код ошибки «${e}»`)
+      }
+
+      if (CONDITIONAL.test(op.summary || '') && !op.capability) {
+        fail(rel, `${id}: описание содержит условную формулировку, но возможность не указана`)
+      }
+    }
+  }
+  return count
+}
+
+/**
+ * Проверяет политику повторов на связность с таксономией ошибок.
+ *
+ * @param {Map<string, object>} errByStableId Ошибки, проиндексированные по stable_id.
+ * @returns {number} Количество проверенных политик.
+ */
+function checkRetryPolicy(errByStableId) {
+  const file = path.join(SPEC, 'protocol', 'retry-policy.yaml')
+  const rel = 'spec/protocol/retry-policy.yaml'
+  if (!fs.existsSync(file)) { fail(rel, 'файл отсутствует'); return 0 }
+  const doc = readYaml(file)
+
+  const cap = doc.limits && doc.limits.max_retry_after_ms && doc.limits.max_retry_after_ms.value
+  if (!Number.isInteger(cap)) {
+    fail(rel, 'не задан limits.max_retry_after_ms - без верхней границы битое или ' +
+      'враждебное значение Retry-After вешает цикл опроса на сутки')
+  }
+
+  let count = 0
+  for (const [id, p] of Object.entries(doc.policies || {})) {
+    count++
+    if (!errByStableId.has(id)) {
+      fail(rel, `политика для «${id}» не соответствует ни одной ошибке в таксономии`)
+      continue
+    }
+    const err = errByStableId.get(id)
+    if (!Number.isInteger(p.max_attempts) || p.max_attempts < 1) {
+      fail(rel, `${id}: max_attempts должен быть целым не меньше 1`)
+    }
+    if (err.retryable === false && p.max_attempts > 1) {
+      fail(rel, `${id}: ошибка помечена как неповторяемая, но политика разрешает ` +
+        `${p.max_attempts} попытки`)
+    }
+    if (err.retryable === true && p.max_attempts > 1) {
+      for (const f of ['base_ms', 'multiplier', 'cap_ms', 'jitter']) {
+        if (p[f] === undefined) fail(rel, `${id}: отсутствует параметр ${f}`)
+      }
+      if (p.jitter && p.jitter !== 'full') {
+        fail(rel, `${id}: разброс обязан быть полным - детерминированный backoff ` +
+          `синхронизирует несколько клиентов на одном адресе в согласованную волну`)
+      }
+    }
+    if (p.respect_retry_after === true && !Number.isInteger(p.max_retry_after_ms)) {
+      fail(rel, `${id}: respect_retry_after без max_retry_after_ms`)
+    }
+  }
+
+  // Каждая повторяемая ошибка обязана иметь политику: отсутствие записи нельзя
+  // истолковать как «политика не определена, попробуем ещё раз».
+  for (const [stableId, err] of errByStableId) {
+    if (err.retryable === true && !doc.policies[stableId]) {
+      fail(rel, `для повторяемой ошибки «${stableId}» не задана политика`)
+    }
+  }
+  return count
+}
+
+/**
  * Точка входа. Выполняет все проверки и печатает отчёт.
  *
  * @returns {void}
@@ -298,7 +467,16 @@ function main() {
   const models = checkModels()
   const errors = checkErrors()
 
-  console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок в таксономии: ${errors}`)
+  const caps = loadCapabilities()
+  const errDoc = readYaml(path.join(SPEC, 'errors', 'errors.yaml'))
+  const errByStableId = new Map(
+    Object.values(errDoc.errors || {}).map(e => [e.stable_id, e])
+  )
+  const ops = checkServices(caps, new Set(errByStableId.keys()))
+  const policies = checkRetryPolicy(errByStableId)
+
+  console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
+    `возможностей: ${caps.size} | операций: ${ops} | политик повтора: ${policies}`)
 
   if (problems.length === 0) {
     console.log('нарушений не найдено')

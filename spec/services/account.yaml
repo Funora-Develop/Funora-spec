@@ -1,0 +1,65 @@
+# Операции с аккаунтом и сессией.
+#
+# safety:        safe | idempotent | unsafe
+# request_class: interactive | poll | automation | monitoring
+#   Класс проставляет сервис, а не пользователь. Он определяет, кого вытесняют
+#   первым при насыщении бюджета: мониторинг отменяем, у interactive и automation
+#   есть неотчуждаемый минимум. Без классов собственный мониторинг продавца
+#   систематически вытесняет ответы покупателям.
+
+version: "0.1.0"
+service: account
+
+operations:
+
+  account.get:
+    summary: Читает профиль аккаунта, от имени которого работает клиент.
+    capability: account.profile
+    safety: safe
+    request_class: interactive
+    returns: Account
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
+  account.refresh:
+    summary: Перечитывает нормализованное состояние аккаунта.
+    capability: account.profile
+    safety: safe
+    request_class: interactive
+    returns: Account
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
+  session.health:
+    summary: >-
+      Проверяет пригодность сессии самым дешёвым доступным способом.
+      Не выполняет бизнес-операцию ради проверки: лишний запрос это лишний след.
+    capability: account.profile
+    safety: safe
+    request_class: poll
+    returns: SessionHealth
+    cost_hint: 1
+    errors:
+      - funora.auth.session_expired
+      - funora.auth.access_blocked
+      - funora.auth.challenge_required
+      - funora.transport
+    notes:
+      - Вызывается ядром по расписанию, а не пользователем в цикле.
+      - Результат кэшируется на min_health_interval_ms; повторный вызов раньше
+        срока возвращает кэш, а не новый запрос.
+
+  capabilities:
+    summary: Возвращает профиль возможностей адаптера и аккаунта.
+    capability: account.profile
+    safety: safe
+    request_class: poll
+    returns: CapabilityProfile
+    notes:
+      - На вызов действует single-flight.
+      - Статические возможности отдаются без сети.
+      - Неуспешная проба даёт unknown, а не unsupported.
