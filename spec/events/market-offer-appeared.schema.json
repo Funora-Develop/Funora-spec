@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/market-offer-appeared.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "market.offer_appeared",
+  "title": "MarketOfferAppearedEvent",
+  "description": "В наблюдаемой выдаче появилось предложение, которого не было в прошлом снимке.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "watch_id": {
+      "x-funora-type": "entity_id"
+    },
+    "offer": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/offer.schema.json"
+    },
+    "query_fingerprint": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Отпечаток запроса, породившего снимок. Позиция сравнима только внутри одного отпечатка."
+    }
+  },
+  "required": [
+    "watch_id",
+    "offer",
+    "query_fingerprint"
+  ]
+}

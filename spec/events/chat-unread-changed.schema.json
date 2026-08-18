@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/chat-unread-changed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "chat.unread_changed",
+  "title": "ChatUnreadChangedEvent",
+  "description": "Изменилось число непрочитанных сообщений в переписке.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "chat": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/chat.schema.json"
+    },
+    "before": {
+      "type": "integer",
+      "minimum": 0,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Прежнее число непрочитанных, штук."
+    },
+    "after": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Текущее число непрочитанных, штук."
+    }
+  },
+  "required": [
+    "chat",
+    "after"
+  ]
+}

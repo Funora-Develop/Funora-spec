@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/market-offer-disappeared.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "market.offer_disappeared",
+  "title": "MarketOfferDisappearedEvent",
+  "description": "Предложение перестало появляться в наблюдаемой выдаче. Название намеренно говорит об исчезновении из выдачи, а не об удалении: движок сравнения снимков наблюдает отсутствие, а причину его не знает. Предложение могло быть снято, могло уйти за пределы фильтра, а могло не попасть в неполный снимок.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "watch_id": {
+      "x-funora-type": "entity_id"
+    },
+    "offer_id": {
+      "x-funora-type": "entity_id"
+    },
+    "query_fingerprint": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Отпечаток запроса, породившего снимок."
+    },
+    "consecutive_absences": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Сколько полных снимков подряд предложение отсутствовало, штук."
+    },
+    "filters_affect_visibility": {
+      "type": "boolean",
+      "description": "Есть ли в наблюдении фильтры, способные скрыть предложение без его снятия. Если да, продвижение отсутствия до вывода об удалении запрещено."
+    }
+  },
+  "required": [
+    "watch_id",
+    "offer_id",
+    "query_fingerprint",
+    "consecutive_absences",
+    "filters_affect_visibility"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/seller-online-changed.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "seller.online_changed",
+  "title": "SellerOnlineChangedEvent",
+  "description": "Публично видимое состояние присутствия продавца изменилось.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "watch_id": {
+      "x-funora-type": "entity_id"
+    },
+    "seller": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json"
+    },
+    "online": {
+      "type": "boolean",
+      "description": "Текущее состояние присутствия."
+    }
+  },
+  "required": [
+    "watch_id",
+    "seller",
+    "online"
+  ]
+}

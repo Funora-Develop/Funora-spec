@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/events/order-created.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "x-funora-event-type": "order.created",
+  "title": "OrderCreatedEvent",
+  "description": "Появился новый заказ.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "order": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/order.schema.json"
+    }
+  },
+  "required": [
+    "order"
+  ]
+}
