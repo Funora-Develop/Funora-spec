@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/account.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Account",
+  "description": "Аккаунт, от имени которого работает клиент. Никогда не содержит сессионного ключа.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "user": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json",
+      "description": "Профиль владельца сессии."
+    },
+    "balance": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Доступный баланс, если показан."
+    },
+    "csrf_token": {
+      "type": "string",
+      "x-funora-sensitivity": "secret",
+      "description": "Токен формы. Помечен secret: не попадает в repr, логи, телеметрию и диагностику."
+    },
+    "locale": {
+      "type": "string",
+      "enum": [
+        "ru",
+        "en"
+      ],
+      "x-funora-closed": true,
+      "description": "Локаль интерфейса, наблюдённая фактически. Набор закрыт значением supported_locales; локаль вне набора даёт UnsupportedLocaleError, а не новое значение перечисления."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа адаптером. Точка отсчёта для всех относительных меток в этом ответе."
+    }
+  },
+  "required": [
+    "user",
+    "locale",
+    "observed_at"
+  ]
+}

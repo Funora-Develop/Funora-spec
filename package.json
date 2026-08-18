@@ -1,0 +1,14 @@
+{
+  "name": "funora-spec",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Canonical contract for the Funora SDKs",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "scripts": {
+    "validate": "node scripts/validate.js"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

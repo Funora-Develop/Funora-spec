@@ -1,0 +1,426 @@
+# Таксономия ошибок Funora.
+#
+# Дерево, а не плоский список: пользователь ловит по родителю и поэтому переживает
+# появление новых кодов без правок. Добавление кода - MINOR, смена родителя - MAJOR,
+# потому что она меняет то, какой except/catch сработает у пользователя.
+#
+# Поля каждой записи:
+#   stable_id  - строковый идентификатор, участвует в conformance. Не меняется никогда.
+#   abi_code   - числовой код для C-SDK. НЕ ПЕРЕИСПОЛЬЗУЕТСЯ даже после удаления ошибки.
+#   parent     - родитель в дереве.
+#   retryable  - можно ли повторить операцию автоматически.
+#   side_effects_possible - могла ли операция уже произвести эффект на стороне площадки.
+#   user_actionable - может ли пользователь что-то сделать сам.
+#
+# Решение о повторе принимает СПЕЦИФИКАЦИЯ, а не догадка пользователя о форме иерархии.
+# Комбинация retryable=true и side_effects_possible=true означает: повторять можно
+# только при наличии ключа идемпотентности, иначе требуется сверка состояния.
+
+version: "0.1.0"
+
+errors:
+
+  # === Корень ==============================================================
+  FunoraError:
+    stable_id: funora.error
+    abi_code: 1000
+    parent: null
+    retryable: false
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: Базовый тип всех ошибок Funora.
+
+  # === Конфигурация ========================================================
+  ConfigurationError:
+    stable_id: funora.configuration
+    abi_code: 1100
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Клиент собран неверно; повтор не поможет, нужно исправить конфигурацию.
+
+  # === Аутентификация и сессия =============================================
+  # §23.3 blueprint давал только AuthenticationError и SessionExpiredError. Этого мало:
+  # продавцу нужно разное поведение при неверном ключе, отозванном ключе и блокировке
+  # аккаунта, а автоматике - разное решение о повторе.
+  AuthenticationError:
+    stable_id: funora.auth
+    abi_code: 1200
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Не удалось подтвердить личность владельца сессии.
+
+  InvalidCredentialsError:
+    stable_id: funora.auth.invalid_credentials
+    abi_code: 1201
+    parent: AuthenticationError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Ключ не принят площадкой. Повторять запрещено - серия попыток выглядит как подбор.
+
+  SessionExpiredError:
+    stable_id: funora.auth.session_expired
+    abi_code: 1202
+    parent: AuthenticationError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Сессия была валидной и перестала быть. Обнаруживается в том числе по ответу
+      HTTP 200 с формой логина - самый опасный случай, потому что для парсера он
+      выглядит как обычная страница.
+
+  AccessBlockedError:
+    stable_id: funora.auth.access_blocked
+    abi_code: 1203
+    parent: AuthenticationError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Площадка отказала в доступе аккаунту или адресу. Поведение fail-closed: опрос
+      останавливается, автоматический короткий backoff запрещён.
+
+  ChallengeRequiredError:
+    stable_id: funora.auth.challenge_required
+    abi_code: 1204
+    parent: AuthenticationError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Площадка требует прохождения проверки. Funora её не обходит и не решает -
+      это явная не-цель проекта. Ошибка существует, чтобы отличить проверку от
+      поломки разметки: без неё клиент продолжит стучаться и подтвердит подозрение.
+
+  # === Валидация ===========================================================
+  ValidationError:
+    stable_id: funora.validation
+    abi_code: 1300
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Аргументы вызова не прошли проверку до отправки запроса.
+
+  CurrencyMismatchError:
+    stable_id: funora.validation.currency_mismatch
+    abi_code: 1301
+    parent: ValidationError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Арифметика между суммами в разных валютах запрещена.
+
+  # === Capability ==========================================================
+  CapabilityError:
+    stable_id: funora.capability
+    abi_code: 1400
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Запрошенная возможность недоступна в текущем адаптере или для этого аккаунта.
+
+  UnsupportedCapabilityError:
+    stable_id: funora.capability.unsupported
+    abi_code: 1401
+    parent: CapabilityError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Возможность отсутствует по позитивному свидетельству: страница получена,
+      отпечаток совпал, элемента функции нет. Не выставляется по ошибке сети.
+
+  ExperimentalCapabilityError:
+    stable_id: funora.capability.experimental
+    abi_code: 1402
+    parent: CapabilityError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Возможность помечена experimental и требует явного включения.
+
+  UnsupportedLocaleError:
+    stable_id: funora.capability.unsupported_locale
+    abi_code: 1403
+    parent: CapabilityError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Интерфейс аккаунта отдан на локали, для которой у адаптера нет текстовых
+      шаблонов. Возвращать пустой результат в этом случае запрещено: смена языка
+      интерфейса тихо выключила бы распознавание событий заказа.
+
+  # === Транспорт ===========================================================
+  TransportError:
+    stable_id: funora.transport
+    abi_code: 1500
+    parent: FunoraError
+    retryable: true
+    side_effects_possible: true
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Сетевой уровень. side_effects_possible=true по умолчанию: запрос мог дойти
+      до площадки и быть выполненным до того, как оборвался ответ. Автоматический
+      повтор допустим только для операций с safety=safe или при наличии ключа
+      идемпотентности; в остальных случаях требуется сверка состояния.
+
+  TimeoutError:
+    stable_id: funora.transport.timeout
+    abi_code: 1501
+    parent: TransportError
+    retryable: true
+    side_effects_possible: true
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Ответ не получен вовремя. Исход операции неизвестен - это ambiguous timeout,
+      и повтор небезопасной операции без сверки состояния запрещён.
+
+  NetworkError:
+    stable_id: funora.transport.network
+    abi_code: 1502
+    parent: TransportError
+    retryable: true
+    side_effects_possible: true
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Соединение не установлено или разорвано. Исход неизвестен, если разрыв произошёл
+      после отправки: повтор небезопасной операции требует сверки состояния.
+
+  RateLimitedError:
+    stable_id: funora.transport.rate_limited
+    abi_code: 1503
+    parent: TransportError
+    retryable: true
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Площадка ответила ограничением. Регистрируется не на запросе, а на бюджете
+      аккаунта: источников запросов много, и по отдельности они друг о друге не знают.
+
+  RemoteServerError:
+    stable_id: funora.transport.remote_server
+    abi_code: 1504
+    parent: TransportError
+    retryable: true
+    side_effects_possible: true
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Площадка вернула ошибку на своей стороне. Запрос мог быть частично выполнен,
+      поэтому повтор небезопасной операции допустим только после сверки состояния.
+
+  # === Локальный бюджет ====================================================
+  # Намеренно НЕ под TransportError. Это решение самого SDK не отправлять запрос,
+  # а не ответ сервера. Пользователь, поймавший TransportError, обычно ретраит -
+  # ретраить исчерпанный бюджет означает крутиться вхолостую.
+  BudgetError:
+    stable_id: funora.budget
+    abi_code: 1900
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Локальное ограничение SDK не позволило выполнить операцию.
+
+  BudgetExhaustedError:
+    stable_id: funora.budget.exhausted
+    abi_code: 1901
+    parent: BudgetError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Бюджет запросов исчерпан, запрос не отправлялся. Возвращается в том числе
+      при регистрации наблюдения, стоимость которого не помещается в бюджет.
+
+  # === Протокол ============================================================
+  ProtocolError:
+    stable_id: funora.protocol
+    abi_code: 1600
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: Ответ площадки не соответствует тому, что ожидает адаптер.
+
+  ProtocolChangedError:
+    stable_id: funora.protocol.changed
+    abi_code: 1601
+    parent: ProtocolError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: >-
+      Отпечаток страницы не совпал: разметка изменилась. Выдаётся вместо пустого
+      результата - тихий пустой список неотличим от «данных нет» и стоит дороже
+      всего. Выставляется только если не сработала ни одна негативная сигнатура
+      (логин, проверка, блокировка): иначе это состояние доступа, а не поломка.
+
+  ParseError:
+    stable_id: funora.protocol.parse
+    abi_code: 1602
+    parent: ProtocolError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: Структура найдена, но значение не приводится к доменному типу.
+
+  UnexpectedResponseError:
+    stable_id: funora.protocol.unexpected_response
+    abi_code: 1603
+    parent: ProtocolError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: Ответ не относится к ожидаемой странице или принадлежит другому аккаунту.
+
+  # === Домен ===============================================================
+  DomainError:
+    stable_id: funora.domain
+    abi_code: 1700
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Запрос корректен, но противоречит состоянию предметной области.
+
+  EntityNotFoundError:
+    stable_id: funora.domain.not_found
+    abi_code: 1701
+    parent: DomainError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Сущность не найдена.
+
+  ConflictError:
+    stable_id: funora.domain.conflict
+    abi_code: 1702
+    parent: DomainError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Состояние изменилось параллельно.
+
+  PreconditionFailedError:
+    stable_id: funora.domain.precondition_failed
+    abi_code: 1703
+    parent: DomainError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Не выполнено обязательное предусловие, например `expected_revision` при
+      изменении цены. Защищает от перетирания параллельной правки.
+
+  # === Состояние и хранилище ===============================================
+  StateError:
+    stable_id: funora.state
+    abi_code: 1800
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Проблема с персистентным состоянием клиента.
+
+  CursorIncompatibleError:
+    stable_id: funora.state.cursor_incompatible
+    abi_code: 1801
+    parent: StateError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Курсор принадлежит другой версии формата или другому семейству адаптера.
+      Молчаливое чтение с начала запрещено: оно даёт лавину повторной обработки.
+
+  StateSchemaIncompatibleError:
+    stable_id: funora.state.schema_incompatible
+    abi_code: 1802
+    parent: StateError
+    retryable: false
+    side_effects_possible: false
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Версия схемы сохранённого состояния не поддерживается этой версией SDK.
+
+  # === Граница пользовательского кода ======================================
+  HandlerError:
+    stable_id: funora.handler
+    abi_code: 1850
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: true
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Ошибка внутри пользовательского обработчика.
+
+  HandlerTimeoutError:
+    stable_id: funora.handler.timeout
+    abi_code: 1851
+    parent: HandlerError
+    retryable: false
+    side_effects_possible: true
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: >-
+      Обработчик не уложился в отведённое время. Существует отдельно, чтобы
+      конфигурация «повторять при TransportError» физически не могла перезапустить
+      частично выполненный обработчик вместе с уже совершёнными записями.
+
+  HandlerCancelledError:
+    stable_id: funora.handler.cancelled
+    abi_code: 1852
+    parent: HandlerError
+    retryable: false
+    side_effects_possible: true
+    user_actionable: false
+    since_spec: "0.1.0"
+    summary: Обработчик отменён кооперативно.
+
+  PluginError:
+    stable_id: funora.plugin
+    abi_code: 1860
+    parent: FunoraError
+    retryable: false
+    side_effects_possible: true
+    user_actionable: true
+    since_spec: "0.1.0"
+    summary: Ошибка внутри стороннего плагина.

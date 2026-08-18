@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/lot.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Lot",
+  "description": "Собственное предложение продавца. В отличие от Offer доступно на запись.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "category_id": {
+      "x-funora-type": "entity_id"
+    },
+    "price": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Показывается ли лот в выдаче."
+    },
+    "stock": {
+      "type": "integer",
+      "minimum": 0,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Остаток. Отсутствие означает «не наблюдалось» и обязано приводить к бездействию автоматики, а не к деактивации лота."
+    },
+    "auto_delivery": {
+      "type": "boolean",
+      "x-funora-observability": "unobserved-possible"
+    },
+    "description_text": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Описание лота, свободный текст продавца."
+    },
+    "entity_revision": {
+      "x-funora-type": "revision",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Хэш нормализованного состояния лота. Передаётся как expected_revision при изменении цены, чтобы не перетереть параллельную правку."
+    },
+    "observed_at": {
+      "x-funora-type": "instant"
+    }
+  },
+  "required": [
+    "id",
+    "category_id",
+    "price",
+    "is_active",
+    "observed_at"
+  ]
+}

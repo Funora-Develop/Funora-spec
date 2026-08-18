@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/user.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "User",
+  "description": "Пользователь площадки. Профиль загружается отдельно; для ссылок достаточно UserRef.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id",
+      "description": "Непрозрачный идентификатор. Сравнение побайтное, парсить в число запрещено."
+    },
+    "username": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Отображаемое имя, свободный текст. Меняется, идентификатором не является и ключом быть не может."
+    },
+    "registered_at": {
+      "x-funora-type": "instant",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Дата регистрации, если показана."
+    },
+    "is_online": {
+      "type": "boolean",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Онлайн-статус, если площадка его показывает."
+    },
+    "rating": {
+      "type": "object",
+      "additionalProperties": false,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Агрегированная оценка. Отсутствие означает, что оценка не показана, а не что она нулевая.",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Средняя оценка, округлённая площадкой."
+        },
+        "reviews_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Число отзывов."
+        }
+      },
+      "required": [
+        "value",
+        "reviews_count"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "username"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/chat.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Chat",
+  "description": "Личная переписка. Термин PrivateChat намеренно не используется как SecretChat: framework не гарантирует особого шифрования.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "counterparty": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json",
+      "description": "Собеседник."
+    },
+    "unread_count": {
+      "type": "integer",
+      "minimum": 0,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Число непрочитанных сообщений в чате, штук."
+    },
+    "last_message_at": {
+      "x-funora-type": "instant",
+      "x-funora-observability": "unobserved-possible"
+    },
+    "observed_at": {
+      "x-funora-type": "instant"
+    }
+  },
+  "required": [
+    "id",
+    "counterparty",
+    "observed_at"
+  ]
+}

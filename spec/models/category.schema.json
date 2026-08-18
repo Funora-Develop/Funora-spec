@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/category.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Category",
+  "description": "Раздел каталога. Идентификатор не зависит от языка интерфейса, отображаемое имя зависит.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "x-funora-type": "entity_id"
+    },
+    "parent_id": {
+      "x-funora-type": "entity_id",
+      "x-funora-observability": "unobserved-possible",
+      "description": "Родительский раздел; отсутствует у корневых."
+    },
+    "display_title": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Локализованное название, свободный текст. В equality и diff не участвует, ключом быть не может."
+    },
+    "display_locale": {
+      "type": "string",
+      "enum": [
+        "ru",
+        "en"
+      ],
+      "x-funora-closed": true,
+      "description": "Локаль, на которой получено display_title. Набор закрыт значением supported_locales."
+    },
+    "url_slug": {
+      "type": "string",
+      "x-funora-plain": true,
+      "x-funora-observability": "unobserved-possible",
+      "description": "Фрагмент URL, свободный текст. Может быть локализован, поэтому locale-зависим и не является стабильным ключом."
+    }
+  },
+  "required": [
+    "id",
+    "display_title",
+    "display_locale"
+  ]
+}
