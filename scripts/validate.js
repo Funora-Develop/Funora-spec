@@ -756,6 +756,107 @@ function checkNaming() {
  *
  * @returns {void}
  */
+/**
+ * Проверяет правила извлечения данных из разметки.
+ *
+ * Инвариант здесь один, и он самый важный во всём файле: правило, помеченное
+ * как наблюдённое, обязано ссылаться на снимок. Придуманный селектор хуже
+ * отсутствующего - отсутствующий виден сразу, придуманный тихо ломает разбор у
+ * всех шести реализаций. Само существование селектора в снимке проверяется в
+ * Funora-python, где лежат фикстуры и есть чем их разобрать; здесь
+ * проверяется, что ссылка вообще проставлена.
+ *
+ * @returns {{files: number, rules: number, selectors: Array<{selector: string, evidence: string[]}>}}
+ *   Число проверенных файлов, число правил с пометкой уверенности и перечень
+ *   наблюдённых селекторов с указанием снимков.
+ */
+function checkExtraction() {
+  const dir = path.join(SPEC, 'extraction')
+  if (!fs.existsSync(dir)) return { files: 0, rules: 0, selectors: [] }
+
+  const LEVELS = new Set(['observed', 'inferred', 'assumed'])
+  const selectors = []
+  let files = 0
+  let rules = 0
+
+  for (const file of walk(dir, '.yaml')) {
+    files += 1
+    const rel = path.relative(ROOT, file)
+    const doc = readYaml(file)
+    if (!doc) continue
+
+    if (!doc.version) fail(rel, 'нет поля version')
+
+    // Ссылка на снимок наследуется от ближайшего предка, который её объявил.
+    // Иначе evidence пришлось бы повторять у каждого поля, а повторение в таком
+    // месте приводит к тому, что копии расходятся и перестают что-либо значить.
+    const visit = (node, pointer, inherited) => {
+      if (Array.isArray(node)) {
+        node.forEach((item, i) => visit(item, `${pointer}[${i}]`, inherited))
+        return
+      }
+      if (!node || typeof node !== 'object') return
+
+      const own = node.evidence
+      const evidence = own
+        ? (Array.isArray(own) ? own : [own])
+        : inherited
+
+      if (typeof node.confidence === 'string') {
+        rules += 1
+        if (!LEVELS.has(node.confidence)) {
+          fail(rel, `${pointer}: неизвестная пометка уверенности "${node.confidence}"`)
+        }
+        if (node.confidence === 'assumed') {
+          fail(rel, `${pointer}: правило с пометкой assumed не может быть в контракте, ` +
+            'предположение даёт молчаливый отказ')
+        }
+        if (node.confidence === 'observed' && !evidence) {
+          fail(rel, `${pointer}: пометка observed без ссылки на снимок ни в самом ` +
+            'правиле, ни у любого из его предков')
+        }
+        const sel = node.selector || node.selectors
+        if (node.confidence === 'observed' && sel && evidence) {
+          const list = Array.isArray(sel) ? sel : [sel]
+          for (const one of list) {
+            if (one.startsWith('self')) continue
+            // Разделитель приводится к косой черте: иначе файл перестраивается
+            // по-разному на Windows и на Linux, и проверка свежести падает в CI
+            // на ровном месте.
+            const where = `${rel.split(path.sep).join('/')}:${pointer}`
+            selectors.push({ selector: one, evidence, where })
+          }
+        }
+      }
+
+      if (node.enum_is_closed === false && node.unknown_fallback !== 'required') {
+        fail(rel, `${pointer}: открытое перечисление обязано требовать запасное значение ` +
+          'для незнакомого, иначе незнакомое состояние станет ошибкой')
+      }
+
+      for (const key of Object.keys(node)) visit(node[key], `${pointer}.${key}`, evidence)
+    }
+
+    visit(doc, path.basename(file, '.yaml'), null)
+  }
+
+  const inventory = path.join(dir, 'observed-selectors.json')
+  const body = JSON.stringify(
+    selectors.sort((a, b) => a.selector.localeCompare(b.selector)), null, 2) + '\n'
+  const previous = fs.existsSync(inventory) ? fs.readFileSync(inventory, 'utf8') : ''
+  if (previous !== body) {
+    if (process.env.FUNORA_WRITE_INVENTORY === '1') {
+      fs.writeFileSync(inventory, body)
+    } else {
+      fail(path.relative(ROOT, inventory),
+        'перечень наблюдённых селекторов устарел. Перестройте его командой ' +
+        'FUNORA_WRITE_INVENTORY=1 node scripts/validate.js')
+    }
+  }
+
+  return { files, rules, selectors }
+}
+
 function main() {
   KNOWN_TYPES = loadTypes()
   checkVersion()
@@ -772,10 +873,13 @@ function main() {
   const events = checkEvents()
   checkBudget()
   const naming = checkNaming()
+  const extraction = checkExtraction()
 
   console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
-    `событий: ${events} | идентификаторов: ${naming.checked}`)
+    `событий: ${events} | идентификаторов: ${naming.checked} | ` +
+    `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
+    `наблюдённых селекторов: ${extraction.selectors.length}`)
 
   if (warnings.length) {
     console.log('')

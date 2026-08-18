@@ -1,0 +1,249 @@
+# Извлечение переписки: список диалогов и сообщения.
+#
+# Здесь живёт самое дорогое правило всей спецификации - признак системного
+# сообщения. Если системное сообщение об оплате отличается от обычного только
+# текстом, покупатель отправляет сообщение с таким же текстом, и бот, доверяющий
+# тексту, выдаёт товар. Это не гипотетическая уязвимость, а прямое следствие
+# устройства разметки, и правило обязано опираться на то, что отправитель
+# подделать не может.
+
+version: "0.1.0"
+
+# Снимок по умолчанию для всего файла: разметку сообщений даёт только он.
+evidence: chat-thread.logged.ru
+
+sources:
+  contact_list:
+    path: /chat/
+    evidence: chat.logged.ru
+    note: Снимок сделан без выбранной переписки, сообщений на нём нет.
+  thread:
+    path: /chat/?node={id}
+    evidence: chat-thread.logged.ru
+    note: Снимок содержит десять сообщений, шесть из них системные.
+
+# --- Список диалогов --------------------------------------------------------
+contact_list:
+  item:
+    selector: "a.contact-item"
+    confidence: observed
+    count_observed: 47
+    evidence: [chat.logged.ru, chat-thread.logged.ru]
+
+  attributes:
+    node_id:
+      name: data-id
+      shape: 9 цифр
+      confidence: observed
+      type: entity_id
+      role: Идентификатор диалога, он же значение параметра node в адресе.
+
+    last_message_position:
+      name: data-node-msg
+      shape: 10 цифр
+      confidence: observed
+      type: opaque
+      role: Позиция последнего сообщения в диалоге.
+
+    own_position:
+      name: data-user-msg
+      shape: 10 цифр
+      confidence: observed
+      type: opaque
+      role: not_established
+      note: >-
+        Смысл поля не установлен. «Последнее прочитанное этим аккаунтом» и
+        «последнее написанное этим аккаунтом» объясняют наблюдение одинаково
+        полно: единственный наблюдавшийся переход - своя же отправка, а она
+        двигает поле при обеих трактовках. Разница принципиальная: при первой
+        признак непрочитанного гаснет после чтения, при второй загорается на
+        каждом чужом сообщении и не гаснет никогда.
+
+  fields:
+    preview_text:
+      selector: ".contact-item-message"
+      confidence: observed
+      count_observed: 47
+      type: x-funora-plain
+    time_text:
+      selector: ".contact-item-time"
+      confidence: observed
+      count_observed: 47
+      type: x-funora-plain
+    counterparty_name:
+      selector: ".media-user-name"
+      confidence: observed
+      type: x-funora-plain
+
+  unread:
+    rule: not_established
+    candidate: Расхождение data-node-msg и data-user-msg
+    confidence: inferred
+    rationale: >-
+      Правило выведено, а не наблюдалось. В снимке непрочитанного не было: все
+      47 элементов несут голый класс contact-item без модификаторов, счётчик в
+      шапке скрыт. Как размечается непрочитанный диалог, неизвестно, и
+      сравнение двух полей может оказаться неверным способом это узнать.
+    required_until_established: >-
+      Признак не выносится в контракт как достоверный. Реализация обязана
+      предусмотреть, что вывод неверен.
+
+  completeness:
+    bounded: true
+    observed_limit: 47
+    pagination_markup: not_observed
+    consequence: >-
+      Список ограничен, разметки дочитывания в снимке нет. Диалог, вытесненный
+      за границу списка, исчезает из наблюдения целиком. Это ограничивает любую
+      гарантию, построенную на списке, и упомянуто в spec/events/delivery.yaml.
+
+# --- Сообщение --------------------------------------------------------------
+message:
+  container:
+    selector: ".chat-message-list"
+    confidence: observed
+  item:
+    selector: ".chat-msg-item"
+    confidence: observed
+    count_observed: 10
+    evidence: chat-thread.logged.ru
+
+  own_id:
+    from: Атрибут id элемента сообщения
+    shape: 18 знаков латиницы, цифр и пунктуации
+    confidence: observed
+    note: >-
+      Форма совпадает с записью «message-» и десятизначного числа, то есть с
+      формой data-node-msg, но это догадка: скелет прячет значение. Существование
+      идентификатора важно само по себе - без него позиция не адресует ничего
+      конкретного.
+
+  fields:
+    body:
+      selector: ".chat-msg-body"
+      confidence: observed
+      count_observed: 10
+    text:
+      selector: ".chat-msg-text"
+      confidence: observed
+      count_observed: 10
+      type: x-funora-plain
+    time_text:
+      selector: ".chat-msg-date"
+      confidence: observed
+      count_observed: 10
+      type: x-funora-plain
+      title_attribute:
+        present: true
+        confidence: observed
+        shape: 20 знаков с кириллицей, цифрами и пунктуацией
+        note: >-
+          Полная форма даты рядом с краткой. Разбирать её всё равно нельзя -
+          внутри локализованный текст, - но отличие от страницы заказов, где
+          title нет вовсе, существенно: правила извлечения времени для двух
+          страниц разные.
+    author_name:
+      selector: ".media-user-name"
+      confidence: observed
+      type: x-funora-plain
+    author_link:
+      selector: "a.chat-msg-author-link"
+      confidence: observed
+      count_observed: 4
+      href_shape: "https://funpay.com/users/{n}/"
+
+  external_links:
+    statement: >-
+      Текст сообщения содержит ссылки, которые ввёл собеседник.
+    confidence: observed
+    evidence: chat-thread.logged.ru
+    rule: >-
+      SDK не переходит по ссылкам из сообщений ни при каких условиях. Это чужой
+      ввод, и переход по нему означал бы, что содержимое переписки управляет
+      поведением клиента.
+
+# --- Признак системного сообщения ------------------------------------------
+system_message:
+  why_it_matters: >-
+    Если признак не структурный, покупатель отправляет сообщение с текстом
+    уведомления об оплате, и бот, доверяющий тексту, выдаёт товар.
+
+  markers:
+    - name: absence_of_author_link
+      selector: "a.chat-msg-author-link"
+      condition: absent
+      confidence: observed
+      strength: primary
+      rationale: >-
+        Самый надёжный из трёх. У сообщения пользователя автор всегда ссылка на
+        профиль, и отправитель не может её убрать, что бы он ни написал в
+        тексте. У системного сообщения автор - обычный текст.
+
+    - name: alert_wrapper
+      selector: ".chat-msg-body .alert"
+      condition: present
+      confidence: observed
+      strength: confirming
+      warning: >-
+        Селектор обязан включать .chat-msg-body. Класс alert-icon встречается и
+        на гостевой странице вне переписки, поэтому сам по себе признаком не
+        является.
+
+    - name: author_label
+      selector: ".chat-msg-author-label"
+      condition: Несёт label-primary
+      confidence: observed
+      strength: weak
+      note: >-
+        У сообщений пользователей наблюдался label-default либо отсутствие
+        ярлыка. Признак вспомогательный: смысл ярлыка неизвестен, он может
+        обозначать роль, а не происхождение.
+
+  observed_distribution:
+    total_messages: 10
+    system: 6
+    human: 4
+    overlaps: 0
+    evidence: chat-thread.logged.ru
+
+  decision_rule:
+    fail_closed: true
+    statement: >-
+      Сообщение считается системным, только если обёртка alert присутствует
+      И ссылка на автора отсутствует. Сообщение считается пользовательским,
+      только если ссылка на автора присутствует И обёртки alert нет.
+    on_disagreement: unknown
+    rationale: >-
+      При расхождении признаков вердикт unknown, а не «системное». Иначе
+      поломка вёрстки превращается в дыру: достаточно, чтобы площадка перестала
+      оборачивать уведомления, и любое сообщение станет системным.
+
+  mutual_exclusion_is_load_bearing:
+    requirement: >-
+      Признаки обязаны оставаться взаимно исключающими.
+    why: >-
+      Правило с закрытым отказом при пересечении признаков перестаёт срабатывать
+      вовсе, и отказ будет тихим: событий просто не станет. Условие проверяется
+      тестом на фикстуре, а не считается выполненным однажды.
+
+# --- Отправка ---------------------------------------------------------------
+sending:
+  form:
+    selector: ".chat-form form"
+    action: https://funpay.com/chat/message
+    method: post
+    confidence: observed
+  hidden_fields: none_observed
+  note: >-
+    Скрытого поля с одноразовым значением в форме нет. Значит защита от подделки
+    запроса живёт вне формы, вероятно в data-app-data на body. Для операций
+    записи это понадобится; здесь только зафиксировано, операции записи в
+    текущей редакции не описаны.
+
+# --- Чего не наблюдалось ----------------------------------------------------
+not_observed:
+  - Непрочитанный диалог и его разметка
+  - Разметка дочитывания списка диалогов и истории сообщений
+  - Сообщение с вложением
+  - Смысл ярлыка автора
+  - Поведение позиции при удалении сообщения или диалога

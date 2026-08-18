@@ -1,0 +1,285 @@
+[
+  {
+    "selector": ".chat-form form",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.sending.form"
+  },
+  {
+    "selector": ".chat-message-list",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.container"
+  },
+  {
+    "selector": ".chat-msg-author-label",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.system_message.markers[2]"
+  },
+  {
+    "selector": ".chat-msg-body",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.body"
+  },
+  {
+    "selector": ".chat-msg-body .alert",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.system_message.markers[1]"
+  },
+  {
+    "selector": ".chat-msg-date",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.time_text"
+  },
+  {
+    "selector": ".chat-msg-item",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.item"
+  },
+  {
+    "selector": ".chat-msg-text",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.text"
+  },
+  {
+    "selector": ".chat.chat-float",
+    "evidence": [
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/updates.yaml:updates.tags.locations[1]"
+  },
+  {
+    "selector": ".contact-item-message",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.preview_text"
+  },
+  {
+    "selector": ".contact-item-time",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.time_text"
+  },
+  {
+    "selector": ".content-account-login",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.guest[3]"
+  },
+  {
+    "selector": ".media-user",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online"
+  },
+  {
+    "selector": ".media-user-name",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.counterparty_name"
+  },
+  {
+    "selector": ".media-user-name",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.author_name"
+  },
+  {
+    "selector": ".menu-item-login",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.guest[1]"
+  },
+  {
+    "selector": ".menu-item-register",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.guest[2]"
+  },
+  {
+    "selector": ".modal-auth",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.guest[4]"
+  },
+  {
+    "selector": ".navbar-toggle-guest",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.guest[0]"
+  },
+  {
+    "selector": ".navbar-toggle-logged",
+    "evidence": [
+      "orders-trade.logged.ru",
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[0]"
+  },
+  {
+    "selector": ".order-desc",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.description"
+  },
+  {
+    "selector": ".orders-table",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.container"
+  },
+  {
+    "selector": ".param-item.chat-panel",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/updates.yaml:updates.tags.locations[2]"
+  },
+  {
+    "selector": ".tc-date-left",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.time_text"
+  },
+  {
+    "selector": ".tc-date-time",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.time_text"
+  },
+  {
+    "selector": ".tc-header",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.container.header"
+  },
+  {
+    "selector": ".tc-order",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.order_number_text"
+  },
+  {
+    "selector": ".tc-price",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.amount_text"
+  },
+  {
+    "selector": ".tc-seller-sum",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text"
+  },
+  {
+    "selector": ".tc-status",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.status"
+  },
+  {
+    "selector": ".tc-user .media-user-name",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_name"
+  },
+  {
+    "selector": "[data-href]",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_link"
+  },
+  {
+    "selector": "a.chat-msg-author-link",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.author_link"
+  },
+  {
+    "selector": "a.chat-msg-author-link",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.system_message.markers[0]"
+  },
+  {
+    "selector": "a.contact-item",
+    "evidence": [
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.contact_list.item"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.row"
+  },
+  {
+    "selector": "div.hidden[data-orders]",
+    "evidence": [
+      "orders-trade.logged.ru",
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[1]"
+  },
+  {
+    "selector": "div.hidden[data-orders]",
+    "evidence": [
+      "orders-trade.logged.ru",
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
+  },
+  {
+    "selector": "span.badge",
+    "evidence": [
+      "orders-trade.logged.ru",
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[2]"
+  }
+]
