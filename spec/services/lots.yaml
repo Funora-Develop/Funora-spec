@@ -1,0 +1,111 @@
+# Собственные предложения продавца.
+#
+# Здесь начинаются операции с денежными последствиями. Каждая запись обязана
+# отвечать на три вопроса, иначе она не попадает в спецификацию:
+#   1. что произойдёт при повторе;
+#   2. что произойдёт, если исходное наблюдение было ошибочным;
+#   3. как откатить, если сработало не то.
+
+version: "0.1.0"
+service: lots
+
+operations:
+
+  lots.list_own:
+    summary: Читает собственные предложения продавца.
+    capability: lots.list_own
+    safety: safe
+    request_class: interactive
+    returns: Lot[]
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
+  lots.activate:
+    summary: Включает лот в выдачу.
+    capability: lots.activate
+    safety: idempotent
+    request_class: automation
+    idempotency_key_from: [account_id, lot_id, target_state]
+    returns: Lot
+    reversible_by: lots.deactivate
+    errors:
+      - funora.capability.unsupported
+      - funora.domain.not_found
+      - funora.auth.session_expired
+      - funora.transport
+
+  lots.deactivate:
+    summary: Снимает лот с выдачи.
+    capability: lots.deactivate
+    safety: idempotent
+    request_class: automation
+    idempotency_key_from: [account_id, lot_id, target_state]
+    returns: Lot
+    reversible_by: lots.activate
+    guards:
+      - id: requires_known_stock
+        summary: >-
+          Автоматическая деактивация по остатку допустима только при остатке,
+          достоверно равном нулю. Состояние «не наблюдалось» обязано давать
+          бездействие и диагностическое событие, а не снятие лота. Подстановка
+          нуля по умолчанию запрещена: страница может перестать показывать
+          остаток, и тогда весь ассортимент снимается за один цикл без единой
+          ошибки в телеметрии.
+      - id: requires_two_observations
+        summary: >-
+          Решение подтверждается двумя последовательными наблюдениями из разных
+          запросов. Одно распарсенное значение основанием для действия не является.
+      - id: fail_closed_on_degraded
+        summary: >-
+          При состоянии degraded, protocol-changed, rate-limited, challenged или
+          blocked автоматика записи приостанавливается. Возобновление только явным
+          действием пользователя.
+    errors:
+      - funora.capability.unsupported
+      - funora.domain.not_found
+      - funora.auth.session_expired
+      - funora.transport
+
+  lots.update_price:
+    summary: Изменяет цену лота.
+    capability: lots.update_price
+    safety: idempotent
+    request_class: automation
+    idempotency_key_from: [account_id, lot_id, expected_revision, new_price]
+    preconditions:
+      - id: expected_revision
+        required: true
+        summary: >-
+          Обязательное предусловие. Без него параллельная правка - из другого
+          процесса, из мобильного приложения, из веб-интерфейса - будет перетёрта
+          молча. При расхождении операция завершается PreconditionFailedError.
+    returns: Lot
+    audit: before_state
+    errors:
+      - funora.capability.unsupported
+      - funora.domain.precondition_failed
+      - funora.domain.not_found
+      - funora.auth.session_expired
+      - funora.transport
+
+  lots.raise:
+    summary: Поднимает лот в выдаче.
+    capability: lots.raise
+    safety: unsafe
+    request_class: automation
+    requires_reconciliation: true
+    returns: RaiseResult
+    notes:
+      - >-
+          Операция небезопасна. Повтор расходует лимит поднятий, восстановить
+          который нельзя. При неоднозначном исходе выполняется сверка фактического
+          состояния, а не повтор.
+      - Доступность зависит от времени с прошлого поднятия, поэтому состояние
+        возможности вычисляется пробой, а не объявляется статически.
+    errors:
+      - funora.capability.unsupported
+      - funora.domain.precondition_failed
+      - funora.transport.timeout
+      - funora.transport

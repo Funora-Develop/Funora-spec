@@ -1,0 +1,97 @@
+# Личная переписка.
+#
+# Термин «личная переписка» выбран намеренно вместо «секретный чат»: отдельной
+# сущности с особым шифрованием протокол не подтверждает, а название, обещающее
+# больше, чем есть на самом деле, вводит пользователя в заблуждение о защищённости.
+
+version: "0.1.0"
+service: chats
+
+operations:
+
+  chats.list:
+    summary: Читает список переписок.
+    capability: chats.list
+    safety: safe
+    request_class: poll
+    returns: Chat[]
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
+  chats.history:
+    summary: Читает недавнюю историю переписки.
+    capability: chats.history
+    safety: safe
+    request_class: interactive
+    returns: Message[]
+    errors:
+      - funora.domain.not_found
+      - funora.auth.session_expired
+      - funora.transport
+
+  chats.history_before:
+    summary: Догружает более старые сообщения через курсор, если интерфейс позволяет.
+    capability: chats.history_pagination
+    safety: safe
+    request_class: interactive
+    returns: Message[]
+    pagination: cursor
+    errors:
+      - funora.capability.unsupported
+      - funora.state.cursor_incompatible
+      - funora.transport
+
+  chats.send_text:
+    summary: Отправляет текстовое сообщение в переписку.
+    capability: chats.send_text
+    safety: unsafe
+    request_class: interactive
+    requires_reconciliation: true
+    returns: Message
+    governor: outbound_message
+    notes:
+      - >-
+          Операция небезопасна. У отправленного сообщения нет отмены, а повтор при
+          неоднозначном исходе означает второе сообщение покупателю.
+      - Сверка выполняется по истории переписки, а не по факту отсутствия ошибки.
+      - >-
+          Проходит через ограничитель исходящих сообщений. Отправка в переписку, по
+          которой не было входящего события в окне, требует явного флага и расходует
+          отдельную малую квоту. Отсутствие метода массовой рассылки не мешает
+          написать цикл в пять строк, а наказание получает продавец: пункт 1.9
+          публичных правил площадки прямо запрещает массовую рассылку.
+    errors:
+      - funora.domain.not_found
+      - funora.budget.exhausted
+      - funora.auth.session_expired
+      - funora.transport.timeout
+      - funora.transport
+
+  chats.send_image:
+    summary: Отправляет изображение, если возможность подтверждена.
+    capability: chats.send_image
+    safety: unsafe
+    request_class: interactive
+    requires_reconciliation: true
+    returns: Message
+    governor: outbound_message
+    notes:
+      - Если возможность реализуется через внешний файлообменник, это столкновение
+        с пунктом 1.12 публичных правил площадки. Проверить до включения.
+    errors:
+      - funora.capability.unsupported
+      - funora.budget.exhausted
+      - funora.transport
+
+  chats.mark_read:
+    summary: Отмечает переписку прочитанной, если операция существует.
+    capability: chats.mark_read
+    safety: idempotent
+    request_class: automation
+    idempotency_key_from: [account_id, chat_id, up_to_message_id]
+    returns: void
+    errors:
+      - funora.capability.unsupported
+      - funora.transport

@@ -1,0 +1,50 @@
+# Публичные предложения и снимки рынка.
+#
+# Это единственный сервис, который обращается к страницам без необходимости
+# авторизации. Он ходит по отдельной дорожке транспорта: свой пул соединений,
+# свой бюджет, свой cookie jar. Причина не в удобстве, а в изоляции отказов -
+# при ограничении на публичной дорожке останавливается только мониторинг,
+# а ответы покупателям и работа с заказами продолжаются.
+
+version: "0.1.0"
+service: market
+
+operations:
+
+  market.offers:
+    summary: Читает публичные предложения по подкатегории.
+    capability: market.offers
+    safety: safe
+    request_class: monitoring
+    transport_lane: public_read
+    returns: Offer[]
+    cost_hint: 1
+    pagination: cursor
+    errors:
+      - funora.protocol.changed
+      - funora.transport.rate_limited
+      - funora.transport
+
+  market.snapshot:
+    summary: >-
+      Снимает состояние выдачи для последующего сравнения. Результат всегда несёт
+      признак полноты: снимок, собранный не до конца, не может быть основанием
+      для вывода об исчезновении предложения.
+    capability: market.snapshot
+    safety: safe
+    request_class: monitoring
+    transport_lane: public_read
+    returns: MarketSnapshot
+    completeness_required: true
+    notes:
+      - Поле completeness принимает complete, partial или unknown.
+      - >-
+          При completeness, отличном от complete, сравнение не порождает событий
+          об исчезновении: сохраняется прежняя опорная точка и выдаётся отдельное
+          событие о неполноте снимка.
+      - Позиция предложения имеет смысл только внутри снимка с тем же отпечатком
+        запроса и между разными запросами несравнима.
+    errors:
+      - funora.protocol.changed
+      - funora.transport.rate_limited
+      - funora.transport

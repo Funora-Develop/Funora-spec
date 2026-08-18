@@ -1,0 +1,40 @@
+# Заказы. В версии 0.x только чтение.
+#
+# Операции записи с денежными последствиями - подтверждение, возврат, выплата -
+# в спецификацию не входят и не будут включены без отдельного разбора безопасности.
+# Причина в собственном правиле проекта: не гарантировать функцию, корректность
+# которой невозможно проверить автоматически.
+
+version: "0.1.0"
+service: orders
+
+operations:
+
+  orders.list:
+    summary: Читает список заказов.
+    capability: orders.list
+    safety: safe
+    request_class: interactive
+    returns: Order[]
+    pagination: cursor
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
+  orders.get:
+    summary: Читает заказ по идентификатору.
+    capability: orders.get
+    safety: safe
+    request_class: interactive
+    returns: Order
+    errors:
+      - funora.domain.not_found
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+    notes:
+      - >-
+          Обязательный независимый источник истины перед любой выдачей товара.
+          Событие оплаты, распознанное по тексту сообщения, основанием не является:
+          текст пишет контрагент, и он может его подделать.

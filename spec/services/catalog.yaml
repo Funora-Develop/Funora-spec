@@ -1,0 +1,34 @@
+# Каталог: разделы и схемы полей.
+
+version: "0.1.0"
+service: catalog
+
+operations:
+
+  catalog.categories:
+    summary: Читает дерево разделов каталога.
+    capability: catalog.categories
+    safety: safe
+    request_class: interactive
+    returns: Category[]
+    cacheable:
+      ttl_ms: 86400000
+      invalidate_on: [adapter_version_change, protocol_changed, session_change]
+      notes:
+        - Данные из кэша не могут быть основанием для отрицательного вывода в diff.
+          Устаревший справочник даёт пустую выдачу, а движок сравнения трактует её
+          как исчезновение рынка.
+    errors:
+      - funora.protocol.changed
+      - funora.transport
+
+  catalog.field_schema:
+    summary: Читает схему полей подкатегории, если её удаётся достоверно нормализовать.
+    capability: catalog.field_schema
+    safety: safe
+    request_class: interactive
+    returns: FieldSchema
+    errors:
+      - funora.capability.unsupported
+      - funora.protocol.changed
+      - funora.transport
