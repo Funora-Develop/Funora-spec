@@ -152,7 +152,7 @@ capabilities:
     initial: unknown
     note: Требует expected_revision, иначе параллельная правка будет перетёрта.
 
-  lots.raise:
+  lots.promote:
     summary: Поднятие лота в выдаче.
     source: probe
     initial: unknown
