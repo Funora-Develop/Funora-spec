@@ -1,0 +1,53 @@
+# Проверки спецификации.
+#
+# Два независимых задания. Первое проверяет внутреннюю непротиворечивость
+# спецификации, второе - что объявленный bump версии соответствует характеру
+# внесённых изменений. Второе требует полной истории: сравнение идёт с origin/main.
+#
+# Сторонние actions закреплены по хэшу коммита, а не по тегу: тег в GitHub можно
+# переставить на другой коммит, хэш нельзя.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Инварианты спецификации
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - run: npm ci
+      - run: node scripts/validate.js
+
+  compat:
+    name: Классификация изменений
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - run: npm ci
+
+      - name: Сравнение с базовой веткой
+        run: node scripts/compat.js --base origin/${{ github.base_ref }}
