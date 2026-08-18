@@ -1,0 +1,179 @@
+# Извлечение списка заказов со страницы /orders/trade.
+#
+# Раздел описывает, что со списка заказов можно взять, а чего нельзя. Второе
+# здесь важнее первого: список не даёт ни точного времени, ни валюты, поэтому
+# полную запись Order из него собрать нельзя, и делать вид, что можно, - худший
+# из вариантов. Неполная запись, выданная за полную, приводит к тому, что
+# обработчик принимает решение по значению, которого никто не наблюдал.
+
+version: "0.1.0"
+
+# Снимок по умолчанию для всего файла. Правило, помеченное как наблюдённое,
+# ссылается сюда, если не указало свой собственный.
+evidence: orders-trade.logged.ru
+
+source:
+  path: /orders/trade
+  requires_session: true
+  evidence: orders-trade.logged.ru
+
+# --- Контейнер и строка -----------------------------------------------------
+container:
+  selector: ".orders-table"
+  confidence: observed
+  evidence: orders-trade.logged.ru
+  note: >-
+    Адресуется по назначению, а не по оформлению. У элемента есть и классы вида
+    table-hover, но они описывают внешний вид и меняются вместе с темой.
+
+  header:
+    selector: ".tc-header"
+    confidence: observed
+    count_observed: 1
+    why_it_matters: >-
+      Заголовок таблицы несёт те же классы ячеек, что и строки. Селектор
+      .tc-price по всей странице находит четыре элемента при трёх заказах:
+      четвёртый - заголовок. Поэтому все поля ищутся строго внутри строки, а не
+      по документу.
+
+row:
+  selector: "a.tc-item"
+  confidence: observed
+  count_observed: 3
+  evidence: orders-trade.logged.ru
+  is_link: true
+  href_shape: "https://funpay.com/orders/{n}/"
+  note: >-
+    Строка сама является ссылкой на заказ. Идентификатор заказа берётся из
+    адреса, а не из текста.
+
+  status_modifier:
+    where: Второй класс элемента строки
+    observed_value: info
+    confidence: observed
+    note: >-
+      Наблюдалось единственное значение при трёх заказах в одном состоянии.
+      Соответствие остальных модификаторов статусам неизвестно.
+
+# --- Поля -------------------------------------------------------------------
+# Все селекторы применяются внутри строки.
+fields:
+  order_id:
+    from: Адрес строки
+    selector: "self[href]"
+    extract: Числовой сегмент пути
+    confidence: observed
+    type: entity_id
+    required: true
+
+  order_number_text:
+    selector: ".tc-order"
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+    note: >-
+      Видимый номер заказа. Совпадает ли он с идентификатором из адреса, не
+      проверялось: скелет прячет оба значения.
+
+  description:
+    selector: ".order-desc"
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+
+  counterparty_name:
+    selector: ".tc-user .media-user-name"
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+
+  counterparty_link:
+    selector: "[data-href]"
+    confidence: observed
+    count_observed: 2
+    note: >-
+      Ссылка на профиль лежит в data-href, а не в href: у элемента обычного
+      href нет вовсе. Разбор, ищущий ссылки только по a[href], пользователя не
+      найдёт. Элементов два - изображение и подпись, - и ведут они в одно место.
+
+  counterparty_online:
+    selector: ".media-user"
+    read: Модификатор класса
+    observed_value: offline
+    confidence: observed
+    note: >-
+      Признак структурный. Соседний .media-user-status содержит локализованный
+      текст и для разбора непригоден.
+
+  status:
+    selector: ".tc-status"
+    read: Цветовой класс
+    observed_value: text-primary
+    confidence: observed
+    count_observed: 1
+    enum_is_closed: false
+    unknown_fallback: required
+    rationale: >-
+      Носителей статуса два и оба структурные: модификатор на строке и цветовой
+      класс на ячейке. Наблюдался ровно один статус, поэтому перечисление
+      обязано остаться открытым. Закрыть его по одному наблюдению означало бы
+      отвергать все прочие состояния как ошибочные.
+
+  amount_text:
+    selector: ".tc-price"
+    scope: row
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+    warning: >-
+      Только внутри строки. По документу селектор находит и заголовок таблицы.
+
+  seller_sum_text:
+    selector: ".tc-seller-sum"
+    scope: row
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+
+  time_text:
+    selectors: [".tc-date-time", ".tc-date-left"]
+    confidence: observed
+    count_observed: 1
+    type: x-funora-plain
+    exact_time: not_observed
+    rationale: >-
+      Машиночитаемого времени на странице нет: ни datetime, ни title, ни
+      data-time. Существует только локализованный текст. Правило разбора времени
+      описано в rules.yaml.
+
+# --- Чего список не даёт ----------------------------------------------------
+# Раздел существует потому, что молчаливая неполнота опаснее явного отказа.
+cannot_be_built_from_list:
+  money:
+    reason: >-
+      Валюта в разметке строки не наблюдалась, а тип money требует кода валюты и
+      масштаба. Собрать значение из одной суммы нельзя.
+    consequence: >-
+      Поле суммы заполняется только текстом для показа. Числовое значение
+      остаётся ненаблюдённым.
+
+  exact_time:
+    reason: Машиночитаемого времени нет.
+    consequence: Поле остаётся ненаблюдённым, а не пустым.
+
+  full_order_record:
+    statement: >-
+      Полная запись Order из списка не собирается. Список даёт достаточно, чтобы
+      обнаружить заказ и его состояние, но не чтобы описать его целиком.
+    consequence: >-
+      Операция чтения списка возвращает сокращённое представление, отличимое от
+      полного по типу. Дополнять его придётся чтением страницы отдельного
+      заказа, которая пока не наблюдалась.
+
+# --- Чего не наблюдалось ----------------------------------------------------
+not_observed:
+  - Страница отдельного заказа
+  - Заказы в состояниях, отличных от наблюдённого
+  - Разметка постраничной навигации при длинном списке
+  - Валюта в явном виде
+  - Пустой список заказов и его отличие от сломанного селектора
