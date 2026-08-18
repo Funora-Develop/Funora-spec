@@ -6,7 +6,9 @@
   "license": "Apache-2.0",
   "type": "commonjs",
   "scripts": {
-    "validate": "node scripts/validate.js"
+    "validate": "node scripts/validate.js",
+    "compat": "node scripts/compat.js",
+    "check": "npm run validate && npm run compat"
   },
   "devDependencies": {
     "js-yaml": "^4.1.0"
