@@ -136,7 +136,14 @@
     "where": "spec/extraction/session.yaml:session.markers.logged_in[0]"
   },
   {
-    "selector": ".order-desc",
+    "selector": ".order-desc .text-muted",
+    "evidence": [
+      "orders-trade.states.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.category"
+  },
+  {
+    "selector": ".order-desc > div:first-child",
     "evidence": [
       "orders-trade.logged.ru"
     ],
@@ -159,9 +166,9 @@
   {
     "selector": ".tc-date-left",
     "evidence": [
-      "orders-trade.logged.ru"
+      "orders-trade.states.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.time_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.time_ago_text"
   },
   {
     "selector": ".tc-date-time",
@@ -190,6 +197,13 @@
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.amount_text"
+  },
+  {
+    "selector": ".tc-price .unit",
+    "evidence": [
+      "orders-trade.states.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.currency_symbol_text"
   },
   {
     "selector": ".tc-seller-sum",
@@ -251,7 +265,7 @@
   {
     "selector": "a.tc-item",
     "evidence": [
-      "orders-trade.logged.ru"
+      "orders-trade.states.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.row"
   },
