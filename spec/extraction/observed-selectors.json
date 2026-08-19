@@ -92,13 +92,6 @@
     "where": "spec/extraction/chats.yaml:chats.contact_list.fields.counterparty_name"
   },
   {
-    "selector": ".media-user-name",
-    "evidence": [
-      "chat-thread.logged.ru"
-    ],
-    "where": "spec/extraction/chats.yaml:chats.message.fields.author_name"
-  },
-  {
     "selector": ".menu-item-login",
     "evidence": [
       "orders-trade.guest.ru"
@@ -239,6 +232,13 @@
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.counterparty_link"
+  },
+  {
+    "selector": "a.chat-msg-author-link",
+    "evidence": [
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/chats.yaml:chats.message.fields.author_name"
   },
   {
     "selector": "a.chat-msg-author-link",
