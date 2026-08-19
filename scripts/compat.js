@@ -336,6 +336,83 @@ function diffVersion(was, now) {
 }
 
 /**
+ * Собирает плоскую карту правил извлечения.
+ *
+ * Файлы в spec/extraction устроены по-разному, и общей схемы у них нет. Зато у
+ * всякого правила есть узел с ключом selector, и именно он описывает, откуда
+ * берётся значение. Обход собирает такие узлы по пути в дереве - этого хватает,
+ * чтобы заметить исчезновение правила, переезд селектора и смену условий, при
+ * которых поле вообще выдаётся значением.
+ *
+ * @param {any} node Узел дерева спецификации.
+ * @param {string} trail Путь до узла, точками.
+ * @param {Object<string, any>} out Накопитель. Ключ - путь, значение - правило.
+ * @returns {Object<string, any>} Тот же накопитель.
+ */
+function collectExtraction(node, trail, out) {
+  if (!node || typeof node !== 'object') return out
+  if (Array.isArray(node)) {
+    node.forEach((item, i) => collectExtraction(item, `${trail}[${i}]`, out))
+    return out
+  }
+  if (typeof node.selector === 'string') {
+    out[trail] = {
+      selector: node.selector,
+      confidence: node.confidence || null,
+      // Односторонность и нормативная приписка вместе описывают одно: при
+      // каких условиях поле выдаётся значением, а при каких - ненаблюдённым.
+      observability: `${node.one_sided ? 'one_sided' : 'plain'}:${node.normative ? 'normative' : 'free'}`,
+    }
+  }
+  for (const [k, v] of Object.entries(node)) {
+    if (k === 'selector') continue
+    collectExtraction(v, trail ? `${trail}.${k}` : k, out)
+  }
+  return out
+}
+
+/**
+ * Сравнивает правила извлечения двух версий файла.
+ *
+ * Раздел extraction не описывает сигнатур, и потому долго оставался невидимым
+ * для этой проверки. Видимым он должен быть: правило извлечения решает, какие
+ * данные шесть SDK отдадут вызывающему, и поменять его молча - значит поменять
+ * поведение всех реализаций, не тронув ни одной сигнатуры.
+ *
+ * @param {string} rel Путь файла относительно корня репозитория.
+ * @param {any} was Разобранное содержимое базовой версии.
+ * @param {any} now Разобранное содержимое текущей версии.
+ * @returns {void}
+ */
+function diffExtraction(rel, was, now) {
+  const a = collectExtraction(was, '', {})
+  const b = collectExtraction(now, '', {})
+
+  for (const key of Object.keys(a)) {
+    if (!(key in b)) {
+      change('remove_extraction_field', rel, `правило извлечения исчезло: ${key}`)
+      continue
+    }
+    if (a[key].selector !== b[key].selector) {
+      change('change_extraction_selector', rel,
+        `селектор ${key}: "${a[key].selector}" -> "${b[key].selector}"`)
+    }
+    if (a[key].confidence !== b[key].confidence) {
+      change('change_extraction_confidence', rel,
+        `уверенность ${key}: ${a[key].confidence} -> ${b[key].confidence}`)
+    }
+    if (a[key].observability !== b[key].observability) {
+      change('change_field_observability', rel,
+        `условия выдачи значения ${key}: ${a[key].observability} -> ${b[key].observability}`)
+    }
+  }
+
+  for (const key of Object.keys(b)) {
+    if (!(key in a)) change('add_extraction_field', rel, `новое правило извлечения: ${key}`)
+  }
+}
+
+/**
  * Точка входа.
  *
  * @returns {void}
@@ -381,6 +458,8 @@ function main() {
       diffService(rel, was, now)
     } else if (rel.endsWith('events/delivery.yaml')) {
       diffDelivery(was, now)
+    } else if (rel.includes('/extraction/') && rel.endsWith('.yaml')) {
+      diffExtraction(rel, was, now)
     }
   }
 
