@@ -201,14 +201,14 @@
   {
     "selector": ".tc-status",
     "evidence": [
-      "orders-trade.logged.ru"
+      "orders-trade.states.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.status"
+    "where": "spec/extraction/orders.yaml:orders.fields.status.carriers[0]"
   },
   {
     "selector": ".tc-user .media-user",
     "evidence": [
-      "orders-trade.logged.ru"
+      "orders-trade.states.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online"
   },

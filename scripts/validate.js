@@ -800,7 +800,16 @@ function checkExtraction() {
       const own = node.evidence
       const evidence = own
         ? (Array.isArray(own) ? own : [own])
-        : inherited
+        : inherited.evidence
+
+      // Уверенность наследуется так же, как ссылка на снимок. Без наследования
+      // селектор, лежащий во вложенном узле, молча выпадает из перечня: узел
+      // свой confidence не несёт, а перечень собирается по нему. Так однажды
+      // исчез .tc-status, когда у статуса появилось два носителя, - без
+      // единого нарушения и без строки в выводе.
+      const confidence = typeof node.confidence === 'string'
+        ? node.confidence
+        : inherited.confidence
 
       if (typeof node.confidence === 'string') {
         rules += 1
@@ -815,8 +824,19 @@ function checkExtraction() {
           fail(rel, `${pointer}: пометка observed без ссылки на снимок ни в самом ` +
             'правиле, ни у любого из его предков')
         }
-        const sel = node.selector || node.selectors
-        if (node.confidence === 'observed' && sel && evidence) {
+      }
+
+      const sel = node.selector || node.selectors
+      if (sel) {
+        if (!confidence) {
+          fail(rel, `${pointer}: селектор без пометки уверенности ни в самом узле, ` +
+            'ни у любого из его предков. Такой селектор не попадает в перечень и ' +
+            'не проверяется по снимкам - то есть перестаёт быть контрактом молча')
+        }
+        if (confidence === 'observed' && !evidence) {
+          fail(rel, `${pointer}: селектор с пометкой observed без ссылки на снимок`)
+        }
+        if (confidence === 'observed' && evidence) {
           const list = Array.isArray(sel) ? sel : [sel]
           for (const one of list) {
             if (one.startsWith('self')) continue
@@ -834,10 +854,12 @@ function checkExtraction() {
           'для незнакомого, иначе незнакомое состояние станет ошибкой')
       }
 
-      for (const key of Object.keys(node)) visit(node[key], `${pointer}.${key}`, evidence)
+      for (const key of Object.keys(node)) {
+        visit(node[key], `${pointer}.${key}`, { evidence, confidence })
+      }
     }
 
-    visit(doc, path.basename(file, '.yaml'), null)
+    visit(doc, path.basename(file, '.yaml'), { evidence: null, confidence: null })
   }
 
   const inventory = path.join(dir, 'observed-selectors.json')
