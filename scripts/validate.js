@@ -857,6 +857,57 @@ function checkExtraction() {
   return { files, rules, selectors }
 }
 
+/**
+ * Проверяет таблицу соответствия вердиктов ошибкам.
+ *
+ * Таблица связывает два файла, которые правятся порознь: классы ответа и
+ * каталог ошибок. Ссылка на несуществующую ошибку не видна ни при чтении, ни
+ * при разборе YAML, а проявляется отказом в момент, когда реализация пытается
+ * поднять ошибку по вердикту - то есть ровно тогда, когда что-то уже пошло не
+ * так.
+ *
+ * @param {Set<string>} errIds Устойчивые идентификаторы из каталога ошибок.
+ * @returns {number} Число проверенных записей таблицы.
+ */
+function checkResponseClasses(errIds) {
+  const file = path.join(SPEC, 'protocol', 'response-classes.yaml')
+  if (!fs.existsSync(file)) return 0
+  const rel = path.relative(ROOT, file).split(path.sep).join('/')
+  const doc = readYaml(file)
+  if (!doc) return 0
+
+  const classes = new Set(Object.keys(doc.classes || {}))
+  const table = doc.verdict_errors || {}
+  let checked = 0
+
+  for (const [cls, rows] of Object.entries(table)) {
+    if (!classes.has(cls)) {
+      fail(rel, `verdict_errors.${cls}: класс ответа не объявлен в classes`)
+    }
+    for (const [reason, stableId] of Object.entries(rows || {})) {
+      checked += 1
+      if (stableId === null) continue
+      if (!errIds.has(stableId)) {
+        fail(rel, `verdict_errors.${cls}.${reason}: ошибки ${stableId} нет в каталоге`)
+      }
+    }
+  }
+
+  for (const cls of classes) {
+    if (!(cls in table)) {
+      fail(rel, `класс ответа ${cls} объявлен, но не имеет ни одной записи в ` +
+        'verdict_errors: реализации выберут ошибку сами и разойдутся')
+    }
+  }
+
+  if (!doc.pipeline || doc.pipeline.order_is_normative !== true) {
+    fail(rel, 'порядок шагов обязан быть объявлен нормативным: без этого ' +
+      'реализации проверят условия в разном порядке')
+  }
+
+  return checked
+}
+
 function main() {
   KNOWN_TYPES = loadTypes()
   checkVersion()
@@ -874,12 +925,14 @@ function main() {
   checkBudget()
   const naming = checkNaming()
   const extraction = checkExtraction()
+  const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
   console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length}`)
+    `наблюдённых селекторов: ${extraction.selectors.length} | ` +
+    `вердиктов: ${responseRows}`)
 
   if (warnings.length) {
     console.log('')
