@@ -40,7 +40,7 @@ row:
   selector: "a.tc-item"
   confidence: observed
   count_observed: 8
-  evidence: orders-trade.states.logged.ru
+  evidence: orders-trade.logged.ru
   is_link: true
   href_shape: "https://funpay.com/orders/{n}/"
   note: >-
@@ -95,7 +95,7 @@ fields:
     selector: ".order-desc .text-muted"
     confidence: observed
     count_observed: 1
-    evidence: orders-trade.states.logged.ru
+    evidence: orders-trade.logged.ru
     type: x-funora-plain
     note: >-
       Второй потомок описания. Наблюдался во всех восьми строках. Текст
@@ -130,7 +130,7 @@ fields:
     vocabulary:
       online: true
       offline: false
-    evidence: orders-trade.states.logged.ru
+    evidence: orders-trade.logged.ru
     count_observed: 8
     note: >-
       Признак структурный. Соседний .media-user-status содержит локализованный
@@ -150,9 +150,9 @@ fields:
       Ненаблюдённость здесь не повреждение поля: она отражает границу словаря, а
       не поломку разметки, и в defects не попадает.
     history: >-
-      До снимка orders-trade.states.logged.ru наблюдался только offline, и
-      признак был односторонним. Снимок сделан в момент, когда трое покупателей
-      были в сети, и дал оба класса разом: 5 offline и 3 online.
+      До 19.08.2026 наблюдался только offline, и признак был односторонним.
+      В тот день снимок, сделанный в момент, когда покупатели были в сети, дал
+      оба класса разом - и односторонность снялась наблюдением, а не догадкой.
 
   status:
     carriers:
@@ -172,7 +172,7 @@ fields:
         one_way: true
         matching: Наличие класса info среди классов строки.
     confidence: observed
-    evidence: orders-trade.states.logged.ru
+    evidence: orders-trade.logged.ru
     count_observed: 8
     enum_is_closed: false
     unknown_fallback: required
@@ -224,7 +224,7 @@ fields:
     scope: row
     confidence: observed
     count_observed: 1
-    evidence: orders-trade.states.logged.ru
+    evidence: orders-trade.logged.ru
     type: x-funora-plain
     note: >-
       Символ валюты лежит в отдельном узле - наблюдался во всех восьми строках.
@@ -267,7 +267,7 @@ fields:
     selector: ".tc-date-left"
     confidence: observed
     count_observed: 1
-    evidence: orders-trade.states.logged.ru
+    evidence: orders-trade.logged.ru
     type: x-funora-plain
     observed_shapes: ["45 минут назад", "3 часа назад", "день назад"]
     shapes_source: >-
@@ -290,7 +290,7 @@ status_mapping:
       row_class: info
       status: paid
       display_ru: Оплачен
-      evidence: orders-trade.states.logged.ru
+      evidence: orders-trade.logged.ru
       count_observed: 5
       meaning: >-
         Покупатель оплатил, деньги удерживает площадка, сделка не завершена.
@@ -300,7 +300,7 @@ status_mapping:
       row_class: null
       status: closed
       display_ru: Закрыт
-      evidence: orders-trade.states.logged.ru
+      evidence: orders-trade.logged.ru
       count_observed: 3
       meaning: >-
         Сделка завершена, удержание снято. Дальнейших действий продавца не
