@@ -85,13 +85,6 @@
     "where": "spec/extraction/session.yaml:session.markers.guest[3]"
   },
   {
-    "selector": ".media-user",
-    "evidence": [
-      "orders-trade.logged.ru"
-    ],
-    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online"
-  },
-  {
     "selector": ".media-user-name",
     "evidence": [
       "chat-thread.logged.ru"
@@ -213,6 +206,13 @@
     "where": "spec/extraction/orders.yaml:orders.fields.status"
   },
   {
+    "selector": ".tc-user .media-user",
+    "evidence": [
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online"
+  },
+  {
     "selector": ".tc-user .media-user-name",
     "evidence": [
       "orders-trade.logged.ru"
@@ -220,7 +220,7 @@
     "where": "spec/extraction/orders.yaml:orders.fields.counterparty_name"
   },
   {
-    "selector": "[data-href]",
+    "selector": ".tc-user [data-href]",
     "evidence": [
       "orders-trade.logged.ru"
     ],
