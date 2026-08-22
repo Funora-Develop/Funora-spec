@@ -725,6 +725,45 @@ function checkBudget() {
 }
 
 /**
+ * Проверяет, что ссылка на реестр неисполненного разрешается.
+ *
+ * Запись покрытия вправе сказать «этого нет, и это записано в
+ * not-implemented.yaml». Такая ссылка - обещание, и висячая ссылка хуже
+ * отсутствия ссылки: она выглядит выполненным обещанием.
+ *
+ * Так и было. Запись про spec/extraction/updates.yaml ссылалась на реестр
+ * неисполненного, а записи про канал обновлений там не было вовсе.
+ *
+ * @returns {number} Число проверенных ссылок.
+ */
+function checkNotImplementedLinks() {
+  const rel = 'spec/conformance/coverage.yaml'
+  const coverage = readYaml(path.join(SPEC, 'conformance', 'coverage.yaml'))
+  const registry = readYaml(path.join(SPEC, 'conformance', 'not-implemented.yaml'))
+  const items = registry.items || {}
+
+  const declared = new Set()
+  for (const body of Object.values(items)) {
+    const where = String((body || {}).declared_in || '')
+    if (where) declared.add(where.split('#')[0])
+  }
+
+  let checked = 0
+  for (const [file, body] of Object.entries(coverage.files || {})) {
+    const note = String((body || {}).note || '')
+    if (!note.includes('not-implemented.yaml')) continue
+    checked += 1
+    if (!declared.has(file)) {
+      fail(rel, `запись «${file}» ссылается на реестр неисполненного, а записи ` +
+        `с declared_in: ${file} там нет. Ссылка на несуществующее выглядит ` +
+        `выполненным обещанием`)
+    }
+  }
+
+  return checked
+}
+
+/**
  * Проверяет, что каждый объявленный класс изменений применяется классификатором.
  *
  * Та же болезнь, что и в реализации: объявление, которым никто не пользуется,
@@ -1141,6 +1180,7 @@ function checkResponseClasses(errIds) {
 function main() {
   KNOWN_TYPES = loadTypes()
   const changeClasses = checkChangeClasses()
+  checkNotImplementedLinks()
   checkVersion()
   const models = checkModels()
   const errors = checkErrors()
