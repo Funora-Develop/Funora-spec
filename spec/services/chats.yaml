@@ -14,7 +14,15 @@ operations:
     capability: chats.list
     safety: safe
     request_class: poll
-    returns: Chat[]
+    # Не Chat[], и это исправление того же противоречия, что уже исправлено у
+    # заказов. Полную запись Chat из списка собрать нельзя: у собеседника нет
+    # идентификатора - в строке только имя, а имя не идентификатор, - и числа
+    # непрочитанных сообщений страница не даёт вовсе.
+    #
+    # Реализация, читающая только этот файл, была вынуждена выдумать и то и
+    # другое.
+    returns: "ChatListEntry[]"
+    returns_schema: spec/models/chat-list-entry.schema.json
     errors:
       - funora.auth.session_expired
       - funora.protocol.changed
@@ -25,7 +33,15 @@ operations:
     capability: chats.history
     safety: safe
     request_class: interactive
-    returns: Message[]
+    # Не Message[], и не список вовсе. Возвращается Thread - результат чтения
+    # страницы целиком, несущий полноту и повреждения. Голый список сообщений
+    # делает неполноту незаметной: вызывающий берёт его и не спрашивает, всё ли
+    # прочитано, а неполная переписка неотличима от короткой.
+    #
+    # Имя ThreadMessage, а не Message: под вторым в spec/models лежит модель
+    # другой формы, которую из наблюдённой разметки собрать нельзя.
+    returns: Thread
+    returns_schema: spec/models/thread.schema.json
     errors:
       - funora.domain.not_found
       - funora.auth.session_expired
