@@ -1,5 +1,14 @@
 [
   {
+    "selector": ".cf-turnstile",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.challenge_widget_on_login[0]",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".chat-contacts",
     "evidence": [
       "chat.logged.ru",
@@ -340,6 +349,15 @@
     "where": "spec/extraction/orders.yaml:orders.fields.counterparty_link",
     "count_observed": 2,
     "scope": "row"
+  },
+  {
+    "selector": "[data-sitekey]",
+    "evidence": [
+      "orders-trade.guest.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.markers.challenge_widget_on_login[1]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "a.chat-msg-author-link",
