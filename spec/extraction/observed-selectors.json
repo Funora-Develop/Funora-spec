@@ -131,7 +131,7 @@
   {
     "selector": ".content-account",
     "evidence": [
-      "orders-trade.logged.ru"
+      "orders-trade.guest.ru"
     ],
     "where": "spec/extraction/session.yaml:session.content_markers[4]"
   },
