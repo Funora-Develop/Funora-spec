@@ -31,7 +31,7 @@ items:
       покупателям на общих основаниях: планировщик наблюдений создаёт больше
       запросов и просто выигрывает очередь. Ровно то, ради чего классы и
       придуманы.
-    symbols: []
+    symbols: [request_class]
 
   budget_rate_limit_response:
     declared_in: spec/runtime/budget.yaml#rate_limit_response
@@ -107,6 +107,20 @@ items:
       Если каждый отступит только за себя, суммарное давление на площадку почти
       не упадёт - то есть ограничение будет получено снова.
     symbols: [account_scoped]
+
+  conformance_runner:
+    declared_in: spec/version.yaml#runner_protocol
+    what: >-
+      Версия протокола запуска набора соответствия: способ прогнать чужую
+      реализацию по общим векторам и сравнить журнал решений.
+    why_not: >-
+      Набора векторов не существует физически. Ось версий заведена заранее,
+      чтобы протокол запуска можно было менять отдельно от контракта, но менять
+      пока нечего.
+    user_impact: >-
+      Проверить чужую реализацию на соответствие нечем. Сегодня согласованность
+      держится тем, что реализация одна.
+    symbols: [RUNNER_PROTOCOL]
 
   handler_timeout_for_sync:
     declared_in: spec/runtime/budget.yaml#limits.handler_timeout_ms
