@@ -117,6 +117,73 @@ function resumeCases() {
 }
 
 /**
+ * Собирает случаи набора rate-budget.
+ *
+ * @returns {object[]} Случаи по протоколу.
+ */
+function rateBudgetCases() {
+  const file = path.join(SPEC, 'conformance', 'rate-budget.vectors.json')
+  if (!fs.existsSync(file)) return []
+  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+
+  return doc.scenarios.map((scenario, index) => ({
+    id: `rate-budget/${scenario.name}`,
+    suite: 'rate_budget',
+    kind: 'rate_budget',
+    vector: `scenarios[${index}]`,
+    trace: scenario.expected,
+    ...(scenario.why === undefined ? {} : { why: scenario.why }),
+  }))
+}
+
+/**
+ * Сверяет трассу отправки с ожидаемым.
+ *
+ * Ожидаемое задано границами, а не точной меткой везде, и это не послабление:
+ * запас в ведре считается числами с плавающей точкой, и последний бит деления
+ * даёт то 199, то 200 миллисекунд. Точная метка требуется там, где ожидания не
+ * было вовсе.
+ *
+ * @param {(number|null)[]} sent Метки отправки; null - запрос не ушёл.
+ * @param {object} want Ожидаемое из вектора.
+ * @returns {string} Пустая строка, если сошлось, иначе описание расхождения.
+ */
+function checkTrace(sent, want) {
+  if (!Array.isArray(sent)) return `трасса не пришла вовсе: ${JSON.stringify(sent)}`
+
+  if (want.refused) {
+    const got = sent.map((one, index) => (one === null ? index : -1)).filter((one) => one >= 0)
+    if (JSON.stringify(got) !== JSON.stringify(want.refused)) {
+      return `не ушли запросы ${JSON.stringify(got)}, ожидалось ${JSON.stringify(want.refused)}`
+    }
+  }
+
+  for (const [index, moment] of Object.entries(want.at || {})) {
+    if (sent[index] !== moment) {
+      return `запрос ${index} ушёл в ${sent[index]}, ожидалось ровно ${moment}`
+    }
+  }
+
+  for (const [index, floor] of Object.entries(want.not_before || {})) {
+    if (sent[index] === null || sent[index] === undefined) {
+      return `запрос ${index} не ушёл вовсе, а ожидался не раньше ${floor}`
+    }
+    if (sent[index] < floor) {
+      return `запрос ${index} ушёл в ${sent[index]}, а не раньше ${floor}`
+    }
+  }
+
+  if (want.total_sent_at_most !== undefined) {
+    const total = sent.filter((one) => one !== null).length
+    if (total > want.total_sent_at_most) {
+      return `ушло ${total} запросов, а больше ${want.total_sent_at_most} уйти не может`
+    }
+  }
+
+  return ''
+}
+
+/**
  * Подаёт случаи реализации и читает ответы.
  *
  * @param {string} command Команда реализации.
@@ -170,7 +237,7 @@ function main() {
 
   const declared = protocol()
   const known = registry()
-  const cases = [...canonicalCases(), ...resumeCases()]
+  const cases = [...canonicalCases(), ...resumeCases(), ...rateBudgetCases()]
   const answers = ask(command, cases)
 
   let passed = 0
@@ -203,6 +270,16 @@ function main() {
     if (answer.outcome === 'pass') {
       // Сценарий сверяет раннер: реализация вернула, что дошло на каждом шаге,
       // а знать ожидаемое ей незачем - иначе она сверяла бы себя сама.
+      if (one.trace) {
+        const complaint = checkTrace(answer.sent, one.trace)
+        if (complaint) {
+          failures.push([one.id, complaint])
+          continue
+        }
+        passed += 1
+        continue
+      }
+
       if (one.expected_steps) {
         const got = JSON.stringify(answer.steps)
         const want = JSON.stringify(one.expected_steps)
