@@ -152,7 +152,16 @@ files:
   spec/extraction/rules.yaml:
     mechanism: verified
     note: >-
-      tests/test_chats.py, tests/test_orders.py и tests/test_thread.py: три исхода чтения атрибута, дубли идентификаторов, повышение уровня повреждения до страницы.
+      scripts/validate.js: объявленные уровни уверенности применяются ко всем
+      пометкам confidence в spec/extraction - недопустимый уровень роняет
+      проверку. Поведение, описанное прочими разделами файла, закреплено в
+      tests/test_chats.py, tests/test_orders.py и tests/test_thread.py: три
+      исхода чтения атрибута, дубли идентификаторов, повышение уровня
+      повреждения до страницы.
+
+      Прежде запись называла только вторую половину, и файл не читал НИ ОДИН
+      из названных наборов: проверялось поведение, которое он описывает, а не
+      он сам. Пометку assumed, запрещённую этим же файлом, не заметил бы никто.
   spec/extraction/session.yaml:
     mechanism: generated
     note: >-

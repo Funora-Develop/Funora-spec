@@ -764,6 +764,76 @@ function checkNotImplementedLinks() {
 }
 
 /**
+ * Проверяет пометки уверенности по объявленным уровням.
+ *
+ * spec/extraction/rules.yaml объявляет три уровня и говорит, какие из них
+ * допустимы в контракте: observed и inferred - да, assumed - нет. Своими же
+ * словами файл объясняет почему: «придуманный селектор хуже отсутствующего -
+ * отсутствующий виден сразу, придуманный тихо ломает разбор у всех шести SDK».
+ *
+ * Проверять это было нечем. Файл значился в реестре покрытия как verified и
+ * назывался тремя наборами тестов, но не читался НИ ОДНИМ: проверялось
+ * поведение, которое он описывает, а не он сам. Пометка assumed прошла бы
+ * молча, и запрет остался бы словами.
+ *
+ * @returns {number} Число проверенных пометок.
+ */
+function checkConfidence() {
+  const rulesRel = 'spec/extraction/rules.yaml'
+  const rules = readYaml(path.join(SPEC, 'extraction', 'rules.yaml'))
+  const levels = rules.confidence_levels || {}
+
+  if (Object.keys(levels).length === 0) {
+    fail(rulesRel, 'уровни уверенности не объявлены')
+    return 0
+  }
+
+  const allowed = new Set()
+  for (const [name, body] of Object.entries(levels)) {
+    if ((body || {}).allowed_in_contract === true) allowed.add(name)
+    if (!(body || {}).meaning) {
+      fail(rulesRel, `уровень «${name}» не объясняет, что означает`)
+    }
+  }
+  if (allowed.size === 0) {
+    fail(rulesRel, 'ни один уровень уверенности не допущен в контракт')
+  }
+
+  let checked = 0
+  const seen = (node, where, rel) => {
+    if (Array.isArray(node)) {
+      node.forEach((item, index) => seen(item, `${where}[${index}]`, rel))
+      return
+    }
+    if (!node || typeof node !== 'object') return
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'confidence' && typeof value === 'string') {
+        checked += 1
+        if (!(value in levels)) {
+          fail(rel, `${where}: уровень уверенности «${value}» не объявлен в ` +
+            `${rulesRel}. Реализации истолкуют его каждая по-своему`)
+        } else if (!allowed.has(value)) {
+          fail(rel, `${where}: уровень «${value}» объявлен недопустимым в ` +
+            `контракте. ${rulesRel} говорит прямо: придуманный селектор хуже ` +
+            `отсутствующего - отсутствующий виден сразу, придуманный тихо ` +
+            `ломает разбор`)
+        }
+        continue
+      }
+      seen(value, where ? `${where}.${key}` : key, rel)
+    }
+  }
+
+  for (const name of fs.readdirSync(path.join(SPEC, 'extraction'))) {
+    if (!name.endsWith('.yaml')) continue
+    const rel = `spec/extraction/${name}`
+    seen(readYaml(path.join(SPEC, 'extraction', name)), '', rel)
+  }
+
+  return checked
+}
+
+/**
  * Проверяет, что каждый объявленный класс изменений применяется классификатором.
  *
  * Та же болезнь, что и в реализации: объявление, которым никто не пользуется,
@@ -1181,6 +1251,7 @@ function main() {
   KNOWN_TYPES = loadTypes()
   const changeClasses = checkChangeClasses()
   checkNotImplementedLinks()
+  const confidences = checkConfidence()
   checkVersion()
   const models = checkModels()
   const errors = checkErrors()
@@ -1198,7 +1269,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
