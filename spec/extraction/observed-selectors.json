@@ -25,7 +25,9 @@
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.message.fields.body"
+    "where": "spec/extraction/chats.yaml:chats.message.fields.body",
+    "count_observed": 11,
+    "scope": "document"
   },
   {
     "selector": ".chat-msg-body .alert",
@@ -39,21 +41,27 @@
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.message.fields.time_text"
+    "where": "spec/extraction/chats.yaml:chats.message.fields.time_text",
+    "count_observed": 11,
+    "scope": "document"
   },
   {
     "selector": ".chat-msg-item",
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.message.item"
+    "where": "spec/extraction/chats.yaml:chats.message.item",
+    "count_observed": 11,
+    "scope": "document"
   },
   {
     "selector": ".chat-msg-text",
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.message.fields.text"
+    "where": "spec/extraction/chats.yaml:chats.message.fields.text",
+    "count_observed": 11,
+    "scope": "document"
   },
   {
     "selector": ".chat.chat-float",
@@ -68,21 +76,27 @@
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.preview_text"
+    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.preview_text",
+    "count_observed": 50,
+    "scope": "document"
   },
   {
     "selector": ".contact-item-time",
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.time_text"
+    "where": "spec/extraction/chats.yaml:chats.contact_list.fields.time_text",
+    "count_observed": 50,
+    "scope": "document"
   },
   {
     "selector": ".content-account-login",
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.guest[3]"
+    "where": "spec/extraction/session.yaml:session.markers.guest[3]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".media-user-name",
@@ -96,28 +110,36 @@
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.guest[1]"
+    "where": "spec/extraction/session.yaml:session.markers.guest[1]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".menu-item-register",
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.guest[2]"
+    "where": "spec/extraction/session.yaml:session.markers.guest[2]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".modal-auth",
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.guest[4]"
+    "where": "spec/extraction/session.yaml:session.markers.guest[4]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".navbar-toggle-guest",
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.guest[0]"
+    "where": "spec/extraction/session.yaml:session.markers.guest[0]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".navbar-toggle-logged",
@@ -126,21 +148,27 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.logged_in[0]"
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[0]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".order-desc .text-muted",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.category"
+    "where": "spec/extraction/orders.yaml:orders.fields.category",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".order-desc > div:first-child",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.description"
+    "where": "spec/extraction/orders.yaml:orders.fields.description",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".orders-table",
@@ -161,49 +189,63 @@
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.time_ago_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.time_ago_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-date-time",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.time_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.time_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-header",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.container.header"
+    "where": "spec/extraction/orders.yaml:orders.container.header",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".tc-order",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.order_number_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.order_number_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-price",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.amount_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.amount_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-price .unit",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.currency_symbol_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.currency_symbol_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-seller-sum",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text"
+    "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-status",
@@ -217,21 +259,27 @@
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online"
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_online",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-user .media-user-name",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_name"
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_name",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-user [data-href]",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_link"
+    "where": "spec/extraction/orders.yaml:orders.fields.counterparty_link",
+    "count_observed": 2,
+    "scope": "row"
   },
   {
     "selector": "a.chat-msg-author-link",
@@ -245,7 +293,9 @@
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.message.fields.author_link"
+    "where": "spec/extraction/chats.yaml:chats.message.fields.author_link",
+    "count_observed": 5,
+    "scope": "document"
   },
   {
     "selector": "a.chat-msg-author-link",
@@ -260,14 +310,18 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/chats.yaml:chats.contact_list.item"
+    "where": "spec/extraction/chats.yaml:chats.contact_list.item",
+    "count_observed": 50,
+    "scope": "document"
   },
   {
     "selector": "a.tc-item",
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/orders.yaml:orders.row"
+    "where": "spec/extraction/orders.yaml:orders.row",
+    "count_observed": 8,
+    "scope": "document"
   },
   {
     "selector": "div.hidden[data-orders]",
@@ -276,7 +330,9 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.logged_in[1]"
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[1]",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "div.hidden[data-orders]",
@@ -294,6 +350,8 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.markers.logged_in[2]"
+    "where": "spec/extraction/session.yaml:session.markers.logged_in[2]",
+    "count_observed": 4,
+    "scope": "document"
   }
 ]

@@ -47,7 +47,7 @@ markers:
     - selector: "span.badge"
       confidence: observed
       evidence: [orders-trade.logged.ru, chat.logged.ru, chat-thread.logged.ru]
-      count_observed: 3
+      count_observed: 4
       absent_in: [orders-trade.guest.ru]
       note: >-
         Счётчики в шапке. Признак вспомогательный: наличие подтверждает сессию,
