@@ -27,7 +27,7 @@ contact_list:
   item:
     selector: "a.contact-item"
     confidence: observed
-    count_observed: 47
+    count_observed: 50
     evidence: [chat.logged.ru, chat-thread.logged.ru]
 
   attributes:
@@ -55,7 +55,7 @@ contact_list:
       how_it_was_established: >-
         Наблюдением за одним диалогом вопрос не решается: своя отправка двигает
         поле и при трактовке «последнее прочитанное», и при трактовке «последнее
-        написанное этим аккаунтом». Разводит список целиком. У всех 47 диалогов
+        написанное этим аккаунтом». Разводит список целиком. У всех диалогов
         снимка значение совпадает с data-node-msg при скрытом счётчике
         непрочитанного. Трактовка «последнее написанное» потребовала бы, чтобы
         последнее сообщение во всех сорока семи переписках было написано
@@ -72,12 +72,12 @@ contact_list:
     preview_text:
       selector: ".contact-item-message"
       confidence: observed
-      count_observed: 47
+      count_observed: 50
       type: x-funora-plain
     time_text:
       selector: ".contact-item-time"
       confidence: observed
-      count_observed: 47
+      count_observed: 50
       type: x-funora-plain
     counterparty_name:
       selector: ".media-user-name"
@@ -90,8 +90,13 @@ contact_list:
     rationale: >-
       Правило опирается на установленный смысл data-user-msg, а он сам выведен.
       Прямо расхождение пары не наблюдалось: в снимке непрочитанного не было,
-      все 47 элементов несут голый класс contact-item без модификаторов, счётчик
-      в шапке скрыт.
+      счётчик в шапке скрыт.
+
+      Утверждение «все элементы несут голый класс без модификаторов» отсюда
+      снято: в снимке страницы переписки один элемент несёт contact-item active.
+      Модификатор относится к выбранному диалогу, а не к непрочитанному, но
+      прежняя формулировка была просто неверна - и именно она обосновывала
+      вывод, что модификатора непрочитанного не существует.
     also_unknown: >-
       Есть ли у непрочитанного диалога собственный класс-модификатор. Если есть,
       он предпочтительнее сравнения пары: структурный признак не зависит от
@@ -101,13 +106,26 @@ contact_list:
       признаке необратимых действий.
 
   completeness:
-    bounded: true
-    observed_limit: 47
+    bounded: unknown
+    largest_observed: 50
     pagination_markup: not_observed
+    retracted: >-
+      Прежде здесь стояло bounded: true с пределом 47. Это было ошибкой, и
+      ошибкой поучительной: 47 - число элементов в одном снимке, а не
+      наблюдённая граница. Пересъёмка того же списка того же аккаунта дала 50.
+      Одно наблюдение приняли за предел, потому что второго не было.
+    what_is_actually_known: >-
+      Разметки дочитывания не наблюдалось ни в одном снимке. Из этого не следует
+      ни ограниченность списка, ни безграничность: пятьдесят элементов без
+      пагинатора не доказывают ни того, ни другого.
     consequence: >-
-      Список ограничен, разметки дочитывания в снимке нет. Диалог, вытесненный
-      за границу списка, исчезает из наблюдения целиком. Это ограничивает любую
-      гарантию, построенную на списке, и упомянуто в spec/events/delivery.yaml.
+      Полнота списка неизвестна, и любая гарантия, построенная на нём, обязана
+      это учитывать. Формулировка в spec/events/delivery.yaml опиралась на
+      ограниченность как на установленный факт - исправлено там же.
+    how_to_settle: >-
+      Снимком аккаунта, у которого диалогов заведомо больше полусотни. Пока
+      такого нет, реализация не вправе закреплять никакое число как предел:
+      закрепившая потеряет диалоги сверх него без единого признака.
 
 # --- Сообщение --------------------------------------------------------------
 message:
@@ -117,7 +135,7 @@ message:
   item:
     selector: ".chat-msg-item"
     confidence: observed
-    count_observed: 10
+    count_observed: 11
     evidence: chat-thread.logged.ru
 
   own_id:
@@ -134,16 +152,16 @@ message:
     body:
       selector: ".chat-msg-body"
       confidence: observed
-      count_observed: 10
+      count_observed: 11
     text:
       selector: ".chat-msg-text"
       confidence: observed
-      count_observed: 10
+      count_observed: 11
       type: x-funora-plain
     time_text:
       selector: ".chat-msg-date"
       confidence: observed
-      count_observed: 10
+      count_observed: 11
       type: x-funora-plain
       title_attribute:
         present: true
@@ -173,7 +191,7 @@ message:
     author_link:
       selector: "a.chat-msg-author-link"
       confidence: observed
-      count_observed: 4
+      count_observed: 5
       href_shape: "https://funpay.com/users/{n}/"
 
   external_links:

@@ -811,6 +811,11 @@ function checkExtraction() {
         ? node.confidence
         : inherited.confidence
 
+      // Область счётчика наследуется так же. Объявлять её у каждого поля
+      // отдельно значило бы завести полтора десятка одинаковых строк, а забыть
+      // одну - получить проверку, считающую строки документом.
+      const scope = typeof node.scope === 'string' ? node.scope : inherited.scope
+
       if (typeof node.confidence === 'string') {
         rules += 1
         if (!LEVELS.has(node.confidence)) {
@@ -844,7 +849,25 @@ function checkExtraction() {
             // по-разному на Windows и на Linux, и проверка свежести падает в CI
             // на ровном месте.
             const where = `${rel.split(path.sep).join('/')}:${pointer}`
-            selectors.push({ selector: one, evidence, where })
+            // Счётчик кладётся в перечень вместе с селектором, и это не
+            // украшение. Числа в спецификации протухли молча дважды: снимки
+            // пересняли, элементов стало больше, а count_observed остался
+            // прежним - и сверить его было нечем. Теперь сверяет соседний
+            // репозиторий, у которого снимки под рукой.
+            //
+            // Правило области обязательно там, где счётчик есть: одно и то же
+            // число означает то «столько на странице», то «столько в строке», и
+            // без пометки проверяющий не знает, что считать.
+            const entry = { selector: one, evidence, where }
+            if (typeof node.count_observed === 'number') {
+              const where_scope = scope || 'document'
+              if (where_scope !== 'document' && where_scope !== 'row') {
+                fail(rel, `${pointer}: неизвестная область счётчика "${where_scope}"`)
+              }
+              entry.count_observed = node.count_observed
+              entry.scope = where_scope
+            }
+            selectors.push(entry)
           }
         }
       }
@@ -855,11 +878,11 @@ function checkExtraction() {
       }
 
       for (const key of Object.keys(node)) {
-        visit(node[key], `${pointer}.${key}`, { evidence, confidence })
+        visit(node[key], `${pointer}.${key}`, { evidence, confidence, scope })
       }
     }
 
-    visit(doc, path.basename(file, '.yaml'), { evidence: null, confidence: null })
+    visit(doc, path.basename(file, '.yaml'), { evidence: null, confidence: null, scope: null })
   }
 
   const inventory = path.join(dir, 'observed-selectors.json')
