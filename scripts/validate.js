@@ -689,6 +689,78 @@ function checkBudget() {
 }
 
 /**
+ * Проверяет, что каждый объявленный класс изменений применяется классификатором.
+ *
+ * Та же болезнь, что и в реализации: объявление, которым никто не пользуется,
+ * выглядит работающим. Класс изменений, записанный в правилах и не применяемый
+ * скриптом, обещает, что такое изменение будет замечено, - а оно проходит молча.
+ *
+ * Проверка идёт в обе стороны. Класс, применяемый скриптом и не объявленный в
+ * правилах, хуже вдвойне: у него нет объявленного bump, и классификация выдаст
+ * undefined там, где должна выдать major.
+ *
+ * @returns {number} Число объявленных классов изменений.
+ */
+function checkChangeClasses() {
+  const rel = 'spec/compat-rules.yaml'
+  const rules = readYaml(path.join(SPEC, 'compat-rules.yaml'))
+  const declared = Object.keys(rules.changes || {})
+  if (declared.length === 0) {
+    fail(rel, 'классы изменений не объявлены')
+    return 0
+  }
+
+  const script = fs.readFileSync(path.join(ROOT, 'scripts', 'compat.js'), 'utf8')
+  const used = new Set()
+  // Имя класса ищется как строка где угодно в скрипте, а не только внутри
+  // вызова change(): часть классов подставляется из таблицы полей, и поиск по
+  // вызову объявлял бы их неприменяемыми.
+  const pattern = /'([a-z_]+)'/g
+  let match
+  while ((match = pattern.exec(script)) !== null) used.add(match[1])
+
+  for (const name of declared) {
+    if (!used.has(name)) {
+      fail(rel, `класс изменений «${name}» объявлен, но классификатор его не ` +
+        `применяет: правила обещают, что такое изменение будет замечено, а оно ` +
+        `проходит молча`)
+    }
+  }
+  // Обратная сторона смотрит ТОЛЬКО прямые вызовы change('...'). Широкий поиск
+  // здесь давал бы ложные срабатывания на всякой строке в snake_case - именами
+  // модулей Node, ключами полей, - и проверка, кричащая на 'child_process',
+  // перестала бы читаться.
+  const calls = new Set()
+  const direct = /change\(\s*'([a-z_]+)'/g
+  let call
+  while ((call = direct.exec(script)) !== null) calls.add(call[1])
+
+  for (const name of calls) {
+    if (!declared.includes(name)) {
+      fail('scripts/compat.js', `классификатор применяет класс «${name}», которого ` +
+        `нет в правилах: у него нет объявленного bump, и классификация выдаст ` +
+        `undefined там, где должна выдать major`)
+    }
+  }
+
+  for (const [name, body] of Object.entries(rules.changes || {})) {
+    if (!['major', 'minor', 'patch', 'forbidden'].includes(body.bump)) {
+      fail(rel, `у класса «${name}» непонятный bump «${body.bump}»`)
+    }
+    // Объяснение может стоять под rationale либо под summary - оба имени в
+    // файле уже прижились. Требуется одно из них: класс с объявленным bump и без
+    // единого слова о причине читается как произвол, и первый же спорный случай
+    // решат по-своему.
+    const why = String(body.rationale || body.summary || '').trim()
+    if (why.length < 30) {
+      fail(rel, `класс «${name}» не объясняет, почему bump именно такой`)
+    }
+  }
+
+  return declared.length
+}
+
+/**
  * Проверяет идентификаторы спецификации на соответствие правилам именования.
  *
  * @returns {{checked: number, collisions: number}} Число проверенных имён и коллизий.
@@ -1032,6 +1104,7 @@ function checkResponseClasses(errIds) {
 
 function main() {
   KNOWN_TYPES = loadTypes()
+  const changeClasses = checkChangeClasses()
   checkVersion()
   const models = checkModels()
   const errors = checkErrors()
@@ -1049,7 +1122,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
