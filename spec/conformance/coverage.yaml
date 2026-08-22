@@ -54,6 +54,14 @@ files:
       объявлял обязательные векторы, а не существовало ни одного - правила
       можно было переписать на противоположные, и обе сборки остались бы
       зелёными.
+  spec/conformance/resume.vectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_resume_vectors.py: сценарии перезапуска прогоняются дословно.
+      Свойство было объявлено в spec/events/delivery.yaml как
+      conformance_suite: resume и проверить его было нечем - а ловушка там
+      настоящая: реализация, сохранившая метки показанием своего секундомера,
+      после перезапуска выдаёт товар дважды.
   spec/conformance/runner-protocol.yaml:
     mechanism: verified
     note: >-

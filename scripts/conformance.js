@@ -93,6 +93,30 @@ function canonicalCases() {
 }
 
 /**
+ * Собирает случаи набора resume.
+ *
+ * Сценарий - не чистая функция: он несёт последовательность шагов и перезапуск
+ * посередине. Поэтому случай ссылается на сценарий целиком, а сверяет раннер
+ * не значение, а перечень доставленного по шагам.
+ *
+ * @returns {object[]} Случаи по протоколу.
+ */
+function resumeCases() {
+  const file = path.join(SPEC, 'conformance', 'resume.vectors.json')
+  if (!fs.existsSync(file)) return []
+  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+
+  return doc.scenarios.map((scenario, index) => ({
+    id: `resume/${scenario.name}`,
+    suite: 'resume',
+    kind: 'resume',
+    vector: `scenarios[${index}]`,
+    expected_steps: scenario.expected,
+    ...(scenario.why === undefined ? {} : { why: scenario.why }),
+  }))
+}
+
+/**
  * Подаёт случаи реализации и читает ответы.
  *
  * @param {string} command Команда реализации.
@@ -146,7 +170,7 @@ function main() {
 
   const declared = protocol()
   const known = registry()
-  const cases = canonicalCases()
+  const cases = [...canonicalCases(), ...resumeCases()]
   const answers = ask(command, cases)
 
   let passed = 0
@@ -177,6 +201,19 @@ function main() {
     }
 
     if (answer.outcome === 'pass') {
+      // Сценарий сверяет раннер: реализация вернула, что дошло на каждом шаге,
+      // а знать ожидаемое ей незачем - иначе она сверяла бы себя сама.
+      if (one.expected_steps) {
+        const got = JSON.stringify(answer.steps)
+        const want = JSON.stringify(one.expected_steps)
+        if (got !== want) {
+          failures.push([one.id, `по шагам получено ${got}, ожидалось ${want}`])
+          continue
+        }
+        passed += 1
+        continue
+      }
+
       // Случай, сверяемый с другим, проверяет раннер: реализация своих ответов
       // между собой не сравнивает и сравнивать не обязана.
       if (one.same_as) {
@@ -196,7 +233,8 @@ function main() {
   }
 
   console.log(`протокол: ${declared.protocol}`)
-  console.log(`наборов: 1 | случаев: ${cases.length}`)
+  const suites = new Set(cases.map((one) => one.suite))
+  console.log(`наборов: ${suites.size} | случаев: ${cases.length}`)
   console.log(`пройдено: ${passed} | отказов: ${failures.length} | пропущено: ${skipped.length}`)
 
   if (skipped.length > 0) {
