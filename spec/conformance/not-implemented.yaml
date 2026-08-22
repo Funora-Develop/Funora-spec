@@ -38,19 +38,6 @@ items:
       реализации не бывает. Появятся - появится и нужда в очереди.
     symbols: []
 
-  budget_bucket_burst:
-    declared_in: spec/runtime/budget.yaml#buckets
-    what: Поле burst у каждого ведра.
-    why_not: >-
-      Значение объявлено числом, но смысл его нигде не определён, а в модели
-      токенного ведра на вопрос «сколько можно подряд» отвечает capacity. Второе
-      число без правила применения означало бы, что шесть SDK применят его
-      шестью способами.
-    user_impact: >-
-      Число подряд идущих запросов ограничено ёмкостью ведра, а не burst. Для
-      ведра хоста это шестьдесят, а не десять.
-    symbols: [burst]
-
   retry_fail_closed:
     declared_in: spec/protocol/retry-policy.yaml#policies
     what: >-
