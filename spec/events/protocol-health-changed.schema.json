@@ -48,5 +48,6 @@
     "after",
     "reason_code",
     "writes_paused"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

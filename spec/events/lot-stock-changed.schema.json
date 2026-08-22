@@ -34,5 +34,6 @@
   "required": [
     "lot_id",
     "after"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

@@ -35,5 +35,6 @@
     "seller_id",
     "price",
     "query_fingerprint"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

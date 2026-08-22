@@ -255,6 +255,6 @@ files:
     note: >-
       scripts/validate.js: каждый x-funora-type в схемах обязан быть в словаре.
   spec/version.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
-      tests/test_spec_coverage.py: семейство адаптера сверяется с константой в _state.py.
+      contract.py: версия спецификации, состояние, версия канонической формы, перечень локалей, семейство адаптера. Прежде семейство было рукописной константой, а перечень локалей не существовал нигде.
