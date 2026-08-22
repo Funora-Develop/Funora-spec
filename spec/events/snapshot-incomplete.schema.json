@@ -4,7 +4,7 @@
   "x-funora-spec-version": "0.1.0",
   "x-funora-event-type": "snapshot.incomplete",
   "title": "SnapshotIncompleteEvent",
-  "description": "Снимок собран не полностью. Сравнение по нему не порождает выводов об исчезновении: опорная точка сохраняется прежней.",
+  "description": "Снимок собран не полностью. Сравнение по нему не порождает выводов об исчезновении: опорная точка сохраняется прежней.\n\nНеполнота бывает двух родов, и оба описываются одним событием. Первый - получены не все страницы: их и считают pages_fetched и pages_requested. Второй - страница получена целиком, но разобралась частично: часть строк отброшена либо поле пропало во всех строках. Тогда страниц получено столько же, сколько запрошено, а расходятся rows_total и rows_accepted.\n\nБез второго рода событие описывало бы только ту неполноту, которой у однослойных списков не бывает, и молчало бы о той, которая случается.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -25,12 +25,30 @@
       "type": "string",
       "x-funora-plain": true,
       "description": "Машиночитаемая причина неполноты."
+    },
+    "entity": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Что именно прочитано неполно: orders, chats, thread. Без этого поля получатель знает, что снимок неполон, и не знает, чего именно."
+    },
+    "rows_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько кандидатов в строки нашлось на странице, штук."
+    },
+    "rows_accepted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько строк принято, штук. Меньше rows_total - часть отброшена."
     }
   },
   "required": [
     "watch_id",
+    "entity",
     "pages_fetched",
     "pages_requested",
+    "rows_total",
+    "rows_accepted",
     "reason_code"
   ]
 }
