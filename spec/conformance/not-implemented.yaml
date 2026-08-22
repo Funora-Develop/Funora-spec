@@ -232,19 +232,6 @@ items:
       нехватке не отказом, а падением.
     symbols: []
 
-  handler_plugins:
-    declared_in: spec/errors/errors.yaml#PluginError
-    what: >-
-      Архитектура сторонних расширений и отказ внутри расширения.
-    why_not: >-
-      Подключить расширение некуда: точки расширения в пакете нет вовсе.
-      Возбуждать PluginError нечему.
-    user_impact: >-
-      Вред адресован не вызывающему, а автору второго SDK: он видит класс с
-      abi_code 1860 под FunoraError и заключает, что архитектура расширений -
-      часть контракта, которую его реализации полагается поддержать.
-    symbols: [PluginError]
-
   locale_unsupported_error:
     declared_in: spec/errors/errors.yaml#UnsupportedLocaleError
     what: >-

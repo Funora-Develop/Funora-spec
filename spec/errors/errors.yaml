@@ -466,12 +466,3 @@ errors:
       принять: молча отданный, он неотличим от полного, и именно так теряются
       оплаченные заказы.
 
-  PluginError:
-    stable_id: funora.plugin
-    abi_code: 1860
-    parent: FunoraError
-    retryable: false
-    side_effects_possible: true
-    user_actionable: true
-    since_spec: "0.1.0"
-    summary: Ошибка внутри стороннего плагина.
