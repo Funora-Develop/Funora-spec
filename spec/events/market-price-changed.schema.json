@@ -4,7 +4,7 @@
   "x-funora-spec-version": "0.1.0",
   "x-funora-event-type": "market.price_changed",
   "title": "MarketPriceChangedEvent",
-  "description": "Цена наблюдаемого чужого предложения изменилась.",
+  "description": "У наблюдаемого предложения переменилась цена.\n\nЭТОТ ВИД СОБЫТИЯ ПОКА НЕ ПОРОЖДАЕТ НИ ОДНА РЕАЛИЗАЦИЯ. Схема описывает намерение, а не наблюдение.\n\nНаблюдения за рынком разрешено сжимать: десять последовательных изменений цены сводятся к паре before и latest. Поэтому имя latest, а не after - в несжатом событии это одно и то же, а в сжатом after читалось бы как «следующее за before», тогда как между ними было ещё восемь.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -17,14 +17,17 @@
     "before": {
       "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
     },
-    "after": {
+    "latest": {
       "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
     },
     "aggregate": {
-      "type": "object",
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "x-funora-observability": "unobserved-possible",
-      "description": "Сводка по сжатым наблюдениям. Обязательна, если событие получено сжатием: без неё пороговый фильтр пользователя получит не тот вход, на который рассчитан.",
+      "description": "Что осталось от схлопнутых наблюдений. null означает, что событие не сжато: одно наблюдение, и обобщать нечего.\n\nПоле обязательно и допускает null, а не опущено. Получатель, принимающий решение по порогу, обязан отличать «сжатия не было» от «сжатие было, а подробности потерялись».",
       "properties": {
         "min": {
           "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json"
@@ -41,12 +44,22 @@
           "type": "integer",
           "minimum": 0,
           "description": "Сколько раз в окне пересечён порог, штук."
+        },
+        "window_started_at": {
+          "x-funora-type": "instant",
+          "description": "Начало окна сжатия. Без границ окна пороговый фильтр не знает, за какое время накопился размах min-max, и сравнивает несравнимое."
+        },
+        "window_ended_at": {
+          "x-funora-type": "instant",
+          "description": "Конец окна сжатия."
         }
       },
       "required": [
         "min",
         "max",
-        "samples"
+        "samples",
+        "window_started_at",
+        "window_ended_at"
       ]
     }
   },
@@ -54,6 +67,7 @@
     "watch_id",
     "offer_id",
     "before",
-    "after"
+    "latest",
+    "aggregate"
   ]
 }
