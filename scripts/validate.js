@@ -129,23 +129,42 @@ function checkProperty(file, pointer, prop, options) {
   const types = Array.isArray(prop.type) ? prop.type : (prop.type ? [prop.type] : [])
   const nullable = types.includes('null')
 
-  // У модели ненаблюдённое поле выражается ОТСУТСТВИЕМ: оно не входит в
-  // required. У нагрузки события - наоборот: поле всегда на месте, а
-  // ненаблюдённое значение равно null.
+  // Пустота обязана объявить, ЧТО она означает. Смыслов ровно два, и они
+  // приводят к разным решениям вызывающего:
   //
-  // Разница не в удобстве. Нагрузка уходит в очередь и в чужую систему, где
-  // отсутствие ключа неотличимо от «поле потерялось по дороге», а null - это
-  // ответ. Поэтому у события правило зеркальное, и обе половины проверяются.
-  if (kind === 'event' && prop['x-funora-observability'] === 'unobserved-possible' && !nullable) {
-    fail(file, `${pointer}: поле объявлено допускающим ненаблюдённость, но тип ` +
-      `не допускает null. В нагрузке события ненаблюдённое значение - это null, ` +
-      `а не отсутствующий ключ: отсутствие неотличимо от потери по дороге`)
+  //   unobserved-possible - «не наблюдали». Значение на странице, возможно,
+  //   есть, а прочитать его не удалось. Вызывающий не вправе считать, что его
+  //   нет.
+  //
+  //   not_applicable - «неприменимо». В этом состоянии сущности поля не бывает
+  //   вовсе: у повреждения уровня страницы нет строки, у ненаблюдённого
+  //   значения нет уверенности. Вызывающий вправе не искать его.
+  //
+  // Прежде правило знало только первый смысл и требовало его от всякой
+  // пустоты. Это заставляло помечать «не наблюдали» там, где наблюдать нечего,
+  // - то есть врать ровно тем полем, которое заведено против вранья.
+  const observability = prop['x-funora-observability']
+  const nullMeaning = prop['x-funora-nullable']
+  const saysUnobserved = observability === 'unobserved-possible'
+  const saysNotApplicable = nullMeaning === 'not_applicable'
+
+  if (saysUnobserved && saysNotApplicable) {
+    fail(file, `${pointer}: пустота объявлена сразу и «не наблюдали», и ` +
+      `«неприменимо». Это разные ответы, и вызывающий обязан знать, какой из них ` +
+      `перед ним`)
   }
 
-  if (nullable && prop['x-funora-observability'] !== 'unobserved-possible') {
-    fail(file, `${pointer}: тип допускает null, но поле не помечено ` +
-      `x-funora-observability: unobserved-possible - шесть SDK разойдутся в том, ` +
-      `означает ли пустота «не наблюдали» или «наблюдали пустое»`)
+  if (nullable && !saysUnobserved && !saysNotApplicable) {
+    fail(file, `${pointer}: тип допускает null, но не сказано, что null означает. ` +
+      `Пометьте x-funora-observability: unobserved-possible либо ` +
+      `x-funora-nullable: not_applicable - шесть SDK иначе разойдутся в том, ` +
+      `означает ли пустота «не наблюдали» или «здесь этого не бывает»`)
+  }
+
+  if (!nullable && (saysUnobserved || saysNotApplicable) && kind === 'event') {
+    fail(file, `${pointer}: пустота объявлена, но тип её не допускает. В нагрузке ` +
+      `события ненаблюдённое и неприменимое - это null, а не отсутствующий ключ: ` +
+      `отсутствие неотличимо от потери по дороге`)
   }
 
   if (types.includes('number')) {
@@ -222,6 +241,9 @@ function checkModels() {
     // подставить умолчание - ровно тот случай, ради которого флаг и введён.
     const required = new Set(doc.required || [])
     for (const [name, prop] of Object.entries(doc.properties || {})) {
+      // Только «не наблюдали». «Неприменимо» обязано быть в required и
+      // допускать null: отсутствие ключа не отличается от потери, а null - это
+      // ответ «здесь этого не бывает».
       if (prop['x-funora-observability'] === 'unobserved-possible' && required.has(name)) {
         fail(rel, `properties.${name}: помечено как «может не наблюдаться», но входит в required`)
       }

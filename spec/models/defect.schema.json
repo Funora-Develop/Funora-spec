@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/defect.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "Defect",
+  "description": "Повреждение, замеченное при разборе страницы.\n\nПовреждения перечисляются, а не суммируются в булев признак «всё плохо»: пропавшая ячейка в одной строке и пропавшая во всех - разные события с разным лечением.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "severity": {
+      "type": "string",
+      "enum": [
+        "page",
+        "row",
+        "field"
+      ],
+      "x-funora-closed": true,
+      "description": "Уровень повреждения. page - изменилась вёрстка страницы; row - непригодна одна строка; field - не прочитано одно поле.\n\nУровень повышается: поле, пропавшее во ВСЕХ строках, - это уже изменение вёрстки, а не сумма невинных пропусков."
+    },
+    "code": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемый код повреждения. Перечень открыт: новая порча разметки даёт новый код, и закрытое перечисление заставило бы реализацию либо молчать о ней, либо врать."
+    },
+    "detail": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Пояснение для человека. Содержимого страницы и персональных данных здесь нет: строка уходит в журналы."
+    },
+    "row_index": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Строка, к которой относится повреждение. null у повреждений уровня страницы: у них строки нет вовсе, и это не незнание, а устройство.",
+      "x-funora-nullable": "not_applicable"
+    },
+    "field_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "x-funora-plain": true,
+      "description": "Поле, к которому относится повреждение. null, если повреждение не о поле.",
+      "x-funora-nullable": "not_applicable"
+    }
+  },
+  "required": [
+    "severity",
+    "code",
+    "detail",
+    "row_index",
+    "field_name"
+  ]
+}

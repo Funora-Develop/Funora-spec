@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.1.0/models/orders-page.schema.json",
+  "x-funora-spec-version": "0.1.0",
+  "title": "OrdersPage",
+  "description": "Результат чтения списка продаж.\n\nЗаписи отдаются МЕТОДОМ, а не полем. Открытый список делает неполноту незаметной: вызывающий берёт его и не спрашивает про полноту, а неполный список неотличим от полного. Метод отказывается отдавать записи неполного результата без явного признания неполноты.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "completeness": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "unknown"
+      ],
+      "x-funora-closed": true,
+      "description": "Полнота прочитанного. complete - разобрано всё, что нашлось. partial - часть данных не прочитана. unknown - установить не удалось.\n\nПустой список даёт unknown, а не complete: снимка страницы без записей у проекта нет, и отличить продавца без заказов от переименованного класса строки нечем. Объявить complete значило бы утверждать то, чего не проверяли."
+    },
+    "reason": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина, по которой полнота такова. Наблюдаемые значения: all_rows_parsed, all_messages_parsed, empty_list_not_observed, empty_thread_not_observed, page_defects, row_defects."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа. Точка отсчёта для относительных меток времени на странице: площадка даёт «два часа назад», и без этой точки такая метка не превращается в момент."
+    },
+    "rows_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько кандидатов в записи нашлось на странице, штук."
+    },
+    "rows_accepted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько записей собрано, штук."
+    },
+    "rows_rejected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько кандидатов отброшено как непригодные, штук."
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.1.0/models/defect.schema.json"
+      },
+      "description": "Замеченные повреждения. Пустой список означает, что повреждений не нашлось, а не что их не искали."
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.1.0/models/order-list-entry.schema.json"
+      },
+      "description": "Собранные записи заказов."
+    }
+  },
+  "required": [
+    "completeness",
+    "reason",
+    "observed_at",
+    "rows_total",
+    "rows_accepted",
+    "rows_rejected",
+    "defects",
+    "entries"
+  ]
+}
