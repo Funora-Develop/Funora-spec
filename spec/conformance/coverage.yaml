@@ -38,6 +38,14 @@ files:
     mechanism: verified
     note: >-
       tests/test_spec_coverage.py: этот файл сверяется с составом спецификации.
+  spec/conformance/canonical-form.vectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_canonical.py: векторы канонической формы и отпечатка события
+      прогоняются дословно. Файл появился потому, что docs/canonical-json.md
+      объявлял обязательные векторы, а не существовало ни одного - правила
+      можно было переписать на противоположные, и обе сборки остались бы
+      зелёными.
   spec/conformance/not-implemented.yaml:
     mechanism: verified
     note: >-
