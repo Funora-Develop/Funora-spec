@@ -109,8 +109,9 @@ function loadTypes() {
  * @param {object} prop Тело свойства из JSON Schema.
  * @returns {void}
  */
-function checkProperty(file, pointer, prop) {
+function checkProperty(file, pointer, prop, options) {
   if (!prop || typeof prop !== 'object') return
+  const kind = (options && options.kind) || 'model'
 
   const declared = prop['x-funora-type']
   if (declared && !KNOWN_TYPES.has(declared)) {
@@ -127,6 +128,19 @@ function checkProperty(file, pointer, prop) {
   // а не по одному.
   const types = Array.isArray(prop.type) ? prop.type : (prop.type ? [prop.type] : [])
   const nullable = types.includes('null')
+
+  // У модели ненаблюдённое поле выражается ОТСУТСТВИЕМ: оно не входит в
+  // required. У нагрузки события - наоборот: поле всегда на месте, а
+  // ненаблюдённое значение равно null.
+  //
+  // Разница не в удобстве. Нагрузка уходит в очередь и в чужую систему, где
+  // отсутствие ключа неотличимо от «поле потерялось по дороге», а null - это
+  // ответ. Поэтому у события правило зеркальное, и обе половины проверяются.
+  if (kind === 'event' && prop['x-funora-observability'] === 'unobserved-possible' && !nullable) {
+    fail(file, `${pointer}: поле объявлено допускающим ненаблюдённость, но тип ` +
+      `не допускает null. В нагрузке события ненаблюдённое значение - это null, ` +
+      `а не отсутствующий ключ: отсутствие неотличимо от потери по дороге`)
+  }
 
   if (nullable && prop['x-funora-observability'] !== 'unobserved-possible') {
     fail(file, `${pointer}: тип допускает null, но поле не помечено ` +
@@ -548,6 +562,22 @@ function checkEvents() {
     if (path.basename(file) === 'envelope.schema.json') continue
     const r = path.relative(ROOT, file).replace(/\\/g, '/')
     const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+    // Тело схемы события проверяется теми же правилами, что и тело модели.
+    // Прежде не проверялось ничем: checkProperty применялся только к моделям, и
+    // схема события могла нести сырой number, неизвестный x-funora-type или
+    // перечисление без запасного значения - валидатор сказал бы «нарушений не
+    // найдено». Шестой SDK повторил бы за схемой.
+    if (!doc.$id) fail(r, 'отсутствует $id')
+    if (!doc.title) fail(r, 'отсутствует title')
+    if (!doc.description) fail(r, 'отсутствует description')
+    if (doc.additionalProperties !== false) {
+      fail(r, 'additionalProperties должно быть false - иначе схема не описывает ' +
+        'форму нагрузки, а лишь её минимум, и реализации разойдутся на лишних полях')
+    }
+    for (const [name, prop] of Object.entries(doc.properties || {})) {
+      checkProperty(r, `properties.${name}`, prop, { kind: 'event' })
+    }
+
     const t = doc['x-funora-event-type']
     if (!t) { fail(r, 'отсутствует x-funora-event-type'); continue }
     if (!/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/.test(t)) {

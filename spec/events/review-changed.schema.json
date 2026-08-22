@@ -22,15 +22,19 @@
       "description": "Характер изменения."
     },
     "rating": {
-      "type": "integer",
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 1,
       "maximum": 5,
       "x-funora-observability": "unobserved-possible",
-      "description": "Оценка, баллов."
+      "description": "Оценка, звёзды. Отсутствие значения означает, что оценку прочитать не удалось, а не что её нет: null и единица - разные ответы, и второй стоит денег.\n\nПоле обязательно и допускает null, а не опущено. В нагрузке события отсутствие ключа неотличимо от потери по дороге; null - это ответ."
     }
   },
   "required": [
     "order_id",
-    "change"
+    "change",
+    "rating"
   ]
 }
