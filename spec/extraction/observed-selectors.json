@@ -436,6 +436,18 @@
     "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
   },
   {
+    "selector": "html[lang]",
+    "evidence": [
+      "orders-trade.logged.ru",
+      "orders-trade.guest.ru",
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.locale",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "span.badge",
     "evidence": [
       "orders-trade.logged.ru",
