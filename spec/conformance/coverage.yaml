@@ -1,0 +1,260 @@
+# Чем каждый файл спецификации связан с реализацией.
+#
+# Файл появился после разбора, который посчитал: генератор читает семь файлов из
+# сорока девяти. Проверка свежести покрывает эти семь. Правка любого из
+# остальных сорока двух - а равно правка непрочитанного раздела внутри самих
+# семи - не даёт ни одного признака ни в одной сборке.
+#
+# Расхождение при этом обнаруживается не сразу и не здесь: спецификация зелёная,
+# сборка зелёная, а второй SDK, написанный по правленому файлу, ведёт себя иначе
+# первого. Обнаружит это тот, кто подключит обе реализации.
+#
+# Механизмов ровно три:
+#
+#   generated - из файла порождается артефакт. Генератор объявляет свои
+#   источники перечнем SOURCES и отказывается читать необъявленное.
+#
+#   verified - порождать нечего либо незачем, но реализация обязана
+#   согласоваться с файлом, и это проверено тестом. Названа проверка.
+#
+#   prose - обоснование, история решения, объяснение почему. Проверять нечего
+#   ПО УСТРОЙСТВУ, а не по трудности: обоснование не имеет машинного отражения.
+#
+# Файл, не попавший ни в одну корзину, роняет проверку покрытия. Молчащий файл
+# спецификации - это обещание, которое никто не держит.
+
+version: "0.1.0"
+
+files:
+  spec/capabilities.yaml:
+    mechanism: generated
+    note: >-
+      capabilities.py: перечисление возможностей, начальные состояния, правило допустимости вызова.
+  spec/compat-rules.yaml:
+    mechanism: verified
+    note: >-
+      scripts/compat.js: классификация изменений спецификации между двумя ревизиями.
+  spec/conformance/coverage.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_spec_coverage.py: этот файл сверяется с составом спецификации.
+  spec/conformance/not-implemented.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_declared_and_read.py: реестр сверяется с тем, что читается пакетом, в обе стороны.
+  spec/errors/errors.yaml:
+    mechanism: generated
+    note: >-
+      errors.py: иерархия ошибок, коды ABI, признаки повторяемости.
+  spec/events/chat-unread-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/delivery.yaml:
+    mechanism: generated
+    note: >-
+      events.py: виды событий, ключи упорядочивания, параметры отпечатка.
+  spec/events/envelope.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: конверт каждого порождаемого события.
+  spec/events/event-loss.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/lot-price-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/lot-stock-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/market-offer-appeared.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/market-offer-disappeared.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/market-price-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/message-created.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/order-created.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/order-status-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/protocol-health-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/review-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/seller-online-changed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/snapshot-incomplete.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/watch-degraded.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/events/watch-primed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/extraction/chats.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_spec_selectors.py и tests/test_chats.py: селекторы и правила разбора списка диалогов.
+  spec/extraction/observed-selectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке.
+  spec/extraction/orders.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: соответствие класса-носителя состоянию заказа.
+  spec/extraction/rules.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_chats.py, tests/test_orders.py и tests/test_thread.py: три исхода чтения атрибута, дубли идентификаторов, повышение уровня повреждения до страницы.
+  spec/extraction/session.yaml:
+    mechanism: generated
+    note: >-
+      response_classes.py: таблица кодов ответа. Прежде жила рукописной копией в классификаторе.
+  spec/extraction/updates.yaml:
+    mechanism: prose
+    note: >-
+      Запись наблюдений о канале обновлений площадки и о том, чего в нём НЕ наблюдали. Реализация канал не использует, и это записано в spec/conformance/not-implemented.yaml и в docs/limits.md.
+  spec/models/account.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/category.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/chat-list-entry.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py.
+  spec/models/chat.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/chats-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py.
+  spec/models/defect.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: повреждения разобранных снимков.
+  spec/models/lot.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/message.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/money.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: ссылается из схем событий, проверяется как часть схемы.
+  spec/models/observed.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: обёртка наблюдения сверяется во всех трёх состояниях.
+  spec/models/offer.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/order-list-entry.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: записи заказов со снимка и сверка множеств имён.
+  spec/models/order.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/orders-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py.
+  spec/models/thread-message.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py.
+  spec/models/thread.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py.
+  spec/models/user.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/naming.yaml:
+    mechanism: verified
+    note: >-
+      scripts/validate.js: имена полей, операций и значений перечислений.
+  spec/protocol/response-classes.yaml:
+    mechanism: generated
+    note: >-
+      response_classes.py: классы ответа, таблица «вердикт - ошибка».
+  spec/protocol/retry-policy.yaml:
+    mechanism: generated
+    note: >-
+      retry.py: политики повторов и пределы.
+  spec/runtime/budget.yaml:
+    mechanism: generated
+    note: >-
+      budget.py: вёдра, пределы, расписание. Генератор отказывает на неизвестном ключе раздела limits.
+  spec/services/account.yaml:
+    mechanism: generated
+    note: >-
+      operations.py: безопасность, возможность, класс запроса.
+  spec/services/catalog.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+  spec/services/chats.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+  spec/services/lots.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+  spec/services/market.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+  spec/services/orders.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+  spec/types.yaml:
+    mechanism: verified
+    note: >-
+      scripts/validate.js: каждый x-funora-type в схемах обязан быть в словаре.
+  spec/version.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_spec_coverage.py: семейство адаптера сверяется с константой в _state.py.
