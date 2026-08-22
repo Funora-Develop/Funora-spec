@@ -175,9 +175,21 @@ files:
     note: >-
       response_classes.py: таблица кодов ответа. Прежде жила рукописной копией в классификаторе.
   spec/extraction/updates.yaml:
-    mechanism: prose
+    mechanism: verified
     note: >-
-      Запись наблюдений о канале обновлений площадки и о том, чего в нём НЕ наблюдали. Реализация канал не использует, и это записано в spec/conformance/not-implemented.yaml и в docs/limits.md.
+      tests/test_spec_selectors.py: селекторы разделов tags и positions входят
+      в перечень наблюдённых и сверяются со снимками наравне с прочими -
+      пометка observed обязана держаться.
+
+      Остальное - запись наблюдений о канале обновлений площадки и о том, чего
+      в нём НЕ наблюдали. Реализация канал не использует, и это записано в
+      spec/conformance/not-implemented.yaml как updates_channel и в
+      docs/limits.md.
+
+      Механизм был объявлен прозой, хотя часть файла сверяется машиной. Хуже
+      того, узел positions использовал синоним location вместо selector и
+      выходил из-под сверки молча: пометка observed стояла, а проверить её было
+      нечем.
   spec/models/account.schema.json:
     mechanism: verified
     note: >-

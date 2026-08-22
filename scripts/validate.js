@@ -1153,6 +1153,13 @@ function checkExtraction() {
             // число означает то «столько на странице», то «столько в строке», и
             // без пометки проверяющий не знает, что считать.
             const entry = { selector: one, evidence, where }
+            // Утверждение об ОТСУТСТВИИ - вторая половина наблюдения, и до сих
+            // пор её не проверял никто. Признак вошедшего, который вдруг
+            // нашёлся бы и на гостевой странице, перестал бы различать сессии -
+            // а спецификация продолжала бы утверждать, что различает.
+            if (Array.isArray(node.absent_in) && node.absent_in.length > 0) {
+              entry.absent_in = node.absent_in
+            }
             if (typeof node.count_observed === 'number') {
               const where_scope = scope || 'document'
               if (where_scope !== 'document' && where_scope !== 'row') {
@@ -1163,6 +1170,20 @@ function checkExtraction() {
             }
             selectors.push(entry)
           }
+        }
+      }
+
+      // Отсутствие объявляется только там, где объявлено и присутствие:
+      // «нигде не наблюдался, но вот здесь его точно нет» - утверждение ни о
+      // чём, и проверить его нечем.
+      if (Array.isArray(node.absent_in) && node.absent_in.length > 0) {
+        if (!node.selector && !node.selectors) {
+          fail(rel, `${pointer}: absent_in объявлен там, где нет селектора`)
+        }
+        const overlap = (evidence || []).filter((name) => node.absent_in.includes(name))
+        if (overlap.length > 0) {
+          fail(rel, `${pointer}: снимки ${overlap.join(', ')} названы и как ` +
+            `свидетельство наличия, и как свидетельство отсутствия`)
         }
       }
 

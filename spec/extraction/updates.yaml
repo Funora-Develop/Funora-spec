@@ -72,7 +72,10 @@ tags:
 # --- Позиции ----------------------------------------------------------------
 positions:
   attributes: [data-node-msg, data-user-msg]
-  location: "a.contact-item"
+  # Ключ selector, а не location. Сборщик перечня наблюдённых знает одно имя, и
+  # синоним молча выводил правило из-под сверки со снимками: пометка observed
+  # стояла, а проверить её было нечем.
+  selector: "a.contact-item"
   shape: 10 цифр
   confidence: observed
   evidence: [chat.logged.ru, chat-thread.logged.ru]

@@ -211,6 +211,9 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/session.yaml:session.markers.logged_in[0]",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
     "count_observed": 1,
     "scope": "document"
   },
@@ -393,6 +396,14 @@
     "scope": "document"
   },
   {
+    "selector": "a.contact-item",
+    "evidence": [
+      "chat.logged.ru",
+      "chat-thread.logged.ru"
+    ],
+    "where": "spec/extraction/updates.yaml:updates.positions"
+  },
+  {
     "selector": "a.tc-item",
     "evidence": [
       "orders-trade.logged.ru"
@@ -409,6 +420,9 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/session.yaml:session.markers.logged_in[1]",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
     "count_observed": 1,
     "scope": "document"
   },
@@ -429,6 +443,9 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/session.yaml:session.markers.logged_in[2]",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
     "count_observed": 4,
     "scope": "document"
   },
