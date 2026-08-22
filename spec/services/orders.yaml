@@ -50,6 +50,11 @@ operations:
     errors:
       - funora.auth.session_expired
       - funora.protocol.changed
+      # Классификатор переводит 4xx на странице списка в
+      # funora.protocol.unexpected_response, и это НЕ потомок protocol.changed,
+      # а его сестра под общим ProtocolError. Вызывающий, выписавший except по
+      # прежнему перечню, её не ловил.
+      - funora.protocol.unexpected_response
       - funora.transport
 
   orders.get:
