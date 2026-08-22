@@ -13,6 +13,11 @@
  * показывает согласие там, где его нет: отсутствие набора видно, ложное
  * согласие нет.
  *
+ * Второе правило, добытое дорого: ОЖИДАЕМОЕ НЕ ПОКИДАЕТ РАННЕРА. Первая
+ * редакция клала ожидаемое прямо в случай, а случай уезжал реализации целиком -
+ * то есть проверяемому присылали ответ вместе с вопросом. Пустая реализация,
+ * возвращающая присланное, проходила бы весь набор.
+ *
  * Запуск:
  *   node scripts/conformance.js "python -m funora.conformance"
  *
@@ -30,6 +35,20 @@ const yaml = require('js-yaml')
 
 const ROOT = path.resolve(__dirname, '..')
 const SPEC = path.join(ROOT, 'spec')
+
+/**
+ * Отвергает файл векторов и останавливает прогон.
+ *
+ * Порок в самих векторах - не отказ реализации, а поломка набора, и путать их
+ * нельзя: отказ реализации разбирают, глядя в реализацию, и искали бы там же.
+ *
+ * @param {string} message Что именно не так.
+ * @returns {void}
+ */
+function refuse(message) {
+  console.error(`векторы негодны: ${message}`)
+  process.exit(2)
+}
 
 /**
  * Читает объявление протокола.
@@ -53,34 +72,77 @@ function registry() {
 }
 
 /**
+ * Читает файл векторов и сверяет объявленную им версию протокола.
+ *
+ * Штамп runner_protocol стоял в файлах векторов с самого начала и не читался
+ * никем: набор, написанный под другую версию протокола, прогонялся бы молча.
+ *
+ * @param {string} name Имя файла в каталоге spec/conformance.
+ * @param {number} expected Версия протокола, по которой работает раннер.
+ * @returns {object|null} Разобранный файл либо null, если файла нет.
+ */
+function vectorFile(name, expected) {
+  const file = path.join(SPEC, 'conformance', name)
+  if (!fs.existsSync(file)) return null
+  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+
+  if (doc.runner_protocol !== expected) {
+    refuse(`${name} объявляет протокол ${doc.runner_protocol}, а раннер работает `
+      + `по версии ${expected}. Прогнать набор чужой версии молча нельзя`)
+  }
+  return doc
+}
+
+/**
  * Собирает случаи набора канонической формы из файла векторов.
  *
  * Случаи выводятся из векторов, а не пишутся отдельно: два перечня одного и
  * того же разошлись бы молча.
  *
- * @returns {object[]} Случаи по протоколу.
+ * @param {number} version Версия протокола.
+ * @returns {object[]} Пары «что уезжает реализации» и «чем сверять».
  */
-function canonicalCases() {
-  const vectors = JSON.parse(fs.readFileSync(
-    path.join(SPEC, 'conformance', 'canonical-form.vectors.json'), 'utf8'))
+function canonicalCases(version) {
+  const vectors = vectorFile('canonical-form.vectors.json', version)
+  if (vectors === null) return []
 
   const cases = []
   const add = (section, bucket, kind, list) => {
     list.forEach((vector, index) => {
+      const refuses = kind.endsWith('_refuses')
+
+      if (!refuses && vector.expected === undefined && vector.same_as === undefined) {
+        refuse(`${section}.${bucket}[${index}] «${vector.name}» не объявил ожидаемого: `
+          + 'ни expected, ни same_as. Такой случай проходил бы, не проверив ничего')
+      }
+      if (refuses && vector.expected !== undefined) {
+        refuse(`${section}.${bucket}[${index}] «${vector.name}» - вектор отказа, и `
+          + 'expected у него сверять нечем. Поле выглядит проверяемым и не проверяется')
+      }
+      if (refuses && vector.refuses_with === undefined) {
+        refuse(`${section}.${bucket}[${index}] «${vector.name}» - вектор отказа и не `
+          + 'назвал класса ошибки в refuses_with. Без имени класса отказ судит себя '
+          + 'сам, и реализация, отвергающая всё подряд, случай проходит')
+      }
+
       cases.push({
-        id: `${section}/${vector.name}`,
-        suite: 'canonical_form',
-        kind,
-        // Ссылка, а не значение. Раннер на JavaScript, и JSON.parse тут теряет
-        // точность за 2^53 и не отличает 1.0 от 1 - то есть портит ровно те
-        // различия, ради которых векторы и существуют. Разбирать вектор обязан
-        // тот, кто будет с ним работать.
-        vector: `${section}.${bucket}[${index}]`,
-        ...(vector.expected === undefined ? {} : { expected: vector.expected }),
-        ...(vector.same_as === undefined
-          ? {}
-          : { same_as: `${section}/${vector.same_as}` }),
-        ...(vector.why === undefined ? {} : { why: vector.why }),
+        ask: {
+          id: `${section}/${vector.name}`,
+          suite: 'canonical_form',
+          kind,
+          // Ссылка, а не значение. Раннер на JavaScript, и JSON.parse тут теряет
+          // точность за 2^53 и не отличает 1.0 от 1 - то есть портит ровно те
+          // различия, ради которых векторы и существуют. Разбирать вектор обязан
+          // тот, кто будет с ним работать.
+          vector: `${section}.${bucket}[${index}]`,
+          ...(vector.why === undefined ? {} : { why: vector.why }),
+        },
+        // Ожидаемое остаётся ЗДЕСЬ и по проводу не уходит.
+        judge: refuses
+          ? { refuses_with: vector.refuses_with }
+          : vector.expected === undefined
+            ? { same_as: `${section}/${vector.same_as}` }
+            : { value: vector.expected },
       })
     })
   }
@@ -89,6 +151,26 @@ function canonicalCases() {
   add('serialize', 'reject', 'serialize_refuses', vectors.serialize.reject)
   add('fingerprint', 'accept', 'fingerprint', vectors.fingerprint.accept)
   add('fingerprint', 'reject', 'fingerprint_refuses', vectors.fingerprint.reject)
+
+  // Ссылка на другой случай разрешается в ЗНАЧЕНИЕ, если оно известно. Сверка
+  // двух ответов между собой сама по себе дырява: реализация, не вернувшая
+  // ничего, даёт undefined в обоих, а undefined равно undefined - и случай
+  // проходит. Проверено полой реализацией: она проходила ровно этот случай и
+  // никакой другой.
+  const known = new Map()
+  for (const one of cases) {
+    if (one.judge.value !== undefined) known.set(one.ask.id, one.judge.value)
+  }
+  for (const one of cases) {
+    const target = one.judge.same_as
+    if (target === undefined) continue
+    if (!cases.some((other) => other.ask.id === target)) {
+      refuse(`случай «${one.ask.id}» ссылается на «${target}», которого в наборе нет`)
+    }
+    if (known.has(target)) {
+      one.judge = { value: known.get(target), because_same_as: target }
+    }
+  }
   return cases
 }
 
@@ -99,57 +181,102 @@ function canonicalCases() {
  * посередине. Поэтому случай ссылается на сценарий целиком, а сверяет раннер
  * не значение, а перечень доставленного по шагам.
  *
- * @returns {object[]} Случаи по протоколу.
+ * @param {number} version Версия протокола.
+ * @returns {object[]} Пары «что уезжает реализации» и «чем сверять».
  */
-function resumeCases() {
-  const file = path.join(SPEC, 'conformance', 'resume.vectors.json')
-  if (!fs.existsSync(file)) return []
-  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+function resumeCases(version) {
+  const doc = vectorFile('resume.vectors.json', version)
+  if (doc === null) return []
 
-  return doc.scenarios.map((scenario, index) => ({
-    id: `resume/${scenario.name}`,
-    suite: 'resume',
-    kind: 'resume',
-    vector: `scenarios[${index}]`,
-    expected_steps: scenario.expected,
-    ...(scenario.why === undefined ? {} : { why: scenario.why }),
-  }))
+  return doc.scenarios.map((scenario, index) => {
+    if (!Array.isArray(scenario.expected)) {
+      refuse(`resume scenarios[${index}] «${scenario.name}» не объявил ожидаемого`)
+    }
+    if (scenario.expected.length !== scenario.steps.length) {
+      refuse(`resume scenarios[${index}] «${scenario.name}»: шагов `
+        + `${scenario.steps.length}, а ожиданий ${scenario.expected.length}. `
+        + 'Сценарий проверял бы меньше, чем выглядит')
+    }
+
+    return {
+      ask: {
+        id: `resume/${scenario.name}`,
+        suite: 'resume',
+        kind: 'resume',
+        vector: `scenarios[${index}]`,
+        ...(scenario.why === undefined ? {} : { why: scenario.why }),
+      },
+      judge: { steps: scenario.expected },
+    }
+  })
 }
 
 /**
  * Собирает случаи набора rate-budget.
  *
- * @returns {object[]} Случаи по протоколу.
+ * @param {number} version Версия протокола.
+ * @returns {object[]} Пары «что уезжает реализации» и «чем сверять».
  */
-function rateBudgetCases() {
-  const file = path.join(SPEC, 'conformance', 'rate-budget.vectors.json')
-  if (!fs.existsSync(file)) return []
-  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+function rateBudgetCases(version) {
+  const doc = vectorFile('rate-budget.vectors.json', version)
+  if (doc === null) return []
 
-  return doc.scenarios.map((scenario, index) => ({
-    id: `rate-budget/${scenario.name}`,
-    suite: 'rate_budget',
-    kind: 'rate_budget',
-    vector: `scenarios[${index}]`,
-    trace: scenario.expected,
-    ...(scenario.why === undefined ? {} : { why: scenario.why }),
-  }))
+  const checkable = ['refused', 'at', 'not_before', 'not_after', 'total_sent_at_most',
+    'served_in_order']
+
+  return doc.scenarios.map((scenario, index) => {
+    const want = scenario.expected || {}
+    const named = checkable.filter((key) => want[key] !== undefined)
+    if (named.length === 0) {
+      refuse(`rate-budget scenarios[${index}] «${scenario.name}» не объявил ничего `
+        + `проверяемого: ожидались какие-то из ${checkable.join(', ')}`)
+    }
+    if (scenario.concurrent && scenario.requires === undefined) {
+      refuse(`rate-budget scenarios[${index}] «${scenario.name}» объявлен одновременным `
+        + 'и не назвал записи реестра в поле requires. Реализация без очереди не '
+        + 'смогла бы честно пропустить его')
+    }
+
+    // Длину трассы считает раннер по самому вектору. Без неё реализация,
+    // вернувшая пустой перечень, проходит любое ограничение сверху: ноль
+    // отправленных не больше никакого предела.
+    const count = scenario.requests
+      ? scenario.requests.length
+      : scenario.generate.accounts * scenario.generate.per_account
+
+    return {
+      ask: {
+        id: `rate-budget/${scenario.name}`,
+        suite: 'rate_budget',
+        kind: 'rate_budget',
+        vector: `scenarios[${index}]`,
+        ...(scenario.why === undefined ? {} : { why: scenario.why }),
+      },
+      judge: { trace: { ...want, request_count: count } },
+    }
+  })
 }
 
 /**
  * Сверяет трассу отправки с ожидаемым.
  *
- * Ожидаемое задано границами, а не точной меткой везде, и это не послабление:
- * запас в ведре считается числами с плавающей точкой, и последний бит деления
- * даёт то 199, то 200 миллисекунд. Точная метка требуется там, где ожидания не
- * было вовсе.
+ * Точная метка (at) требуется там, где ожидания не было вовсе. Где оно было -
+ * требуется КОРИДОР из not_before и not_after: запас в ведре считается числами
+ * с плавающей точкой, и последний бит деления даёт то 199, то 200 миллисекунд.
+ * Одной нижней границы мало - реализация, восстанавливающая право на залп вдвое
+ * медленнее объявленного, все нижние границы соблюдает.
  *
- * @param {(number|null)[]} sent Метки отправки; null - запрос не ушёл.
+ * @param {object} answer Ответ реализации.
  * @param {object} want Ожидаемое из вектора.
  * @returns {string} Пустая строка, если сошлось, иначе описание расхождения.
  */
-function checkTrace(sent, want) {
+function checkTrace(answer, want) {
+  const sent = answer.sent
   if (!Array.isArray(sent)) return `трасса не пришла вовсе: ${JSON.stringify(sent)}`
+  if (sent.length !== want.request_count) {
+    return `в трассе ${sent.length} меток, а запросов в сценарии `
+      + `${want.request_count}. Метка обязана быть у каждого`
+  }
 
   if (want.refused) {
     const got = sent.map((one, index) => (one === null ? index : -1)).filter((one) => one >= 0)
@@ -164,20 +291,44 @@ function checkTrace(sent, want) {
     }
   }
 
-  for (const [index, floor] of Object.entries(want.not_before || {})) {
-    if (sent[index] === null || sent[index] === undefined) {
-      return `запрос ${index} не ушёл вовсе, а ожидался не раньше ${floor}`
+  const bounded = (bounds, worse) => {
+    for (const [index, edge] of Object.entries(bounds || {})) {
+      if (Number(index) >= sent.length) {
+        return `граница объявлена запросу ${index}, а в трассе всего ${sent.length}`
+      }
+      if (sent[index] === null || sent[index] === undefined) {
+        return `запрос ${index} не ушёл вовсе, а ожидался в границах около ${edge}`
+      }
+      if (worse(sent[index], edge)) {
+        return `запрос ${index} ушёл в ${sent[index]}, а граница ${edge}`
+      }
     }
-    if (sent[index] < floor) {
-      return `запрос ${index} ушёл в ${sent[index]}, а не раньше ${floor}`
-    }
+    return ''
   }
+
+  const low = bounded(want.not_before, (got, edge) => got < edge)
+  if (low) return low
+  const high = bounded(want.not_after, (got, edge) => got > edge)
+  if (high) return high
 
   if (want.total_sent_at_most !== undefined) {
     const total = sent.filter((one) => one !== null).length
     if (total > want.total_sent_at_most) {
       return `ушло ${total} запросов, а больше ${want.total_sent_at_most} уйти не может`
     }
+  }
+
+  if (want.served_in_order !== undefined) {
+    // Порядок обслуживания НЕ выводится из меток: при одновременном поступлении
+    // честная реализация с очередью вправе вернуть одинаковые метки. Поэтому
+    // порядок обязан прийти отдельным полем - иначе сверять нечего.
+    if (!Array.isArray(answer.served)) {
+      return 'сценарий проверяет порядок обслуживания, а поле served не пришло. '
+        + 'Из меток отправки порядок не выводится: они могут совпасть'
+    }
+    const got = JSON.stringify(answer.served)
+    const need = JSON.stringify(want.served_in_order)
+    if (got !== need) return `обслужено в порядке ${got}, ожидалось ${need}`
   }
 
   return ''
@@ -187,11 +338,11 @@ function checkTrace(sent, want) {
  * Подаёт случаи реализации и читает ответы.
  *
  * @param {string} command Команда реализации.
- * @param {object[]} cases Случаи.
+ * @param {object[]} cases Случаи; уезжает только поле ask.
  * @returns {Map<string, object>} Ответы по идентификатору случая.
  */
 function ask(command, cases) {
-  const input = cases.map((one) => JSON.stringify(one)).join('\n') + '\n'
+  const input = cases.map((one) => JSON.stringify(one.ask)).join('\n') + '\n'
   const parts = command.split(/\s+/)
   const run = spawnSync(parts[0], parts.slice(1), {
     input,
@@ -223,6 +374,67 @@ function ask(command, cases) {
 }
 
 /**
+ * Сверяет один ответ с тем, чем этот случай судится.
+ *
+ * @param {object} one Случай: поля ask и judge.
+ * @param {object} answer Ответ реализации.
+ * @param {Map<string, object>} answers Все ответы - нужны сверке с другим случаем.
+ * @returns {string} Пустая строка, если сошлось, иначе описание расхождения.
+ */
+function verdict(one, answer, answers) {
+  const judge = one.judge
+
+  if (judge.trace !== undefined) return checkTrace(answer, judge.trace)
+
+  if (judge.steps !== undefined) {
+    const got = JSON.stringify(answer.steps)
+    const need = JSON.stringify(judge.steps)
+    return got === need ? '' : `по шагам получено ${got}, ожидалось ${need}`
+  }
+
+  if (judge.value !== undefined) {
+    if (answer.value === judge.value) return ''
+    const source = judge.because_same_as === undefined
+      ? ''
+      : ` (ответ обязан совпасть с «${judge.because_same_as}»)`
+    return `получено ${JSON.stringify(answer.value)}, ожидалось `
+      + `${JSON.stringify(judge.value)}${source}`
+  }
+
+  if (judge.same_as !== undefined) {
+    // Сюда доходят только ссылки на случай, у которого своего ожидаемого нет, -
+    // прочие разрешены в значение при сборке. Пустой ответ отвергается прежде
+    // сравнения: иначе два «ничего» совпадут и случай пройдёт.
+    const other = answers.get(judge.same_as)
+    if (answer.value === undefined || answer.value === null) {
+      return `ответ пуст, а обязан совпасть с «${judge.same_as}». Два пустых `
+        + 'ответа совпадают между собой и не значат ничего'
+    }
+    if (!other || other.value !== answer.value) {
+      return `ответ обязан совпасть с «${judge.same_as}»: ${answer.value} против `
+        + `${other ? other.value : 'ответа нет'}`
+    }
+    return ''
+  }
+
+  if (judge.refuses_with !== undefined) {
+    // Отказ обязан быть ИМЕНОВАННЫМ. Иначе случай судит себя сам, и реализация,
+    // отвергающая всё подряд, проходит его наравне с правильной. Заодно это
+    // держит согласие классов ошибок: два SDK, отвергающие дробное число
+    // разными классами, заставляют вызывающего писать разный except.
+    if (answer.value !== judge.refuses_with) {
+      return `отказ обязан быть классом «${judge.refuses_with}», а пришло `
+        + `${JSON.stringify(answer.value)}`
+    }
+    return ''
+  }
+
+  // Страховка на случай, если сюда доедет случай, которому нечем судить.
+  // Прежде такой случай молча засчитывался пройденным.
+  return 'случай не объявил ожидаемого: судить его нечем'
+}
+
+/**
  * Прогоняет набор и печатает итог.
  *
  * @returns {number} Код возврата.
@@ -237,7 +449,12 @@ function main() {
 
   const declared = protocol()
   const known = registry()
-  const cases = [...canonicalCases(), ...resumeCases(), ...rateBudgetCases()]
+  const version = declared.protocol
+  const cases = [
+    ...canonicalCases(version),
+    ...resumeCases(version),
+    ...rateBudgetCases(version),
+  ]
   const answers = ask(command, cases)
 
   let passed = 0
@@ -245,9 +462,9 @@ function main() {
   const skipped = []
 
   for (const one of cases) {
-    const answer = answers.get(one.id)
+    const answer = answers.get(one.ask.id)
     if (!answer) {
-      failures.push([one.id, 'реализация не ответила на случай вовсе'])
+      failures.push([one.ask.id, 'реализация не ответила на случай вовсе'])
       continue
     }
 
@@ -256,61 +473,33 @@ function main() {
       if (!named) {
         // Пропуск без ссылки - отказ. Ровно то, ради чего протокол написан:
         // реализация вправе чего-то не уметь и не вправе делать вид, что умеет.
-        failures.push([one.id, 'пропуск без ссылки на реестр неисполненного'])
+        failures.push([one.ask.id, 'пропуск без ссылки на реестр неисполненного'])
         continue
       }
       if (!known.has(named)) {
-        failures.push([one.id, `пропуск ссылается на запись «${named}», которой в реестре нет`])
+        failures.push([one.ask.id,
+          `пропуск ссылается на запись «${named}», которой в реестре нет`])
         continue
       }
-      skipped.push([one.id, named])
+      skipped.push([one.ask.id, named])
       continue
     }
 
     if (answer.outcome === 'pass') {
-      // Сценарий сверяет раннер: реализация вернула, что дошло на каждом шаге,
-      // а знать ожидаемое ей незачем - иначе она сверяла бы себя сама.
-      if (one.trace) {
-        const complaint = checkTrace(answer.sent, one.trace)
-        if (complaint) {
-          failures.push([one.id, complaint])
-          continue
-        }
-        passed += 1
+      const complaint = verdict(one, answer, answers)
+      if (complaint) {
+        failures.push([one.ask.id, complaint])
         continue
-      }
-
-      if (one.expected_steps) {
-        const got = JSON.stringify(answer.steps)
-        const want = JSON.stringify(one.expected_steps)
-        if (got !== want) {
-          failures.push([one.id, `по шагам получено ${got}, ожидалось ${want}`])
-          continue
-        }
-        passed += 1
-        continue
-      }
-
-      // Случай, сверяемый с другим, проверяет раннер: реализация своих ответов
-      // между собой не сравнивает и сравнивать не обязана.
-      if (one.same_as) {
-        const other = answers.get(one.same_as)
-        if (!other || other.value !== answer.value) {
-          failures.push([one.id,
-            `ответ обязан совпасть с «${one.same_as}»: ${answer.value} против `
-            + `${other ? other.value : 'ответа нет'}`])
-          continue
-        }
       }
       passed += 1
       continue
     }
 
-    failures.push([one.id, answer.detail || 'отказ без подробностей'])
+    failures.push([one.ask.id, answer.detail || 'отказ без подробностей'])
   }
 
-  console.log(`протокол: ${declared.protocol}`)
-  const suites = new Set(cases.map((one) => one.suite))
+  const suites = new Set(cases.map((one) => one.ask.suite))
+  console.log(`протокол: ${version}`)
   console.log(`наборов: ${suites.size} | случаев: ${cases.length}`)
   console.log(`пройдено: ${passed} | отказов: ${failures.length} | пропущено: ${skipped.length}`)
 
