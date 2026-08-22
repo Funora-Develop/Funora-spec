@@ -129,6 +129,11 @@ verdict_errors:
   unknown:
     empty_body: funora.protocol.unexpected_response
     identity_marker_absent: funora.protocol.changed
+    # Тело не разобралось как разметка. Отделено от identity_marker_absent
+    # намеренно: то говорит «разметка изменилась», а здесь разметка могла не
+    # меняться вовсе - ответ пришёл не тем, чем должен. Диагнозы разные, и
+    # лечение разное.
+    body_unparsable: funora.protocol.unexpected_response
 
 # --- Уточнения, не выразимые таблицей ---------------------------------------
 refinements:
