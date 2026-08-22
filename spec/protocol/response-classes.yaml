@@ -116,6 +116,11 @@ verdict_errors:
 
   wrong_identity:
     host_mismatch: funora.protocol.unexpected_response
+    # Хост конечного адреса нечитаем: не расхождение, а невозможность судить о
+    # происхождении ответа. Отделено от host_mismatch причиной, а не классом:
+    # доверять ответу нельзя в обоих случаях, а разбирать их по-разному пришлось
+    # бы тому, кто читает журнал.
+    host_unreadable: funora.protocol.unexpected_response
 
   transport_error:
     http_5xx: funora.transport.remote_server
