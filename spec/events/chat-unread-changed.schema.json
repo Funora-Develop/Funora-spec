@@ -4,27 +4,40 @@
   "x-funora-spec-version": "0.1.0",
   "x-funora-event-type": "chat.unread_changed",
   "title": "ChatUnreadChangedEvent",
-  "description": "Изменилось число непрочитанных сообщений в переписке.",
+  "description": "У диалога переменилось непрочитанное: пришло сообщение либо диалог прочитан.\n\nОба перехода дают одно событие. Различить их получатель может по полю unread: true - есть непрочитанное, false - прочитано.\n\nНагрузка - указатель на сущность, а не её копия: идентификаторы и то, что переменилось, но не содержимое. Прежняя редакция требовала вложить сюда модель целиком, а модель обязывает нести текст сообщения, имена людей и суммы. Событие уходит обработчику, а оттуда в журнал, в очередь, в чужую систему, и нести туда чужую переписку незачем: кому нужны подробности, тот читает страницу сам и знает, что делает.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "chat": {
-      "$ref": "https://funora.dev/spec/0.1.0/models/chat.schema.json"
+    "chat_id": {
+      "x-funora-type": "entity_id",
+      "description": "Диалог, о котором событие."
     },
-    "before": {
-      "type": "integer",
-      "minimum": 0,
+    "unread": {
+      "type": [
+        "boolean",
+        "null"
+      ],
       "x-funora-observability": "unobserved-possible",
-      "description": "Прежнее число непрочитанных, штук."
+      "description": "Есть ли в диалоге непрочитанное. Отсутствие значения означает, что признак вывести не удалось, а не что непрочитанного нет."
     },
-    "after": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "Текущее число непрочитанных, штук."
+    "unread_confidence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "observed",
+        "inferred",
+        null
+      ],
+      "x-funora-closed": true,
+      "description": "Насколько признак заслуживает доверия. Значение inferred означает, что он выведен из расхождения двух позиций, а не прочитан со страницы: правило выведено, и расхождения пары при непрочитанном диалоге никто не наблюдал ни разу.",
+      "x-funora-observability": "unobserved-possible"
     }
   },
   "required": [
-    "chat",
-    "after"
+    "chat_id",
+    "unread",
+    "unread_confidence"
   ]
 }

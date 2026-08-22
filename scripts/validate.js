@@ -120,12 +120,26 @@ function checkProperty(file, pointer, prop) {
   // Ссылка на другую модель и объявленный доменный тип снимают требование к скаляру.
   const delegated = Boolean(prop.$ref || declared)
 
-  if (prop.type === 'number') {
+  // Поле, допускающее отсутствие значения, объявляется массивом типов:
+  // ["string", "null"]. Прежде все проверки ниже сравнивали prop.type со
+  // строкой и на таком поле не срабатывали ни одна - то есть любое правило
+  // обходилось дописыванием "null" в тип. Проверки идут по объявленным типам,
+  // а не по одному.
+  const types = Array.isArray(prop.type) ? prop.type : (prop.type ? [prop.type] : [])
+  const nullable = types.includes('null')
+
+  if (nullable && prop['x-funora-observability'] !== 'unobserved-possible') {
+    fail(file, `${pointer}: тип допускает null, но поле не помечено ` +
+      `x-funora-observability: unobserved-possible - шесть SDK разойдутся в том, ` +
+      `означает ли пустота «не наблюдали» или «наблюдали пустое»`)
+  }
+
+  if (types.includes('number')) {
     fail(file, `${pointer}: тип number запрещён - представление с плавающей точкой ` +
       `не воспроизводится одинаково в шести языках; используйте integer или x-funora-type`)
   }
 
-  if (prop.type === 'string' && !delegated) {
+  if (types.includes('string') && !delegated) {
     const constrained = Array.isArray(prop.enum) || typeof prop.pattern === 'string'
     const justified = prop['x-funora-sensitivity'] || prop['x-funora-plain'] === true
     if (!constrained && !justified) {
@@ -134,7 +148,7 @@ function checkProperty(file, pointer, prop) {
     }
   }
 
-  if (prop.type === 'integer' && !delegated && !prop.description) {
+  if (types.includes('integer') && !delegated && !prop.description) {
     fail(file, `${pointer}: integer без description - единица измерения не выводится из типа`)
   }
 
@@ -490,7 +504,13 @@ function checkEvents() {
   } else {
     const env = JSON.parse(fs.readFileSync(envFile, 'utf8'))
     const req = new Set(env.required || [])
-    for (const f of ['id', 'type', 'account_id', 'ordering_key', 'observed_at', 'origin', 'payload']) {
+    // Перечень - пол, а не потолок: схема вправе требовать больше, но не меньше.
+    // Прежде здесь стояло семь полей, а схема требовала восемь, и контракт
+    // говорил о своей обязательности двумя голосами разное. Автор второго SDK,
+    // взявший перечень из валидатора как список обязательного - а он на то и
+    // выглядит, - не отдал бы delivery и не нарушил бы ни одной проверки.
+    for (const f of ['id', 'type', 'account_id', 'entity_id', 'ordering_key',
+                     'observed_at', 'origin', 'delivery', 'payload']) {
       if (!req.has(f)) {
         fail('spec/events/envelope.schema.json', `поле ${f} обязано входить в required`)
       }
@@ -666,6 +686,11 @@ function checkNaming() {
   /** Собранные идентификаторы: имя -> список мест, где встречается. */
   const found = new Map()
   const add = (name, where) => {
+    // Нестроковые члены перечисления - не идентификаторы. Значение null означает
+    // «значение может отсутствовать», и требовать от него snake_case
+    // бессмысленно; прежде проверка на нём падала с TypeError, а падение
+    // валидатора выглядит как поломка инструмента, а не как нарушение правила.
+    if (typeof name !== 'string') return
     if (!found.has(name)) found.set(name, [])
     found.get(name).push(where)
   }

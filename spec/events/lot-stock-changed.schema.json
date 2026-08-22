@@ -4,27 +4,35 @@
   "x-funora-spec-version": "0.1.0",
   "x-funora-event-type": "lot.stock_changed",
   "title": "LotStockChangedEvent",
-  "description": "Остаток собственного лота изменился.",
+  "description": "У собственного лота переменилось количество.\n\nЭТОТ ВИД СОБЫТИЯ ПОКА НЕ ПОРОЖДАЕТ НИ ОДНА РЕАЛИЗАЦИЯ. Схема описывает намерение, а не наблюдение. Реализация обязана отказывать в подписке на него вслух, а не принимать обработчик, который не выполнится никогда.\n\nНагрузка - указатель на сущность, а не её копия: идентификаторы и то, что переменилось, но не содержимое. Прежняя редакция требовала вложить сюда модель целиком, а модель обязывает нести текст сообщения, имена людей и суммы. Событие уходит обработчику, а оттуда в журнал, в очередь, в чужую систему, и нести туда чужую переписку незачем: кому нужны подробности, тот читает страницу сам и знает, что делает.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "lot": {
-      "$ref": "https://funora.dev/spec/0.1.0/models/lot.schema.json"
+    "lot_id": {
+      "x-funora-type": "entity_id",
+      "description": "Лот."
     },
     "before": {
-      "type": "integer",
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 0,
-      "x-funora-observability": "unobserved-possible",
-      "description": "Прежний остаток, штук. Отсутствие означает «не наблюдалось», а не ноль."
+      "description": "Количество до изменения, штук.",
+      "x-funora-observability": "unobserved-possible"
     },
     "after": {
-      "type": "integer",
+      "type": [
+        "integer",
+        "null"
+      ],
       "minimum": 0,
-      "x-funora-observability": "unobserved-possible",
-      "description": "Текущий остаток, штук. Отсутствие означает «не наблюдалось», а не ноль."
+      "description": "Количество после изменения, штук.",
+      "x-funora-observability": "unobserved-possible"
     }
   },
   "required": [
-    "lot"
+    "lot_id",
+    "after"
   ]
 }
