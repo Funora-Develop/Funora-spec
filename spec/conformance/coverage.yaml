@@ -30,6 +30,14 @@ files:
     mechanism: generated
     note: >-
       capabilities.py: перечисление возможностей, начальные состояния, правило допустимости вызова.
+  spec/canonical-form.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_canonical.py: каждое правило обязано называть, чем оно
+      проверяется, и названное обязано существовать. Файл появился потому, что
+      правила жили в прозе docs/canonical-json.md - вне реестра, вне валидатора
+      и вне классификатора изменений: их можно было переписать на
+      противоположные, и обе сборки оставались зелёными.
   spec/compat-rules.yaml:
     mechanism: verified
     note: >-
