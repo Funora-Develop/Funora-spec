@@ -22,6 +22,33 @@ sources:
     evidence: chat-thread.logged.ru
     note: Снимок содержит десять сообщений, шесть из них системные.
 
+# --- Контейнеры виджета переписки -------------------------------------------
+# Жили только в коде. Оба служат признаком того, что страница вправду отдала
+# виджет переписки: по ним же классификатор отличает настоящее содержимое от
+# страницы проверки.
+widget:
+  selector: ".chat-contacts"
+  confidence: observed
+  evidence: [chat.logged.ru, chat-thread.logged.ru]
+  note: Внешняя обёртка виджета. Присутствует и без выбранной переписки.
+
+list:
+  selector: ".contact-list"
+  confidence: observed
+  evidence: [chat.logged.ru, chat-thread.logged.ru]
+  note: Контейнер строк. Второй, независимый от класса строки признак.
+
+unread_badge:
+  selector: "span.badge-chat"
+  confidence: observed
+  evidence: [chat.logged.ru]
+  count_observed: 1
+  note: >-
+    Счётчик непрочитанного в виджете переписки. Отличается от span.badge из
+    session.yaml: тот - любой счётчик в шапке, этот - именно переписки.
+    Прежде спецификация объявляла только первый, а код читал только второй, и
+    сверить их было нечем.
+
 # --- Список диалогов --------------------------------------------------------
 contact_list:
   item:

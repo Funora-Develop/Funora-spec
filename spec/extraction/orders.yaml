@@ -36,6 +36,15 @@ container:
       четвёртый - заголовок. Поэтому все поля ищутся строго внутри строки, а не
       по документу.
 
+rows_container:
+  selector: ".dyn-table-body"
+  confidence: observed
+  evidence: [orders-trade.logged.ru]
+  note: >-
+    Контейнер строк. Второй, независимый от класса строки признак: если
+    сменится класс строки, но останется контейнер, реализация отличит смену
+    разметки от пустого списка.
+
 row:
   selector: "a.tc-item"
   confidence: observed

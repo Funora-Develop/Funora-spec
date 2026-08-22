@@ -75,6 +75,65 @@ markers:
       evidence: [orders-trade.guest.ru]
       count_observed: 1
 
+  # Признаки страницы проверки. Жили только в коде классификатора, а решают
+  # они, отличит ли реализация «площадка требует проверку» от «разметка
+  # сменилась». Две реализации с разными перечнями ответят по-разному на одну
+  # страницу, и одна из них станет чинить разбор там, где надо ждать.
+  challenge:
+    - selector: "#challenge-form"
+      confidence: inferred
+      note: Наблюдений нет. Признак выведен по устройству типовых проверок.
+    - selector: ".g-recaptcha"
+      confidence: inferred
+    - selector: ".h-captcha"
+      confidence: inferred
+    - selector: 'script[src*="captcha"]'
+      confidence: inferred
+      note: >-
+        Загрузка скрипта проверки. Признак остаётся, даже если виджет ещё не
+        отрисован.
+    - selector: "[data-sitekey]"
+      confidence: inferred
+      note: >-
+        Атрибут, а не класс: виджеты проверки различаются классами, а ключ
+        площадки лежит в атрибуте у всех.
+
+  # Признаки формы входа. Отличаются от markers.guest тем, что говорят не «мы
+  # не вошли», а «нам показали страницу входа вместо запрошенной».
+  login_form:
+    - selector: 'input[type="password"]'
+      confidence: inferred
+    - selector: 'form[action*="login"]'
+      confidence: inferred
+    - selector: 'form[action*="auth"]'
+      confidence: inferred
+
+# --- Признаки настоящего содержимого ----------------------------------------
+# Перечень закрыт по построению: настоящая страница проверки или блокировки
+# заменяет содержимое целиком, и ни таблицы заказов, ни виджета переписки на
+# ней нет. Отсюда правило - текстовая подпись, найденная на странице, где есть
+# хоть один из этих признаков, вердикта не даёт.
+#
+# Без этого правила сообщение собеседника со словами «ваш аккаунт заблокирован»
+# останавливало бы клиента: текст пришёл бы из чужой переписки, а выглядел бы
+# как ответ площадки.
+content_markers:
+  - selector: ".orders-table"
+    confidence: observed
+    evidence: [orders-trade.logged.ru]
+  - selector: ".chat-contacts"
+    confidence: observed
+    evidence: [chat.logged.ru, chat-thread.logged.ru]
+  - selector: ".chat-message-list"
+    confidence: observed
+    evidence: [chat-thread.logged.ru]
+  - selector: ".contact-list"
+    confidence: observed
+    evidence: [chat.logged.ru, chat-thread.logged.ru]
+  - selector: ".content-account"
+    confidence: observed
+    evidence: [orders-trade.logged.ru]
+
 # --- Правило решения --------------------------------------------------------
 decision:
   order_is_normative: true

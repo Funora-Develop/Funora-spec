@@ -135,9 +135,12 @@ files:
     note: >-
       tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
   spec/extraction/chats.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
-      tests/test_spec_selectors.py и tests/test_chats.py: селекторы и правила разбора списка диалогов.
+      extraction.py: селекторы разбора переписки. Прежде каждый жил в двух
+      местах - объявлением здесь и литералом в коде, - и расхождение молчало:
+      проверки гоняют разбор по снимкам, а текст спецификации с кодом не
+      сверял никто.
   spec/extraction/observed-selectors.json:
     mechanism: verified
     note: >-
