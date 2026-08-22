@@ -36,5 +36,6 @@
     "order_id",
     "change",
     "rating"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

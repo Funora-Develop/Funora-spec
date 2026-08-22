@@ -69,5 +69,6 @@
     "before",
     "latest",
     "aggregate"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

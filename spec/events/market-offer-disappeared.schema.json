@@ -35,5 +35,6 @@
     "query_fingerprint",
     "consecutive_absences",
     "filters_affect_visibility"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }

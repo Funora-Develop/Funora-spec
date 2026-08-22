@@ -30,5 +30,6 @@
     "requested_interval_ms",
     "effective_interval_ms",
     "reason_code"
-  ]
+  ],
+  "x-funora-not-implemented": true
 }
