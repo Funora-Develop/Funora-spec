@@ -158,19 +158,6 @@ errors:
     since_spec: "0.1.0"
     summary: Возможность помечена experimental и требует явного включения.
 
-  UnsupportedLocaleError:
-    stable_id: funora.capability.unsupported_locale
-    abi_code: 1403
-    parent: CapabilityError
-    retryable: false
-    side_effects_possible: false
-    user_actionable: true
-    since_spec: "0.1.0"
-    summary: >-
-      Интерфейс аккаунта отдан на локали, для которой у адаптера нет текстовых
-      шаблонов. Возвращать пустой результат в этом случае запрещено: смена языка
-      интерфейса тихо выключила бы распознавание событий заказа.
-
   # === Транспорт ===========================================================
   TransportError:
     stable_id: funora.transport
