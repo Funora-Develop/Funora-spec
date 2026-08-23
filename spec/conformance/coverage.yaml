@@ -41,6 +41,10 @@ files:
       обязан точно совпасть со списком requires_opt_in, is_usable не смеет
       называть неработающее состояние, списки не пересекаются, а состояние вне
       обоих допустимо ровно одно - unsupported.
+    not_implemented:
+      - probe_laziness
+      - probe_single_flight
+      - capability_profile
   spec/canonical-form.yaml:
     mechanism: verified
     note: >-
@@ -132,6 +136,7 @@ files:
     note: >-
       events.py: виды событий, ключи упорядочивания, параметры отпечатка.
     not_implemented:
+      - dedup_eviction_policy
       - event_identity_source
       - lane_dropping
       - ordering_causality
@@ -350,6 +355,8 @@ files:
     mechanism: generated
     note: >-
       operations.py: безопасность, возможность, класс запроса.
+    not_implemented:
+      - session_health_cache
   spec/services/catalog.yaml:
     mechanism: generated
     note: >-
@@ -391,6 +398,7 @@ files:
       допустимые значения x-funora-type. Проверка осталась, а механизм у
       записи может быть только один, и порождение сильнее.
     not_implemented:
+      - money_mapping_for_absent_languages
       - instant_attributes
   spec/version.yaml:
     mechanism: generated
