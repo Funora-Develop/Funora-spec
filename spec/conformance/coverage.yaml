@@ -46,7 +46,11 @@ files:
   spec/compat-rules.yaml:
     mechanism: verified
     note: >-
-      scripts/compat.js: классификация изменений спецификации между двумя ревизиями.
+      scripts/compat.js: классификация изменений спецификации между двумя
+      ревизиями. Плюс раздел deprecation: три класса требуют предварительной
+      пометки x-funora-deprecated, и классификатор отклоняет удаление
+      непомеченного либо помеченного позже, чем требует min_deprecation_minors.
+      Форму самой пометки сверяет scripts/validate.js.
   spec/conformance/coverage.yaml:
     mechanism: verified
     note: >-
