@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.1.0/models/account.schema.json",
+  "$id": "https://funora.dev/spec/0.5.0/models/account.schema.json",
   "x-funora-spec-version": "0.5.0",
   "title": "Account",
   "description": "Аккаунт продавца.\n\nНИ ОДНА РЕАЛИЗАЦИЯ ЭТОГО НЕ СОБИРАЕТ. Баланс объявлен обязательным, а страница с балансом не наблюдалась.\n\nПометка стоит здесь затем же, зачем у схем непорождаемых событий: схема без реализации описывает намерение, а читается как контракт. Второй SDK, написанный по ней, выдумает то, чего не наблюдал.",
@@ -8,11 +8,11 @@
   "additionalProperties": false,
   "properties": {
     "user": {
-      "$ref": "https://funora.dev/spec/0.1.0/models/user.schema.json",
+      "$ref": "https://funora.dev/spec/0.5.0/models/user.schema.json",
       "description": "Профиль владельца сессии."
     },
     "balance": {
-      "$ref": "https://funora.dev/spec/0.1.0/models/money.schema.json",
+      "$ref": "https://funora.dev/spec/0.5.0/models/money.schema.json",
       "x-funora-observability": "unobserved-possible",
       "x-funora-governed-by": "account.balance",
       "description": "Доступный баланс, если показан. Отсутствие значения означает «не наблюдали», а не ноль: возможность account.balance указывает сюда, а это поле - обратно на неё, и снять различие можно только с обеих сторон сразу."
