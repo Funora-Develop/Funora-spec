@@ -861,6 +861,85 @@ function checkValueShapes() {
 }
 
 /**
+ * Сверяет перечень нужных наблюдений с реестром неисполненного.
+ *
+ * Перечень называет, какие записи реестра закроются каким наблюдением. Он же -
+ * единственное место, где написано, чего проекту не хватает В ПЕРВУЮ ОЧЕРЕДЬ:
+ * реализация растёт наблюдением, а не кодом.
+ *
+ * Расхождение с реестром ловится в обе стороны. Указание на несуществующую
+ * запись обещает, что наблюдение что-то закроет, а закрывать нечего. Запись,
+ * которую не закрывает никакое наблюдение и которая при этом ждёт именно
+ * наблюдения, остаётся без плана - и ждёт вечно.
+ *
+ * @returns {number} Сколько наблюдений перечислено.
+ */
+function checkObservationsNeeded() {
+  const rel = 'spec/conformance/observations-needed.yaml'
+  const file = path.join(SPEC, 'conformance', 'observations-needed.yaml')
+  if (!fs.existsSync(file)) {
+    fail(rel, 'перечня нужных наблюдений нет. Реализация растёт наблюдением, и ' +
+      'без перечня непонятно, с чего начинать')
+    return 0
+  }
+
+  const doc = readYaml(file) || {}
+  const items = doc.items || {}
+  const registry = readYaml(path.join(SPEC, 'conformance', 'not-implemented.yaml')) || {}
+  const known = new Set(Object.keys(registry.items || {}))
+
+  for (const field of ['how_to_capture', 'why_expect_file', 'what_to_check_before_moving']) {
+    if (!String(doc[field] || '').trim()) {
+      fail(rel, `не объявлено ${field}. Перечень без указания, КАК снимать и ` +
+        'что смотреть перед переносом, приглашает снять сырой HTML и положить ' +
+        'его в репозиторий')
+    }
+  }
+
+  let counted = 0
+  const claimed = new Set()
+  for (const [name, one] of Object.entries(items)) {
+    counted += 1
+    for (const field of ['expect_file', 'path', 'account_state', 'why']) {
+      if (!String((one || {})[field] || '').trim()) {
+        fail(rel, `${name}: не объявлено ${field}`)
+      }
+    }
+    if (!Number.isInteger((one || {}).priority)) {
+      fail(rel, `${name}: не объявлен priority. Порядок решает, что снимать ` +
+        'первым, а снимать всё разом значит идти на площадку залпом')
+    }
+    const unblocks = (one || {}).unblocks || []
+    if (unblocks.length === 0) {
+      fail(rel, `${name}: не названо ни одной записи реестра. Наблюдение, ` +
+        'которое ничего не закрывает, - не план, а пожелание')
+    }
+    for (const id of unblocks) {
+      if (!known.has(String(id))) {
+        fail(rel, `${name}: unblocks называет запись «${id}», которой в реестре ` +
+          'неисполненного нет')
+        continue
+      }
+      claimed.add(String(id))
+    }
+  }
+
+  // Обратная сторона: запись, которая ждёт именно наблюдения, обязана быть в
+  // плане. Отличает такие поле awaits_observation - объявлять его должен тот,
+  // кто заводит запись, а не угадывать проверка.
+  for (const [name, entry] of Object.entries(registry.items || {})) {
+    if ((entry || {}).awaits_observation !== true) continue
+    if (!claimed.has(name)) {
+      fail('spec/conformance/not-implemented.yaml',
+        `запись «${name}» помечена ожидающей наблюдения, а в перечне нужных ` +
+        'наблюдений её не закрывает ни одно. Ждать она будет вечно')
+    }
+  }
+
+  return counted
+}
+
+/**
  * Сверяет версию в опознавателе схемы с версией контракта.
  *
  * Каждый $id и каждый $ref несёт версию в адресе:
@@ -2896,6 +2975,7 @@ function main() {
   const extraction = checkExtraction()
   const carriers = checkStatusCarriers()
   const citations = checkPlatformRuleCitations()
+  const observations = checkObservationsNeeded()
   const schemaIds = checkSchemaIdVersion(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const extractionTypes = checkExtractionTypes(KNOWN_TYPES)
@@ -2907,7 +2987,7 @@ function main() {
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | адресов схем: ${schemaIds} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
+    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | адресов схем: ${schemaIds} | нужных наблюдений: ${observations} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
     `вердиктов: ${responseRows}`)
 
   if (warnings.length) {
