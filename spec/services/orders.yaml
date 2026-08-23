@@ -46,7 +46,6 @@ operations:
     # завершается на коротком списке и молча теряет всё за границей первой
     # страницы.
     pagination: none
-    pagination_planned: cursor
     errors:
       - funora.auth.session_expired
       - funora.protocol.changed

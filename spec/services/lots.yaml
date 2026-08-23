@@ -92,11 +92,6 @@ operations:
 
   lots.promote:
     summary: Поднимает лот в выдаче.
-    renamed_from: lots.raise
-    rename_reason: >-
-      raise - ключевое слово Python. Вызов client.lots.raise() не разбирается
-      интерпретатором, то есть метод с таким именем невозможно вызвать вообще.
-      Поймано проверкой имён до первого тега спецификации.
     capability: lots.promote
     safety: unsafe
     request_class: automation
