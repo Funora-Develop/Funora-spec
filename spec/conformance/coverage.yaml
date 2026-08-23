@@ -92,6 +92,8 @@ files:
     mechanism: generated
     note: >-
       errors.py: иерархия ошибок, коды ABI, признаки повторяемости.
+    not_implemented:
+      - parse_error_class
   spec/events/chat-unread-changed.schema.json:
     mechanism: verified
     note: >-
@@ -100,6 +102,8 @@ files:
     mechanism: generated
     note: >-
       events.py: виды событий, ключи упорядочивания, параметры отпечатка.
+    not_implemented:
+      - lane_dropping
   spec/events/envelope.schema.json:
     mechanism: verified
     note: >-
@@ -212,6 +216,8 @@ files:
       того, узел positions использовал синоним location вместо selector и
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
+    not_implemented:
+      - updates_channel
   spec/models/account.schema.json:
     mechanism: verified
     note: >-
@@ -296,6 +302,11 @@ files:
     mechanism: generated
     note: >-
       budget.py: вёдра, пределы, расписание. Генератор отказывает на неизвестном ключе раздела limits.
+    not_implemented:
+      - budget_account_bucket
+      - budget_exact_trace
+      - budget_request_preemption
+      - handler_timeout_for_sync
   spec/services/account.yaml:
     mechanism: generated
     note: >-
@@ -308,10 +319,15 @@ files:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - cursor_pagination
+      - domain_not_found
   spec/services/lots.yaml:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - domain_write_operations
   spec/services/market.yaml:
     mechanism: generated
     note: >-

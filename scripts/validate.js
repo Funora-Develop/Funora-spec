@@ -818,6 +818,43 @@ function checkNotImplementedLinks() {
     }
   }
 
+  // Связь в ОБЕ стороны, и вторая половина важнее первой. Пока ссылок не было,
+  // запись реестра можно было вырезать, и не замечал этого никто: проверки
+  // перебирают items, а удалённая запись не перебирается. Обещание исчезало
+  // вместе с обещанием о нём.
+  //
+  // Ссылка машиночитаемая, а не прозой в note. Проза разрешается только в
+  // сторону «файл -> реестр»: по ней нельзя спросить, названа ли ЭТА запись.
+  const named = new Map()
+  for (const [file, body] of Object.entries(coverage.files || {})) {
+    for (const key of (body || {}).not_implemented || []) {
+      if (!items[key]) {
+        fail(rel, `запись покрытия «${file}» называет неисполненным «${key}», ` +
+          `которого в реестре нет. Либо запись сняли и ссылку забыли, либо ` +
+          `ссылка написана с опечаткой`)
+        continue
+      }
+      const where = String(items[key].declared_in || '').split('#')[0]
+      if (where !== file) {
+        fail(rel, `«${key}» назван в покрытии файла «${file}», а объявлен в ` +
+          `«${where}». Ссылка обязана стоять там, где механизм объявлен`)
+      }
+      if (named.has(key)) {
+        fail(rel, `«${key}» назван дважды: в «${named.get(key)}» и в «${file}»`)
+      }
+      named.set(key, file)
+    }
+  }
+
+  for (const key of Object.keys(items)) {
+    if (named.has(key)) continue
+    const where = String(items[key].declared_in || '').split('#')[0]
+    fail('spec/conformance/not-implemented.yaml',
+      `запись «${key}» не держится ничем: в покрытии файла «${where}» её имени ` +
+      `нет. Такую запись можно вырезать, и ни одна проверка этого не заметит - ` +
+      `обещание исчезнет вместе с обещанием о нём`)
+  }
+
   return checked
 }
 
