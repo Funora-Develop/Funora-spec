@@ -306,7 +306,7 @@ files:
       - budget_account_bucket
       - budget_exact_trace
       - budget_request_preemption
-      - handler_timeout_for_sync
+      - handler_timeout_for_plain_calls
   spec/services/account.yaml:
     mechanism: generated
     note: >-
