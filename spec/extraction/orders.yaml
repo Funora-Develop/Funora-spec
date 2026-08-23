@@ -57,7 +57,7 @@ row:
   count_observed: 8
   evidence: orders-trade.logged.ru
   is_link: true
-  href_shape: "https://funpay.com/orders/{n}/"
+  observed_signature: "https://funpay.com/orders/{n}/"
   note: >-
     Строка сама является ссылкой на заказ. Идентификатор заказа берётся из
     адреса, а не из текста.
@@ -77,8 +77,16 @@ fields:
     from: Адрес строки
     selector: "self[href]"
     extract: Последний сегмент пути после /orders/
-    charset: Латинские буквы в верхнем регистре и цифры
-    example_shape: 8 знаков
+    observed_shapes: ["8 знаков: латинские буквы в верхнем регистре и цифры"]
+    shapes_source: >-
+      Со слов наблюдателя, смотревшего живую страницу, а не из снимка. Скелет
+      маскирует сегмент пути одинаково для 12345 и для QN2CW7HY - см.
+      предупреждение ниже, из-за которого эта ошибка и держалась.
+
+      Прежде здесь стояли charset и example_shape. Оба читаются как ТРЕБОВАНИЕ к
+      значению, а являются наблюдением: SDK, принявший charset за ограничение,
+      отбросил бы заказ с идентификатором другой формы - тот самый заказ, по
+      которому продавец ждёт выдачи.
     confidence: observed
     type: entity_id
     required: true
