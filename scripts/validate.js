@@ -861,6 +861,137 @@ function checkValueShapes() {
 }
 
 /**
+ * Сверяет ссылки на правила площадки с перечнем процитированных пунктов.
+ *
+ * Контракт ссылается на пункты публичных правил площадки по номеру, и номер в
+ * тексте выглядит проверенным - он точен на вид. Проверить его читателю было
+ * нечем: ни перечня, ни даты, ни указания, кто и когда смотрел.
+ *
+ * Важнее обычного указателя это потому, что ссылки стоят там, где объясняется
+ * ЗАПРЕТ: почему нет метода массовой рассылки, почему отправка вне окна требует
+ * явного флага. Наказание за нарушение получает не автор SDK, а продавец, чей
+ * аккаунт работает через него. Обоснование запрета, которое нельзя проверить, -
+ * худший вид обоснования: снять запрет легко, восстановить аккаунт нельзя.
+ *
+ * @returns {number} Сколько ссылок найдено.
+ */
+function checkPlatformRuleCitations() {
+  const rel = 'spec/legal/platform-rules.yaml'
+  const file = path.join(SPEC, 'legal', 'platform-rules.yaml')
+  if (!fs.existsSync(file)) {
+    fail(rel, 'перечня процитированных правил площадки нет, а ссылки на них в ' +
+      'контракте есть. Номер, не разрешающийся никуда, читается как проверенный')
+    return 0
+  }
+  const doc = readYaml(file) || {}
+  const clauses = doc.clauses || {}
+
+  for (const [number, body] of Object.entries(clauses)) {
+    if (!String((body || {}).prohibits || '').trim()) {
+      fail(rel, `пункт ${number}: не сказано, что он запрещает. Ссылка на него ` +
+        'обосновывает наш запрет, и обоснование обязано быть читаемым')
+    }
+    if (!String((body || {}).why_we_cite_it || '').trim()) {
+      fail(rel, `пункт ${number}: не сказано, зачем мы на него ссылаемся`)
+    }
+    if (typeof (body || {}).verified !== 'boolean') {
+      fail(rel, `пункт ${number}: не объявлено verified. Номер, о котором ` +
+        'неизвестно, сверялся ли он с площадкой, читается как сверенный')
+    }
+    if ((body || {}).verified === false && !String((body || {}).verification_needs || '').trim()) {
+      fail(rel, `пункт ${number}: объявлен несверенным и не сказано, что нужно ` +
+        'для сверки. Несверенное без пути к сверке остаётся несверенным навсегда')
+    }
+    // Сверенным объявить можно и не сверив - машина этого не отличит. Отличить
+    // она может другое: несёт ли утверждение ответственность. Кто смотрел, когда
+    // и что именно. Утверждение без этого - то же самое «verified: false», но
+    // выглядящее противоположно, и это хуже прямого признания.
+    if ((body || {}).verified === true) {
+      for (const [field, what] of [
+        ['verified_on', 'дата сверки'],
+        ['verified_by', 'кто смотрел'],
+        ['verified_against', 'что именно читалось'],
+      ]) {
+        if (!String((body || {})[field] || '').trim()) {
+          fail(rel, `пункт ${number}: объявлен сверенным, а ${field} (${what}) ` +
+            'не назван. Сверку делает человек, и утверждение о ней обязано ' +
+            'нести ответственность: без неё «сверено» ничем не отличается от ' +
+            '«не сверено», кроме вида')
+        }
+      }
+      // YAML разбирает 2026-08-24 в объект даты, а не в строку, и String() от
+      // него даёт человекочитаемое «Sat Aug 23 2026...». Принимаются оба вида:
+      // требовать кавычек вокруг даты значило бы ловить не ошибку, а привычку.
+      const on = (body || {}).verified_on
+      const written = on instanceof Date
+        ? on.toISOString().slice(0, 10)
+        : String(on || '')
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(written)) {
+        fail(rel, `пункт ${number}: verified_on не дата вида ГГГГ-ММ-ДД. ` +
+          'Правила площадки меняются, и сверка без даты не говорит, устарела ' +
+          'она или нет')
+      }
+    }
+  }
+
+  // Ссылка в тексте обязана разрешаться. Образец терпим к падежу и переносу
+  // строки: «п.1.12», «пункт 1.9», «пункту 1.9 публичных правил».
+  // Окончание набирается кириллическим классом, а не \w: в JavaScript \w -
+  // это [A-Za-z0-9_], и «пункту 1.9» образец с \w не брал. Ссылка в
+  // spec/runtime/budget.yaml так и проходила мимо.
+  const CITATION = /(?:п\.|пункт[а-яё]*)\s*(\d+\.\d+)[\s\S]{0,80}?правил/gi
+  const seen = new Map()
+  let found = 0
+
+  for (const source of walk(SPEC, '.yaml')) {
+    const at = path.relative(ROOT, source).split(path.sep).join('/')
+    if (at === rel) continue
+    const text = fs.readFileSync(source, 'utf8')
+    for (const match of text.matchAll(CITATION)) {
+      found += 1
+      const number = match[1]
+      if (!(number in clauses)) {
+        fail(at, `ссылка на пункт ${number} правил площадки не разрешается в ` +
+          'spec/legal/platform-rules.yaml. Номер выглядит проверенным и таковым ' +
+          'не является: обоснование запрета, которое нельзя проверить, снимут ' +
+          'первым - а наказание получит продавец')
+        continue
+      }
+      if (!seen.has(number)) seen.set(number, new Set())
+      seen.get(number).add(at)
+    }
+  }
+
+  // Обратная сторона: запись без ссылок - обоснование запрета, который сняли, а
+  // обоснование забыли. И перечень cited_in обязан говорить правду.
+  for (const [number, body] of Object.entries(clauses)) {
+    const where = seen.get(number) || new Set()
+    if (where.size === 0) {
+      fail(rel, `пункт ${number} не назван ни одним местом контракта. Либо ` +
+        'запрет сняли и забыли снять обоснование, либо ссылку переписали так, ' +
+        'что она перестала узнаваться')
+      continue
+    }
+    const declared = new Set(((body || {}).cited_in) || [])
+    for (const one of where) {
+      if (!declared.has(one)) {
+        fail(rel, `пункт ${number}: на него ссылается «${one}», а в cited_in ` +
+          'этого места нет. Перечень мест ведут руками, и разошедшийся он ' +
+          'обещает полноту, которой не имеет')
+      }
+    }
+    for (const one of declared) {
+      if (!where.has(one)) {
+        fail(rel, `пункт ${number}: cited_in называет «${one}», а ссылки там ` +
+          'нет. Указатель в пустоту хуже отсутствующего')
+      }
+    }
+  }
+
+  return found
+}
+
+/**
  * Сверяет носителей состояния заказа с таблицей соответствия.
  *
  * Одно и то же объявлено в двух местах одного файла: перечень классов у
@@ -2710,6 +2841,7 @@ function main() {
   const naming = checkNaming()
   const extraction = checkExtraction()
   const carriers = checkStatusCarriers()
+  const citations = checkPlatformRuleCitations()
   const extractionTypes = checkExtractionTypes(KNOWN_TYPES)
   const shapes = checkValueShapes()
   checkSinglePipelineDeclaration()
@@ -2719,7 +2851,7 @@ function main() {
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
+    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
     `вердиктов: ${responseRows}`)
 
   if (warnings.length) {
