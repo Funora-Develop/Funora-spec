@@ -183,9 +183,9 @@ rules:
       - 'правило 12: money в каноническом виде'
     checked_by: >-
       canonical-form.vectors.json -> serialize «правило 12». Проверяется
-      сериализация уже собранного money; сборка money из наблюдённого текста в
-      эталонной реализации не сделана, см. conformance/not-implemented.yaml ->
-      domain_money_type.
+      сериализация уже собранного money. Сборка money со страницы проверяется
+      отдельно и в другом месте: знак валюты лежит в собственном узле разметки,
+      и переводится в код по таблице types.money.symbol_table.
 
   - id: 13
     rule: >-

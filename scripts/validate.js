@@ -102,6 +102,64 @@ function loadTypes() {
 }
 
 /**
+ * Проверяет таблицу «знак валюты - код ISO 4217».
+ *
+ * Сама она не проверялась ничем: про types.yaml здесь знали ровно одно - что
+ * имена типов используются как значения x-funora-type. Таблицу можно было
+ * дописать пустой, с кодом строчными буквами либо с двумя знаками одной валюты,
+ * и спецификация осталась бы «без нарушений».
+ *
+ * Проверка живёт здесь, а не только в кодогенераторе питона: кодогенератор
+ * защищает одну реализацию из шести, а спецификацию читают все.
+ *
+ * @returns {number} Сколько записей в таблице.
+ */
+function checkCurrencySymbols() {
+  const doc = readYaml(path.join(SPEC, 'types.yaml'))
+  const money = (doc.types || {}).money || {}
+  const table = money.symbol_table
+  if (!table || Object.keys(table).length === 0) {
+    fail('spec/types.yaml', 'types.money.symbol_table пуст либо не объявлен. '
+      + 'Страница показывает знак и не показывает кода; без таблицы сумму собрать '
+      + 'нельзя, а угадать соответствие - значит приписать чужую валюту чужому '
+      + 'заказу молча')
+    return 0
+  }
+
+  const byCode = new Map()
+  for (const [symbol, entry] of Object.entries(table)) {
+    if (!symbol.trim()) {
+      fail('spec/types.yaml', 'в таблице знаков есть пустой ключ')
+      continue
+    }
+    if (!entry || !entry.evidence) {
+      fail('spec/types.yaml', `у знака «${symbol}» нет поля evidence. Таблица стоит `
+        + 'на наблюдении, и запись без ссылки на него неотличима от выдуманной')
+    }
+    if (entry && entry.ambiguous) {
+      if (entry.currency) {
+        fail('spec/types.yaml', `знак «${symbol}» объявлен и неоднозначным, и имеющим `
+          + 'код. Одно из двух: либо он решает, либо нет')
+      }
+      continue
+    }
+    const code = entry && entry.currency
+    if (typeof code !== 'string' || !/^[A-Z]{3}$/.test(code)) {
+      fail('spec/types.yaml', `у знака «${symbol}» код ${JSON.stringify(code)} не по `
+        + 'ISO 4217. Три заглавные латинские буквы либо ambiguous: true')
+      continue
+    }
+    if (byCode.has(code)) {
+      fail('spec/types.yaml', `код ${code} стоит и у «${byCode.get(code)}», и у `
+        + `«${symbol}». Соответствие объявлено односторонним, и два знака одной `
+        + 'валюты означают, что один из них наблюдён неверно')
+    }
+    byCode.set(code, symbol)
+  }
+  return Object.keys(table).length
+}
+
+/**
  * Проверяет одно свойство схемы на соответствие правилам скаляров и перечислений.
  *
  * @param {string} file Относительный путь к файлу схемы, для сообщения об ошибке.
@@ -1274,6 +1332,7 @@ function main() {
   checkNotImplementedLinks()
   const confidences = checkConfidence()
   checkVersion()
+  const symbols = checkCurrencySymbols()
   const models = checkModels()
   const errors = checkErrors()
 
@@ -1290,7 +1349,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
