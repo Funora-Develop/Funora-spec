@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.1.0/events/watch-degraded.schema.json",
+  "$id": "https://funora.dev/spec/0.5.0/events/watch-degraded.schema.json",
   "x-funora-spec-version": "0.5.0",
   "x-funora-event-type": "watch.degraded",
   "title": "WatchDegradedEvent",

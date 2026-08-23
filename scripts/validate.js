@@ -861,6 +861,60 @@ function checkValueShapes() {
 }
 
 /**
+ * Сверяет версию в опознавателе схемы с версией контракта.
+ *
+ * Каждый $id и каждый $ref несёт версию в адресе:
+ * https://funora.dev/spec/X.Y.Z/models/order.schema.json. Все пятьдесят стояли
+ * на 0.1.0 при spec_version 0.5.0 - отстали на четыре выпуска, и не проверял их
+ * никто.
+ *
+ * Штамп x-funora-spec-version проверялся и поднимался, адрес - нет. Две версии
+ * на одну схему, и вторая замерла.
+ *
+ * Версия в адресе НУЖНА, а не лишняя: она делает опознаватель именем этой
+ * редакции схемы. Потребитель, читавший 0.4.1, продолжает разрешать свои
+ * адреса, а не получает молча другую схему по тому же адресу. Замершая версия
+ * это обещание отменяет: по адресу 0.1.0 лежит что угодно.
+ *
+ * ПОЧЕМУ КЛАССИФИКАТОР ИЗМЕНЕНИЙ ОБ ЭТОМ МОЛЧИТ. Версия в адресе выводится из
+ * spec_version, а не объявляется отдельно. Подъём версии классификатор
+ * замечает один раз - по самому spec_version; сообщать о нём же ещё
+ * пятьдесят раз, по числу адресов, значило бы считать одно изменение
+ * полусотней. Молчание здесь намеренное, а не пропуск.
+ *
+ * @param {string} version Объявленная версия спецификации.
+ * @returns {number} Сколько адресов проверено.
+ */
+function checkSchemaIdVersion(version) {
+  const URL = /https:\/\/funora\.dev\/spec\/(\d+\.\d+\.\d+)\//g
+  let checked = 0
+
+  const files = [
+    ...walk(path.join(SPEC, 'models'), '.schema.json'),
+    ...walk(path.join(SPEC, 'events'), '.schema.json'),
+  ]
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    const text = fs.readFileSync(file, 'utf8')
+    for (const match of text.matchAll(URL)) {
+      checked += 1
+      if (match[1] !== version) {
+        fail(rel, `адрес схемы несёт версию «${match[1]}», а контракт объявлен ` +
+          `«${version}». Опознаватель именует редакцию схемы: замерев, он ` +
+          'обещает потребителю, что по этому адресу лежит прежнее, - а лежит ' +
+          'нынешнее')
+      }
+    }
+  }
+  if (checked === 0) {
+    fail('spec/models', 'ни одна схема не несёт адреса с версией. Опознаватель ' +
+      'без версии не отличает редакции, и потребитель разрешит ссылку в то, ' +
+      'что окажется по адресу сегодня')
+  }
+  return checked
+}
+
+/**
  * Сверяет ссылки на правила площадки с перечнем процитированных пунктов.
  *
  * Контракт ссылается на пункты публичных правил площадки по номеру, и номер в
@@ -2842,6 +2896,8 @@ function main() {
   const extraction = checkExtraction()
   const carriers = checkStatusCarriers()
   const citations = checkPlatformRuleCitations()
+  const schemaIds = checkSchemaIdVersion(
+    (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const extractionTypes = checkExtractionTypes(KNOWN_TYPES)
   const shapes = checkValueShapes()
   checkSinglePipelineDeclaration()
@@ -2851,7 +2907,7 @@ function main() {
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
+    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | адресов схем: ${schemaIds} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
     `вердиктов: ${responseRows}`)
 
   if (warnings.length) {
