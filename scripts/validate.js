@@ -500,6 +500,84 @@ function loadCapabilities() {
     fail(rel, 'состояние unsupported обязано быть не usable')
   }
 
+  // Описательная таблица состояний сверяется с нормативными предикатами.
+  //
+  // Проверялись до сих пор два значения из десяти: unknown.usable и
+  // unsupported.usable. Сами предикаты не смотрел никто, при том что раздел
+  // predicates прямо рассказывает, как порождённый ИЗ ТАБЛИЦЫ код оказался
+  // неверным: у experimental признак usable равен true, а звать без включения
+  // нельзя. Значит расхождение таблицы с предикатами уже случалось однажды - и
+  // повториться ему ничто не мешало.
+  //
+  // Реализация обязана выводить решение из предикатов. Но таблицу читают
+  // глазами, и лгущая таблица уводит автора второго SDK ровно туда же.
+  const st = doc.states || {}
+  const pr = doc.predicates || {}
+  if (pr.normative !== true) {
+    fail(rel, 'predicates обязаны быть помечены normative: иначе решение о ' +
+      'вызове выводится из описательных признаков таблицы, а это уже давало ' +
+      'неверный код')
+  }
+  const usable = new Set((pr.is_usable || {}).true_for || [])
+  const optIn = new Set((pr.requires_opt_in || {}).true_for || [])
+
+  for (const name of [...usable, ...optIn]) {
+    if (!st[name]) fail(rel, `предикаты называют состояние «${name}», которого нет в states`)
+  }
+
+  // Признак opt_in_required в таблице обязан совпасть со списком предиката
+  // ТОЧНО. Разойдись они - таблица обещает включение там, где реализация его не
+  // спросит, либо молчит там, где спросит.
+  const flagged = new Set(Object.keys(st).filter((name) => st[name].opt_in_required === true))
+  for (const name of flagged) {
+    if (!optIn.has(name)) {
+      fail(rel, `у состояния «${name}» в таблице стоит opt_in_required, но ` +
+        'предикат requires_opt_in его не называет. Таблица обещает явное ' +
+        'включение, которого реализация не спросит')
+    }
+  }
+  for (const name of optIn) {
+    if (!flagged.has(name)) {
+      fail(rel, `предикат requires_opt_in называет «${name}», а в таблице у ` +
+        'него нет opt_in_required. Читающий таблицу не узнает, что вызов ' +
+        'требует включения')
+    }
+  }
+
+  // Состояние, которое не работает, звать нельзя. Обратное неверно нарочно:
+  // experimental работает, но в is_usable его нет.
+  for (const name of usable) {
+    if (st[name] && st[name].usable !== true) {
+      fail(rel, `предикат is_usable называет «${name}», у которого в таблице ` +
+        'usable не true. Вызов разрешён у состояния, объявленного неработающим')
+    }
+  }
+
+  // Два списка обязаны не пересекаться: состояние в обоих проходит по первой
+  // же ветке правила допуска, и требование включения не спрашивается никогда.
+  for (const name of usable) {
+    if (optIn.has(name)) {
+      fail(rel, `состояние «${name}» стоит и в is_usable, и в requires_opt_in. ` +
+        'По правилу допуска первая ветка срабатывает раньше, и включение не ' +
+        'спросится ни разу - предикат мёртв')
+    }
+  }
+
+  // Состояние, не названное ни одним предикатом, звать запрещено всегда. Такое
+  // состояние ровно одно, и это unsupported: остальные завели затем, чтобы
+  // вызов шёл.
+  for (const name of Object.keys(st)) {
+    if (usable.has(name) || optIn.has(name)) continue
+    if (name === 'unsupported') continue
+    fail(rel, `состояние «${name}» не названо ни одним предикатом, значит ` +
+      'вызов при нём запрещён всегда - как при unsupported. Либо его забыли в ' +
+      'предикатах, либо оно не нужно')
+  }
+  if (usable.has('unsupported') || optIn.has('unsupported')) {
+    fail(rel, 'unsupported назван предикатом. Это состояние - позитивное ' +
+      'свидетельство отсутствия функции, и вызов при нём обязан отклоняться')
+  }
+
   for (const [id, c] of Object.entries(doc.capabilities || {})) {
     if (!c.summary) fail(rel, `${id}: отсутствует summary`)
     if (!['static', 'probe', 'derived'].includes(c.source)) {
