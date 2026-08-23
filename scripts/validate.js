@@ -470,6 +470,49 @@ function checkVersion() {
 }
 
 /**
+ * Запрещает второе объявление версии события.
+ *
+ * Нормативный перечень один - revision_source.sources: там все виды сразу, и
+ * там их сверяют ворота. Раздел, объявляющий версию своего вида отдельно, - это
+ * второе объявление той же вещи, и расходятся такие молча: правит их разный
+ * человек в разное время, а прозу с прозой не сличает никакая проверка.
+ *
+ * Так и было у snapshot.incomplete: слово в слово о том же в двух местах.
+ *
+ * @returns {number} Сколько разделов проверено.
+ */
+function checkNoSecondRevisionDeclaration() {
+  const rel = 'spec/events/delivery.yaml'
+  const doc = readYaml(path.join(SPEC, 'events', 'delivery.yaml')) || {}
+  let checked = 0
+
+  for (const [name, section] of Object.entries(doc)) {
+    if (name === 'revision_source') continue
+    if (!section || typeof section !== 'object' || Array.isArray(section)) continue
+    checked += 1
+    if ('revision' in section) {
+      fail(rel, `раздел ${name} объявляет revision вторым объявлением. ` +
+        'Нормативный перечень один - revision_source.sources. Два объявления ' +
+        'одной вещи расходятся молча: прозу с прозой не сличает никакая ' +
+        'проверка. Поставьте указатель revision_declared_in')
+    }
+    if ('revision_declared_in' in section) {
+      const target = String(section.revision_declared_in || '')
+      const m = /^revision_source\.sources\[(.+)\]$/.exec(target)
+      if (!m) {
+        fail(rel, `раздел ${name}: указатель revision_declared_in «${target}» ` +
+          'не разбирается. Ожидается вид revision_source.sources[имя.вида]')
+      } else if (!((doc.revision_source || {}).sources || {})[m[1]]) {
+        fail(rel, `раздел ${name}: указатель ведёт на вид «${m[1]}», ` +
+          'которого в revision_source.sources нет. Указатель в пустоту хуже ' +
+          'дубля: дубль хотя бы что-то говорит')
+      }
+    }
+  }
+  return checked
+}
+
+/**
  * Требует единственной оси версий.
  *
  * Двадцать два файла объявляли в шапке собственную version, все двадцать две
@@ -1723,6 +1766,7 @@ function main() {
   const symbols = checkCurrencySymbols()
   const enums = checkEnumOpenness()
   const axes = checkSingleVersionAxis()
+  checkNoSecondRevisionDeclaration()
   const marks = checkDeprecationMarks(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const errorNames = checkErrorNamesResolve(
