@@ -470,6 +470,79 @@ function checkVersion() {
 }
 
 /**
+ * Запрещает второй нормативный перечень шагов.
+ *
+ * Порядок шагов классификации нормативен: две реализации, проверившие условия в
+ * разном порядке, разойдутся именно на той странице, ради которой правило и
+ * написано. Перечень поэтому обязан быть один.
+ *
+ * Их было два, и они уже разошлись: spec/extraction/session.yaml ставил пустое
+ * тело первым шагом, а единый перечень и реализация проверяют личность раньше.
+ *
+ * Ловится ПРИСУТСТВИЕ второго перечня, а не значение флага рядом с ним. Проверка
+ * по флагу обходится снятием флага, и второй перечень остался бы стоять.
+ *
+ * @returns {number} Сколько файлов проверено.
+ */
+function checkSinglePipelineDeclaration() {
+  const HOME = 'spec/protocol/response-classes.yaml'
+  let checked = 0
+
+  const looksNormative = (node) =>
+    Array.isArray(node) &&
+    node.length > 0 &&
+    node.every((one) => one && typeof one === 'object' && !Array.isArray(one)) &&
+    node.some((one) => 'step' in one || 'check' in one)
+
+  const visit = (rel, at, node) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((one, i) => visit(rel, `${at}[${i}]`, one))
+      return
+    }
+    for (const [key, value] of Object.entries(node)) {
+      const where = at ? `${at}.${key}` : key
+      if (key === 'steps' && looksNormative(value)) {
+        fail(rel, `${where}: второй нормативный перечень шагов. Порядок ` +
+          'объявляется один раз, и объявлен он в ' + HOME + '. Два перечня ' +
+          'правит разный человек в разное время, и расходятся они молча - ' +
+          'прозу с прозой не сличает никакая проверка. Поставьте указатель')
+        continue
+      }
+      visit(rel, where, value)
+    }
+  }
+
+  for (const file of walk(SPEC, '.yaml')) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    if (rel === HOME) continue
+    checked += 1
+    visit(rel, '', readYaml(file))
+  }
+
+  // Номер шага обязан совпадать с местом в списке. Иначе номер - украшение:
+  // порядок держит список, а читающий сверяется с номером, и разойтись они
+  // могут молча. Мутация «шаг уехал вперёд по номеру» на первой редакции этой
+  // проверки промолчала: сдвинулся номер, а список остался прежним.
+  const home = readYaml(path.join(SPEC, 'protocol', 'response-classes.yaml')) || {}
+  const steps = ((home.pipeline || {}).steps) || []
+  steps.forEach((one, i) => {
+    if (one && one.step !== i + 1) {
+      fail(HOME, `pipeline.steps[${i}] («${(one || {}).name}») несёт номер ` +
+        `${(one || {}).step}, а стоит ${i + 1}-м. Порядок держит список, а ` +
+        'читающий сверяется с номером: разойдясь, они назовут разный порядок ' +
+        'проверки, и две реализации по-разному ответят на страницу, где ' +
+        'признаки противоречат друг другу')
+    }
+  })
+  if (steps.length === 0) {
+    fail(HOME, 'pipeline.steps пуст либо отсутствует. Порядок классификации ' +
+      'нормативен, и объявлять его больше негде: второй перечень запрещён')
+  }
+  return checked
+}
+
+/**
  * Проверяет объявленные обратные операции.
  *
  * reversible_by - обещание, на котором строят откат: сделал запись, не сложилось
@@ -2140,6 +2213,7 @@ function main() {
   const naming = checkNaming()
   const extraction = checkExtraction()
   const carriers = checkStatusCarriers()
+  checkSinglePipelineDeclaration()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
   console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | файлов без своей версии: ${axes} | составов версии: ${revisionParts} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +

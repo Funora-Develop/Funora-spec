@@ -412,6 +412,47 @@ function diffBudget(was, now) {
 }
 
 /**
+ * Сравнивает нормативный порядок шагов классификации.
+ *
+ * Порядок решает, какой из двух сработавших признаков даст вердикт, и смена его
+ * меняет ответ ровно на той странице, ради которой порядок и объявлен. Класс
+ * был бы объявлен впустую, если бы порождать его было нечему: до этой функции
+ * перестановка шагов проезжала молча.
+ *
+ * @param {object} was Прежнее содержимое spec/protocol/response-classes.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffPipeline(was, now) {
+  const rel = 'spec/protocol/response-classes.yaml'
+  const names = (doc) => (((doc || {}).pipeline || {}).steps || [])
+    .map((one) => String((one || {}).name || ''))
+
+  const before = names(was)
+  const after = names(now)
+  if (before.length === 0 && after.length === 0) return
+
+  const gone = before.filter((one) => !after.includes(one))
+  const added = after.filter((one) => !before.includes(one))
+  for (const one of gone) {
+    change('change_pipeline_order', rel, `шаг «${one}» убран из порядка классификации`)
+  }
+  for (const one of added) {
+    change('change_pipeline_order', rel, `шаг «${one}» добавлен в порядок классификации`)
+  }
+
+  // Перестановка сохранившихся шагов - отдельное изменение, и заметить его
+  // сравнением множеств нельзя: множество то же самое.
+  const keptBefore = before.filter((one) => after.includes(one))
+  const keptAfter = after.filter((one) => before.includes(one))
+  const moved = keptBefore.some((one, i) => one !== keptAfter[i])
+  if (moved) {
+    change('change_pipeline_order', rel,
+      `порядок шагов переставлен: ${keptBefore.join(' -> ')} стало ${keptAfter.join(' -> ')}`)
+  }
+}
+
+/**
  * Сравнивает таблицу «вердикт - ошибка».
  *
  * От таблицы зависит, повторит клиент запрос или остановится навсегда.
@@ -922,6 +963,7 @@ function main() {
       diffRetry(was, now)
     } else if (rel.endsWith('protocol/response-classes.yaml')) {
       diffVerdicts(was, now)
+      diffPipeline(was, now)
     } else if (rel.endsWith('runtime/budget.yaml')) {
       diffBudget(was, now)
     } else if (rel.endsWith('spec/canonical-form.yaml')) {
