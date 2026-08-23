@@ -634,6 +634,36 @@ function checkStatusCarriers() {
     return 0
   }
 
+  // Перечень обязательных полей записи объявлен машиночитаемо и до сих пор его
+  // не читал никто. Запись без evidence - это утверждение о разметке площадки,
+  // сделанное без наблюдения: угадали цвет, и разбор молча опознаёт не тот
+  // статус. Запись без row_class объявляет отсутствие модификатора там, где его
+  // просто забыли, - и перекрёстная сверка носителей ловит расхождение на
+  // ровном месте.
+  //
+  // Поле, объявленное обязательным, обязано ПРИСУТСТВОВАТЬ, но не обязано быть
+  // непустым: у записи «закрыт» модификатор строки честно пустой, и это факт о
+  // площадке, а не пробел заполнения. Различает их null: он объявлен, а
+  // отсутствие ключа - нет.
+  const required = mapping.each_entry_requires
+  if (!Array.isArray(required) || required.length === 0) {
+    fail(rel, 'status_mapping.each_entry_requires пуст либо не объявлен. ' +
+      'Перечень обязательных полей записи - единственное, что не даёт завести ' +
+      'запись без свидетельства, то есть утверждение о разметке площадки без ' +
+      'наблюдения')
+  } else {
+    entries.forEach((one, i) => {
+      for (const field of required) {
+        if (!one || !(field in one)) {
+          fail(rel, `status_mapping.entries[${i}]: нет обязательного поля ` +
+            `«${field}». Перечень each_entry_requires объявляет его ` +
+            'обязательным, и запись без него - либо забытое наблюдение, либо ' +
+            'утверждение, которого никто не делал')
+        }
+      }
+    })
+  }
+
   const primary = carriers.filter((one) => one.role === 'primary')
   if (primary.length !== 1) {
     fail(rel, `носителей с ролью primary ${primary.length}, а обязан быть ` +
@@ -1189,6 +1219,44 @@ function loadCapabilities() {
   if (usable.has('unsupported') || optIn.has('unsupported')) {
     fail(rel, 'unsupported назван предикатом. Это состояние - позитивное ' +
       'свидетельство отсутствия функции, и вызов при нём обязан отклоняться')
+  }
+
+  // Возможность, чьё значение берётся из объявленного набора, обязана назвать
+  // указатель на этот набор, а указатель - разрешаться в непустой перечень.
+  //
+  // Прежде здесь стояло value_kind: locale_set - слово без читателя, обещавшее
+  // вызывающему, что возможность ВЕРНЁТ набор. Она возвращает состояние.
+  for (const [id, c] of Object.entries(doc.capabilities || {})) {
+    if (c.value_kind !== undefined) {
+      fail(rel, `${id}: поле value_kind. Возможность возвращает состояние, а ` +
+        'не значение: перечень состояний один на все возможности и объявлен в ' +
+        'states. Если у возможности есть набор допустимых значений, назовите ' +
+        'его указателем value_set_declared_in')
+    }
+    const pointer = c.value_set_declared_in
+    if (pointer === undefined) continue
+
+    const m = /^(spec\/[\w./-]+)#([\w.]+)$/.exec(String(pointer))
+    if (!m) {
+      fail(rel, `${id}: указатель value_set_declared_in «${pointer}» не ` +
+        'разбирается. Ожидается вид spec/файл.yaml#ключ')
+      continue
+    }
+    const file = path.join(ROOT, m[1])
+    if (!fs.existsSync(file)) {
+      fail(rel, `${id}: указатель ведёт в файл «${m[1]}», которого нет`)
+      continue
+    }
+    let node = readYaml(file)
+    for (const step of m[2].split('.')) {
+      node = node && typeof node === 'object' ? node[step] : undefined
+    }
+    if (!Array.isArray(node) || node.length === 0) {
+      fail(rel, `${id}: указатель ведёт на «${m[2]}», а там не непустой ` +
+        'перечень. Возможность с пустым набором отвечала бы «не ' +
+        'поддерживается» на любое значение, включая то, на котором площадка и ' +
+        'работает')
+    }
   }
 
   for (const [id, c] of Object.entries(doc.capabilities || {})) {
