@@ -683,6 +683,115 @@ function checkReversibility(ops) {
 }
 
 /**
+ * Сверяет типы в правилах извлечения со словарём типов.
+ *
+ * Значение type: в spec/extraction не значило ничего: словарь его не проверял, и
+ * слово opaque стояло у двух полей, не будучи объявленным нигде. Опечатка в типе
+ * проходила молча, а на типе стоит всё, что о поле известно, - можно ли
+ * разбирать значение, можно ли считать, можно ли показывать.
+ *
+ * Отличить объявление типа от поля чужого объекта помогают соседи: аннотация
+ * стоит рядом с selector, name, confidence либо from. Ключ type внутри описания
+ * чужой структуры (changed_object_shape в updates.yaml) соседей не имеет и
+ * пропускается - иначе проверка требовала бы от площадки объявлять наши типы.
+ *
+ * @param {Set<string>} known Имена типов из spec/types.yaml.
+ * @returns {number} Сколько объявлений типа проверено.
+ */
+function checkExtractionTypes(known) {
+  const SIBLINGS = ['selector', 'name', 'confidence', 'from']
+  const EXTRA = new Set(['x-funora-plain'])
+  let checked = 0
+
+  const visit = (rel, at, node) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((one, i) => visit(rel, `${at}[${i}]`, one))
+      return
+    }
+    if ('type' in node && SIBLINGS.some((one) => one in node)) {
+      checked += 1
+      const value = String(node.type)
+      if (!known.has(value) && !EXTRA.has(value)) {
+        fail(rel, `${at}: тип «${value}» не объявлен в spec/types.yaml. На типе ` +
+          'стоит всё, что о поле известно - можно ли разбирать значение, можно ' +
+          'ли считать, можно ли показывать, - и шесть реализаций истолкуют ' +
+          'необъявленный по-своему')
+      }
+    }
+    for (const [key, value] of Object.entries(node)) {
+      visit(rel, at ? `${at}.${key}` : key, value)
+    }
+  }
+
+  for (const file of walk(path.join(SPEC, 'extraction'), '.yaml')) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    visit(rel, '', readYaml(file))
+  }
+  return checked
+}
+
+/**
+ * Требует объявленного типа у поля, объявившего форму значения.
+ *
+ * Форма значения - charset, shape и их родня - читается автором второго SDK как
+ * то, чему значение обязано отвечать. Отвечать или нет, решает ТИП: у
+ * непрозрачного разбирать значение запрещено вовсе, и форма там - наблюдение, а
+ * не требование. Поле без типа проваливается мимо этого различия молча.
+ *
+ * @returns {number} Сколько полей с формой проверено.
+ */
+function checkShapesDeclareType() {
+  // Шаблон адреса href_shape в перечень НЕ входит, и это не послабление.
+  // Шаблон описывает не значение, а способ достать значение из адреса: у узла,
+  // который сам является ссылкой, типизируемого значения нет вовсе. Требовать
+  // от него тип значило бы выдумывать его, а выдуманный тип хуже отсутствующего
+  // - он выглядит проверенным.
+  //
+  // Взамен шаблон обязан быть узнаваем как шаблон: с местозаполнителем внутри.
+  // Шаблон без него - обычная строка, и SDK прочтёт её как единственный
+  // допустимый адрес.
+  const FORM = ['charset', 'example_shape', 'shape', 'observed_shapes']
+  const TEMPLATE = /\{[nt]\}/
+  let checked = 0
+
+  const visit = (rel, at, node) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((one, i) => visit(rel, `${at}[${i}]`, one))
+      return
+    }
+    if (typeof node.href_shape === 'string' && !TEMPLATE.test(node.href_shape)) {
+      fail(rel, `${at}: href_shape «${node.href_shape}» не содержит ` +
+        'местозаполнителя. Шаблон без него - обычная строка, и SDK прочтёт её ' +
+        'как единственный допустимый адрес: всякая строка с другим ' +
+        'идентификатором будет отброшена')
+    }
+
+    const forms = FORM.filter((one) => one in node)
+    if (forms.length > 0) {
+      checked += 1
+      if (!('type' in node)) {
+        fail(rel, `${at}: объявлена форма значения (${forms.join(', ')}), а тип ` +
+          'не объявлен. От типа зависит, читать ли форму как требование к ' +
+          'значению или как наблюдение: у непрозрачного разбирать значение ' +
+          'запрещено, и SDK, принявший форму за ограничение, отбросит строку, ' +
+          'которую эталон принимает')
+      }
+    }
+    for (const [key, value] of Object.entries(node)) {
+      visit(rel, at ? `${at}.${key}` : key, value)
+    }
+  }
+
+  for (const file of walk(path.join(SPEC, 'extraction'), '.yaml')) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    visit(rel, '', readYaml(file))
+  }
+  return checked
+}
+
+/**
  * Сверяет носителей состояния заказа с таблицей соответствия.
  *
  * Одно и то же объявлено в двух местах одного файла: перечень классов у
@@ -2467,6 +2576,8 @@ function main() {
   const naming = checkNaming()
   const extraction = checkExtraction()
   const carriers = checkStatusCarriers()
+  const extractionTypes = checkExtractionTypes(KNOWN_TYPES)
+  checkShapesDeclareType()
   checkSinglePipelineDeclaration()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
@@ -2474,7 +2585,7 @@ function main() {
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ` +
+    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | типов в извлечении: ${extractionTypes} | ` +
     `вердиктов: ${responseRows}`)
 
   if (warnings.length) {

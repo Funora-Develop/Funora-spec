@@ -19,6 +19,7 @@
 
 # --- Метки состояния --------------------------------------------------------
 tags:
+  type: opaque
   shape: 8 знаков латиницы с цифрами
   confidence: observed
   evidence: [orders-trade.logged.ru, chat.logged.ru, chat-thread.logged.ru]
@@ -82,6 +83,7 @@ positions:
   # синоним молча выводил правило из-под сверки со снимками: пометка observed
   # стояла, а проверить её было нечем.
   selector: "a.contact-item"
+  type: opaque
   shape: 10 цифр
   confidence: observed
   evidence: [chat.logged.ru, chat-thread.logged.ru]
