@@ -470,6 +470,111 @@ function checkVersion() {
 }
 
 /**
+ * Проверяет пометки устаревшего.
+ *
+ * Пометка - предусловие удаления: классификатор отклоняет удаление
+ * непомеченного. Значит бессмысленная пометка не безобидна, она РАЗРЕШАЕТ
+ * удаление. Пометка без since не даёт отсчитать миноры; пометка на значении,
+ * которого в перечислении нет, не защищает ничего и уйдёт вместе с опечаткой.
+ *
+ * @param {string} version Объявленная версия спецификации.
+ * @returns {number} Сколько пометок найдено.
+ */
+function checkDeprecationMarks(version) {
+  const MARK = 'x-funora-deprecated'
+  const VALUES = 'x-funora-deprecated-values'
+  const parse = (value) => {
+    const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(value || '').trim())
+    return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null
+  }
+  const now = parse(version)
+  let found = 0
+
+  /**
+   * Проверяет одну пометку.
+   *
+   * @param {string} rel Файл, где она стоит.
+   * @param {string} at Место внутри файла.
+   * @param {*} mark Содержимое пометки.
+   * @returns {void}
+   */
+  const one = (rel, at, mark) => {
+    found += 1
+    if (!mark || typeof mark !== 'object' || Array.isArray(mark)) {
+      fail(rel, `${at}: пометка ${MARK} обязана быть отображением с полем since`)
+      return
+    }
+    const since = parse(mark.since)
+    if (!since) {
+      fail(rel, `${at}: пометка ${MARK} без разбираемого since (стоит ` +
+        `«${mark.since === undefined ? 'ничего' : mark.since}»). Без него не ` +
+        'отсчитать миноры, а именно их требует min_deprecation_minors - и ' +
+        'удаление пройдёт, ничего не предупредив')
+      return
+    }
+    if (now && (since[0] > now[0] || (since[0] === now[0] && since[1] > now[1]))) {
+      fail(rel, `${at}: пометка ${MARK} объявляет since «${mark.since}», а ` +
+        `версия спецификации «${version}». Помечено будущим - значит не ` +
+        'помечено ни в одной выпущенной версии')
+    }
+    if ('replaced_by' in mark && !String(mark.replaced_by || '').trim()) {
+      fail(rel, `${at}: у пометки ${MARK} поле replaced_by пусто. Либо назовите ` +
+        'замену, либо не объявляйте поле')
+    }
+  }
+
+  /**
+   * Обходит узел схемы вглубь.
+   *
+   * @param {string} rel Файл.
+   * @param {string} at Путь до узла.
+   * @param {*} node Узел.
+   * @returns {void}
+   */
+  const walkNode = (rel, at, node) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => walkNode(rel, `${at}[${i}]`, item))
+      return
+    }
+    if (MARK in node) one(rel, at, node[MARK])
+    if (VALUES in node) {
+      const marks = node[VALUES]
+      if (!marks || typeof marks !== 'object' || Array.isArray(marks)) {
+        fail(rel, `${at}: ${VALUES} обязано быть отображением значение -> пометка`)
+      } else {
+        const values = new Set(node.enum || [])
+        for (const [value, mark] of Object.entries(marks)) {
+          if (!values.has(value)) {
+            fail(rel, `${at}: ${VALUES} помечает значение «${value}», которого ` +
+              'в enum нет. Пометка не защищает ничего и уйдёт вместе с опечаткой')
+          }
+          one(rel, `${at}.${value}`, mark)
+        }
+      }
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (key === MARK || key === VALUES) continue
+      walkNode(rel, at ? `${at}.${key}` : key, value)
+    }
+  }
+
+  const files = [
+    ...walk(path.join(SPEC, 'models'), '.schema.json'),
+    ...walk(path.join(SPEC, 'events'), '.schema.json'),
+    ...walk(path.join(SPEC, 'services'), '.yaml'),
+  ]
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    const doc = file.endsWith('.yaml')
+      ? readYaml(file)
+      : JSON.parse(fs.readFileSync(file, 'utf8'))
+    walkNode(rel, '', doc)
+  }
+  return found
+}
+
+/**
  * Загружает идентификаторы объявленных возможностей.
  *
  * @returns {Set<string>} Множество идентификаторов из spec/capabilities.yaml.
@@ -1508,6 +1613,8 @@ function main() {
   const confidences = checkConfidence()
   checkVersion()
   const symbols = checkCurrencySymbols()
+  const marks = checkDeprecationMarks(
+    (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const errorNames = checkErrorNamesResolve(
     new Set(Object.keys(readYaml(path.join(SPEC, 'errors', 'errors.yaml')).errors || {})))
   const models = checkModels()
@@ -1526,7 +1633,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +

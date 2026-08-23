@@ -85,10 +85,14 @@ function showType(value) {
  * @param {string} kind Класс изменения из spec/compat-rules.yaml.
  * @param {string} where Место, где изменение обнаружено.
  * @param {string} what Человекочитаемое описание на русском языке.
+ * @param {object|null} [was] Объявление, каким оно было в базовой точке. Нужно
+ *   классам с requires_deprecation: пометка ставится на само объявление и
+ *   вместе с ним исчезает, значит искать её надо в базовой точке и в момент,
+ *   когда объявление ещё под рукой.
  * @returns {void}
  */
-function change(kind, where, what) {
-  changes.push({ kind, where, what })
+function change(kind, where, what, was) {
+  changes.push({ kind, where, what, was: was || null })
 }
 
 /**
@@ -103,6 +107,90 @@ function git(args) {
   } catch (e) {
     return null
   }
+}
+
+/**
+ * Разбирает версию спецификации в три числа.
+ *
+ * @param {string} value Строка вида «0.3.0».
+ * @returns {number[]|null} Три числа либо null, если разобрать нечем.
+ */
+function parseVersion(value) {
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(value || '').trim())
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null
+}
+
+/**
+ * Считает, на сколько миноров версия ушла от точки пометки.
+ *
+ * Переход через мажор покрывает требование целиком: он больше минора по
+ * определению, и считать разницу миноров через границу мажора нельзя - минор
+ * там обнуляется, и 1.0.0 после 0.9.0 дало бы «минус девять».
+ *
+ * @param {number[]} since Версия, в которой поставлена пометка.
+ * @param {number[]} now Версия, в которой объявление удаляется.
+ * @returns {number} Число пройденных миноров. Бесконечность при смене мажора.
+ */
+function minorsSince(since, now) {
+  if (now[0] > since[0]) return Infinity
+  if (now[0] < since[0]) return -Infinity
+  return now[1] - since[1]
+}
+
+/**
+ * Проверяет, что удаляемое было заранее помечено устаревшим.
+ *
+ * Три класса изменений требуют предварительной пометки, и до сих пор требование
+ * не исполнялось ничем - пометить объявление было нечем вовсе. Требование без
+ * исполнения хуже отсутствия требования: автор второго SDK читает его как
+ * действующую защиту и рассчитывает, что удаления приходят предупреждёнными.
+ *
+ * @param {object[]} list Обнаруженные изменения.
+ * @param {object} rules Разобранный spec/compat-rules.yaml.
+ * @param {string} nowVersion Версия спецификации в рабочем дереве.
+ * @returns {string[]} Нарушения на русском языке. Пустой список - всё в порядке.
+ */
+function checkDeprecation(list, rules, nowVersion) {
+  const marker = ((rules.deprecation || {}).marker) || 'x-funora-deprecated'
+  const now = parseVersion(nowVersion)
+  const out = []
+
+  for (const c of list) {
+    const rule = (rules.changes || {})[c.kind]
+    if (!rule || rule.requires_deprecation !== true) continue
+
+    const mark = c.was ? c.was[marker] : null
+    if (!mark) {
+      out.push(`${c.where}: ${c.what} - без предварительной пометки ${marker}. ` +
+        'Класс изменения требует, чтобы объявление сначала было помечено ' +
+        'устаревшим: иначе у пользователя нет ни одной версии, в которой видно ' +
+        'и старое, и новое')
+      continue
+    }
+
+    const need = rule.min_deprecation_minors
+    if (!need) continue
+
+    const since = parseVersion(mark.since)
+    if (!since) {
+      out.push(`${c.where}: ${c.what} - пометка ${marker} без разбираемого ` +
+        `since (стоит «${mark.since}»). Сколько миноров прошло, вычислить нечем`)
+      continue
+    }
+    if (!now) {
+      out.push(`${c.where}: ${c.what} - версия спецификации «${nowVersion}» ` +
+        'не разбирается, отсчёт миноров невозможен')
+      continue
+    }
+    const passed = minorsSince(since, now)
+    if (passed < need) {
+      out.push(`${c.where}: ${c.what} - помечено в ${mark.since}, удаляется в ` +
+        `${nowVersion}: прошло миноров ${passed === -Infinity ? 'меньше нуля' : passed}, ` +
+        `а требуется ${need}. Пометка обязана дожить до выпуска, иначе она ` +
+        'ничего не предупредила')
+    }
+  }
+  return out
 }
 
 /**
@@ -374,11 +462,18 @@ function diffSchema(rel, was, now) {
     const wasEnum = new Set(a.enum || [])
     const nowEnum = new Set(b.enum || [])
     for (const v of nowEnum) if (!wasEnum.has(v)) change('add_enum_value', rel, `поле ${name}: добавлено значение ${v}`)
-    for (const v of wasEnum) if (!nowEnum.has(v)) change('remove_enum_value', rel, `поле ${name}: удалено значение ${v}`)
+    for (const v of wasEnum) {
+      if (nowEnum.has(v)) continue
+      // Значение перечисления - строка, повесить ключ на неё негде.
+      // Пометка живёт на несущем свойстве, в x-funora-deprecated-values.
+      const marks = a['x-funora-deprecated-values'] || {}
+      change('remove_enum_value', rel, `поле ${name}: удалено значение ${v}`,
+        marks[v] ? { 'x-funora-deprecated': marks[v] } : null)
+    }
   }
 
   for (const name of Object.keys(wasProps)) {
-    if (!(name in nowProps)) change('remove_field', rel, `удалено поле ${name}`)
+    if (!(name in nowProps)) change('remove_field', rel, `удалено поле ${name}`, wasProps[name])
   }
 }
 
@@ -423,7 +518,7 @@ function diffErrors(was, now) {
     }
   }
   for (const name of Object.keys(a)) {
-    if (!(name in b)) change('remove_field', rel, `удалена ошибка ${name}`)
+    if (!(name in b)) change('remove_field', rel, `удалена ошибка ${name}`, a[name])
   }
 }
 
@@ -482,7 +577,7 @@ function diffService(rel, was, now) {
     }
   }
   for (const id of Object.keys(a)) {
-    if (!(id in b)) change('remove_operation', rel, `удалена операция ${id}`)
+    if (!(id in b)) change('remove_operation', rel, `удалена операция ${id}`, a[id])
   }
 }
 
@@ -743,6 +838,22 @@ function main() {
   }
 
   const enforced = strict || (vNow && vNow.status === 'released')
+
+  // Пометка устаревшего. Проверяется до сверки bump: удаление без пометки - это
+  // нарушение порядка выпуска, а не спор о том, какой цифрой его выразить.
+  const undeprecated = checkDeprecation(changes, rules, (vNow && vNow.spec_version) || '')
+  if (undeprecated.length) {
+    console.log('')
+    console.log(`удалений без предварительной пометки: ${undeprecated.length}`)
+    for (const one of undeprecated) console.log(`  ${one}`)
+    if (enforced) {
+      console.log('')
+      console.log('ОТКАЗ: класс изменения требует предварительной пометки устаревшим')
+      process.exit(1)
+    }
+    console.log('статус draft - проверка носит информационный характер')
+  }
+
   if (RANK[v.bump] < RANK[required]) {
     console.log('')
     console.log(`объявленный bump «${v.bump}» меньше необходимого «${required}»`)
