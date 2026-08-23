@@ -1574,6 +1574,16 @@ function loadCapabilities() {
  * @returns {number} Количество проверенных операций.
  */
 function checkServices(caps, errIds) {
+  // Возможность без операции объясняет себя сама, и объяснение проверяется.
+  // Прежде таких было четыре, и ни одна не говорила, чем она управляет: реестр
+  // возможностей читается как перечень того, что фреймворк умеет, и
+  // необъяснённая запись обещает вызов, которого нет.
+  const WITHOUT = {
+    model_field: 'управляет полем модели',
+    engine_state: 'выставляется движком по наблюдению',
+    event_stream: 'относится к потоку событий, а не к вызову',
+    not_implemented: 'механизма нет - обязана быть запись в реестре',
+  }
   const dir = path.join(SPEC, 'services')
   const files = walk(dir, '.yaml')
   if (files.length === 0) { fail('spec/services', 'не найдено ни одного сервиса'); return 0 }
@@ -1712,6 +1722,47 @@ function checkServices(caps, errIds) {
   }
 
   checkReversibility(ops)
+
+  // Какие возможности вправду привязаны хоть к одной операции.
+  const bound = new Set()
+  for (const { op } of ops.values()) {
+    if (op.capability) bound.add(String(op.capability))
+  }
+  const doc = readYaml(path.join(SPEC, 'capabilities.yaml')) || {}
+  const registry = readYaml(path.join(SPEC, 'conformance', 'not-implemented.yaml')) || {}
+  const items = registry.items || {}
+  const rel = 'spec/capabilities.yaml'
+
+  for (const [id, c] of Object.entries(doc.capabilities || {})) {
+    const why = (c || {}).governed_without_operation
+    if (bound.has(id)) {
+      if (why !== undefined) {
+        fail(rel, `${id}: объявлено governed_without_operation, а операция у ` +
+          'возможности есть. Объяснение отсутствия того, что присутствует, ' +
+          'вводит в заблуждение вернее умолчания')
+      }
+      continue
+    }
+    if (!(why in WITHOUT)) {
+      fail(rel, `${id}: ни одна операция не привязана к возможности, и ` +
+        'governed_without_operation не объявлено либо вне перечня ' +
+        `${Object.keys(WITHOUT).join(', ')}. Реестр возможностей читается как ` +
+        'перечень того, что фреймворк умеет, и необъяснённая запись обещает ' +
+        'вызов, которого нет')
+      continue
+    }
+    if (why !== 'not_implemented') continue
+
+    const named = Object.values(items).some(
+      (one) => String((one || {}).declared_in || '').includes(id))
+    if (!named) {
+      fail(rel, `${id}: объявлена не реализованной, а записи в ` +
+        'spec/conformance/not-implemented.yaml, чей declared_in указывал бы ' +
+        'на неё, нет. Правило проекта: механизм либо реализован, либо ' +
+        'перечислен - третьего не бывает')
+    }
+  }
+
   return count
 }
 

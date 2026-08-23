@@ -132,6 +132,7 @@ capabilities:
     summary: Чтение баланса аккаунта.
     source: probe
     initial: unknown
+    governed_without_operation: model_field
     model_field_declared_in: spec/models/account.schema.json#properties.balance
     note: >-
       Баланс показан не на всех страницах и не всем типам аккаунтов - потому
@@ -211,6 +212,7 @@ capabilities:
     initial: supported
 
   orders.events:
+    governed_without_operation: not_implemented
     summary: Распознавание событий заказа из канала обновлений.
     source: probe
     initial: unknown
@@ -256,6 +258,7 @@ capabilities:
     note: Оговорка blueprint «если операция существует и протестирована».
 
   reviews.get:
+    governed_without_operation: not_implemented
     summary: Чтение отзывов по заказу или профилю.
     source: probe
     initial: unknown
@@ -266,6 +269,7 @@ capabilities:
       площадка отдаёт этому аккаунту.
     source: static
     initial: supported
+    governed_without_operation: engine_state
     value_set_declared_in: spec/version.yaml#supported_locales
     what_changed_here: >-
       Стояло value_kind: locale_set и «не булева возможность: значением является
