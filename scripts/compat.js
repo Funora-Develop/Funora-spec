@@ -681,6 +681,8 @@ function diffService(rel, was, now) {
       'меняется ответ на вопрос, полон ли результат'],
     ['request_class', 'change_operation_request_class',
       'меняется распределение бюджета и очерёдность'],
+    ['reversible_by', 'change_operation_reversibility',
+      'у потребителя меняется или исчезает путь отката записи'],
   ]
 
   for (const [id, op] of Object.entries(b)) {
