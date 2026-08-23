@@ -102,6 +102,64 @@ function loadTypes() {
 }
 
 /**
+ * Проверяет таблицу «знак валюты - код ISO 4217».
+ *
+ * Сама она не проверялась ничем: про types.yaml здесь знали ровно одно - что
+ * имена типов используются как значения x-funora-type. Таблицу можно было
+ * дописать пустой, с кодом строчными буквами либо с двумя знаками одной валюты,
+ * и спецификация осталась бы «без нарушений».
+ *
+ * Проверка живёт здесь, а не только в кодогенераторе питона: кодогенератор
+ * защищает одну реализацию из шести, а спецификацию читают все.
+ *
+ * @returns {number} Сколько записей в таблице.
+ */
+function checkCurrencySymbols() {
+  const doc = readYaml(path.join(SPEC, 'types.yaml'))
+  const money = (doc.types || {}).money || {}
+  const table = money.symbol_table
+  if (!table || Object.keys(table).length === 0) {
+    fail('spec/types.yaml', 'types.money.symbol_table пуст либо не объявлен. '
+      + 'Страница показывает знак и не показывает кода; без таблицы сумму собрать '
+      + 'нельзя, а угадать соответствие - значит приписать чужую валюту чужому '
+      + 'заказу молча')
+    return 0
+  }
+
+  const byCode = new Map()
+  for (const [symbol, entry] of Object.entries(table)) {
+    if (!symbol.trim()) {
+      fail('spec/types.yaml', 'в таблице знаков есть пустой ключ')
+      continue
+    }
+    if (!entry || !entry.evidence) {
+      fail('spec/types.yaml', `у знака «${symbol}» нет поля evidence. Таблица стоит `
+        + 'на наблюдении, и запись без ссылки на него неотличима от выдуманной')
+    }
+    if (entry && entry.ambiguous) {
+      if (entry.currency) {
+        fail('spec/types.yaml', `знак «${symbol}» объявлен и неоднозначным, и имеющим `
+          + 'код. Одно из двух: либо он решает, либо нет')
+      }
+      continue
+    }
+    const code = entry && entry.currency
+    if (typeof code !== 'string' || !/^[A-Z]{3}$/.test(code)) {
+      fail('spec/types.yaml', `у знака «${symbol}» код ${JSON.stringify(code)} не по `
+        + 'ISO 4217. Три заглавные латинские буквы либо ambiguous: true')
+      continue
+    }
+    if (byCode.has(code)) {
+      fail('spec/types.yaml', `код ${code} стоит и у «${byCode.get(code)}», и у `
+        + `«${symbol}». Соответствие объявлено односторонним, и два знака одной `
+        + 'валюты означают, что один из них наблюдён неверно')
+    }
+    byCode.set(code, symbol)
+  }
+  return Object.keys(table).length
+}
+
+/**
  * Проверяет одно свойство схемы на соответствие правилам скаляров и перечислений.
  *
  * @param {string} file Относительный путь к файлу схемы, для сообщения об ошибке.
@@ -617,6 +675,42 @@ function checkEvents() {
     if (!declared.has(t)) fail(rel, `правило вывода ключа задано для несуществующего типа «${t}»`)
   }
 
+  // Каждый тип объявляет, что служит его версией в отпечатке. Отпечаток -
+  // ключ идемпотентности, общий для всех реализаций, и три его поля выбора не
+  // оставляют. Четвёртое оставляет: разойдясь в нём, две реализации перестают
+  // гасить повторы друг друга, и подключивший обе получает каждое событие
+  // дважды.
+  //
+  // До этой проверки поле описывалось только словарём типов - «хэш
+  // нормализованного состояния», - и правило было неверным опасно: хэш всего
+  // состояния меняется от посторонней правки, и событие о статусе заказа
+  // пришло бы второй раз после того, как покупатель сменил имя.
+  const sources = (d.revision_source && d.revision_source.sources) || {}
+  if (Object.keys(sources).length === 0) {
+    fail(rel, 'не объявлено, что служит версией событий в отпечатке')
+  }
+  for (const t of declared) {
+    if (!(t in sources)) {
+      fail(rel, `для типа «${t}» не объявлено, что служит его версией в ` +
+        `отпечатке: реализации выведут это поле сами и разойдутся в ключе ` +
+        `идемпотентности`)
+    }
+  }
+  for (const t of Object.keys(sources)) {
+    if (!declared.has(t)) {
+      fail(rel, `версия в отпечатке объявлена для несуществующего типа «${t}»`)
+    }
+  }
+  for (const [t, source] of Object.entries(sources)) {
+    if (typeof source !== 'string' || source.trim().length < 3) {
+      fail(rel, `у типа «${t}» источник версии пуст`)
+    }
+    if (/observed_at|наблюдени|время|момент/i.test(String(source))) {
+      fail(rel, `у типа «${t}» версией служит момент наблюдения: он различается ` +
+        `у каждого чтения, и гашение повторов не сработает ни разу`)
+    }
+  }
+
   // Полосы обслуживания ссылаются только на существующие типы, и каждый тип
   // отнесён ровно к одной полосе: иначе политика переполнения для него не определена.
   const lanes = (d.backpressure && d.backpressure.lanes) || {}
@@ -686,6 +780,187 @@ function checkBudget() {
     fail(rel, 'мониторинг обязан быть отменяемым - иначе наблюдение за рынком вытесняет ' +
       'ответы покупателям, потому что создаёт больше запросов и выигрывает очередь')
   }
+}
+
+/**
+ * Проверяет, что ссылка на реестр неисполненного разрешается.
+ *
+ * Запись покрытия вправе сказать «этого нет, и это записано в
+ * not-implemented.yaml». Такая ссылка - обещание, и висячая ссылка хуже
+ * отсутствия ссылки: она выглядит выполненным обещанием.
+ *
+ * Так и было. Запись про spec/extraction/updates.yaml ссылалась на реестр
+ * неисполненного, а записи про канал обновлений там не было вовсе.
+ *
+ * @returns {number} Число проверенных ссылок.
+ */
+function checkNotImplementedLinks() {
+  const rel = 'spec/conformance/coverage.yaml'
+  const coverage = readYaml(path.join(SPEC, 'conformance', 'coverage.yaml'))
+  const registry = readYaml(path.join(SPEC, 'conformance', 'not-implemented.yaml'))
+  const items = registry.items || {}
+
+  const declared = new Set()
+  for (const body of Object.values(items)) {
+    const where = String((body || {}).declared_in || '')
+    if (where) declared.add(where.split('#')[0])
+  }
+
+  let checked = 0
+  for (const [file, body] of Object.entries(coverage.files || {})) {
+    const note = String((body || {}).note || '')
+    if (!note.includes('not-implemented.yaml')) continue
+    checked += 1
+    if (!declared.has(file)) {
+      fail(rel, `запись «${file}» ссылается на реестр неисполненного, а записи ` +
+        `с declared_in: ${file} там нет. Ссылка на несуществующее выглядит ` +
+        `выполненным обещанием`)
+    }
+  }
+
+  return checked
+}
+
+/**
+ * Проверяет пометки уверенности по объявленным уровням.
+ *
+ * spec/extraction/rules.yaml объявляет три уровня и говорит, какие из них
+ * допустимы в контракте: observed и inferred - да, assumed - нет. Своими же
+ * словами файл объясняет почему: «придуманный селектор хуже отсутствующего -
+ * отсутствующий виден сразу, придуманный тихо ломает разбор у всех шести SDK».
+ *
+ * Проверять это было нечем. Файл значился в реестре покрытия как verified и
+ * назывался тремя наборами тестов, но не читался НИ ОДНИМ: проверялось
+ * поведение, которое он описывает, а не он сам. Пометка assumed прошла бы
+ * молча, и запрет остался бы словами.
+ *
+ * @returns {number} Число проверенных пометок.
+ */
+function checkConfidence() {
+  const rulesRel = 'spec/extraction/rules.yaml'
+  const rules = readYaml(path.join(SPEC, 'extraction', 'rules.yaml'))
+  const levels = rules.confidence_levels || {}
+
+  if (Object.keys(levels).length === 0) {
+    fail(rulesRel, 'уровни уверенности не объявлены')
+    return 0
+  }
+
+  const allowed = new Set()
+  for (const [name, body] of Object.entries(levels)) {
+    if ((body || {}).allowed_in_contract === true) allowed.add(name)
+    if (!(body || {}).meaning) {
+      fail(rulesRel, `уровень «${name}» не объясняет, что означает`)
+    }
+  }
+  if (allowed.size === 0) {
+    fail(rulesRel, 'ни один уровень уверенности не допущен в контракт')
+  }
+
+  let checked = 0
+  const seen = (node, where, rel) => {
+    if (Array.isArray(node)) {
+      node.forEach((item, index) => seen(item, `${where}[${index}]`, rel))
+      return
+    }
+    if (!node || typeof node !== 'object') return
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'confidence' && typeof value === 'string') {
+        checked += 1
+        if (!(value in levels)) {
+          fail(rel, `${where}: уровень уверенности «${value}» не объявлен в ` +
+            `${rulesRel}. Реализации истолкуют его каждая по-своему`)
+        } else if (!allowed.has(value)) {
+          fail(rel, `${where}: уровень «${value}» объявлен недопустимым в ` +
+            `контракте. ${rulesRel} говорит прямо: придуманный селектор хуже ` +
+            `отсутствующего - отсутствующий виден сразу, придуманный тихо ` +
+            `ломает разбор`)
+        }
+        continue
+      }
+      seen(value, where ? `${where}.${key}` : key, rel)
+    }
+  }
+
+  for (const name of fs.readdirSync(path.join(SPEC, 'extraction'))) {
+    if (!name.endsWith('.yaml')) continue
+    const rel = `spec/extraction/${name}`
+    seen(readYaml(path.join(SPEC, 'extraction', name)), '', rel)
+  }
+
+  return checked
+}
+
+/**
+ * Проверяет, что каждый объявленный класс изменений применяется классификатором.
+ *
+ * Та же болезнь, что и в реализации: объявление, которым никто не пользуется,
+ * выглядит работающим. Класс изменений, записанный в правилах и не применяемый
+ * скриптом, обещает, что такое изменение будет замечено, - а оно проходит молча.
+ *
+ * Проверка идёт в обе стороны. Класс, применяемый скриптом и не объявленный в
+ * правилах, хуже вдвойне: у него нет объявленного bump, и классификация выдаст
+ * undefined там, где должна выдать major.
+ *
+ * @returns {number} Число объявленных классов изменений.
+ */
+function checkChangeClasses() {
+  const rel = 'spec/compat-rules.yaml'
+  const rules = readYaml(path.join(SPEC, 'compat-rules.yaml'))
+  const declared = Object.keys(rules.changes || {})
+  if (declared.length === 0) {
+    fail(rel, 'классы изменений не объявлены')
+    return 0
+  }
+
+  const script = fs.readFileSync(path.join(ROOT, 'scripts', 'compat.js'), 'utf8')
+  const used = new Set()
+  // Имя класса ищется как строка где угодно в скрипте, а не только внутри
+  // вызова change(): часть классов подставляется из таблицы полей, и поиск по
+  // вызову объявлял бы их неприменяемыми.
+  const pattern = /'([a-z_]+)'/g
+  let match
+  while ((match = pattern.exec(script)) !== null) used.add(match[1])
+
+  for (const name of declared) {
+    if (!used.has(name)) {
+      fail(rel, `класс изменений «${name}» объявлен, но классификатор его не ` +
+        `применяет: правила обещают, что такое изменение будет замечено, а оно ` +
+        `проходит молча`)
+    }
+  }
+  // Обратная сторона смотрит ТОЛЬКО прямые вызовы change('...'). Широкий поиск
+  // здесь давал бы ложные срабатывания на всякой строке в snake_case - именами
+  // модулей Node, ключами полей, - и проверка, кричащая на 'child_process',
+  // перестала бы читаться.
+  const calls = new Set()
+  const direct = /change\(\s*'([a-z_]+)'/g
+  let call
+  while ((call = direct.exec(script)) !== null) calls.add(call[1])
+
+  for (const name of calls) {
+    if (!declared.includes(name)) {
+      fail('scripts/compat.js', `классификатор применяет класс «${name}», которого ` +
+        `нет в правилах: у него нет объявленного bump, и классификация выдаст ` +
+        `undefined там, где должна выдать major`)
+    }
+  }
+
+  for (const [name, body] of Object.entries(rules.changes || {})) {
+    if (!['major', 'minor', 'patch', 'forbidden'].includes(body.bump)) {
+      fail(rel, `у класса «${name}» непонятный bump «${body.bump}»`)
+    }
+    // Объяснение может стоять под rationale либо под summary - оба имени в
+    // файле уже прижились. Требуется одно из них: класс с объявленным bump и без
+    // единого слова о причине читается как произвол, и первый же спорный случай
+    // решат по-своему.
+    const why = String(body.rationale || body.summary || '').trim()
+    if (why.length < 30) {
+      fail(rel, `класс «${name}» не объясняет, почему bump именно такой`)
+    }
+  }
+
+  return declared.length
 }
 
 /**
@@ -936,6 +1211,13 @@ function checkExtraction() {
             // число означает то «столько на странице», то «столько в строке», и
             // без пометки проверяющий не знает, что считать.
             const entry = { selector: one, evidence, where }
+            // Утверждение об ОТСУТСТВИИ - вторая половина наблюдения, и до сих
+            // пор её не проверял никто. Признак вошедшего, который вдруг
+            // нашёлся бы и на гостевой странице, перестал бы различать сессии -
+            // а спецификация продолжала бы утверждать, что различает.
+            if (Array.isArray(node.absent_in) && node.absent_in.length > 0) {
+              entry.absent_in = node.absent_in
+            }
             if (typeof node.count_observed === 'number') {
               const where_scope = scope || 'document'
               if (where_scope !== 'document' && where_scope !== 'row') {
@@ -946,6 +1228,20 @@ function checkExtraction() {
             }
             selectors.push(entry)
           }
+        }
+      }
+
+      // Отсутствие объявляется только там, где объявлено и присутствие:
+      // «нигде не наблюдался, но вот здесь его точно нет» - утверждение ни о
+      // чём, и проверить его нечем.
+      if (Array.isArray(node.absent_in) && node.absent_in.length > 0) {
+        if (!node.selector && !node.selectors) {
+          fail(rel, `${pointer}: absent_in объявлен там, где нет селектора`)
+        }
+        const overlap = (evidence || []).filter((name) => node.absent_in.includes(name))
+        if (overlap.length > 0) {
+          fail(rel, `${pointer}: снимки ${overlap.join(', ')} названы и как ` +
+            `свидетельство наличия, и как свидетельство отсутствия`)
         }
       }
 
@@ -1032,7 +1328,11 @@ function checkResponseClasses(errIds) {
 
 function main() {
   KNOWN_TYPES = loadTypes()
+  const changeClasses = checkChangeClasses()
+  checkNotImplementedLinks()
+  const confidences = checkConfidence()
   checkVersion()
+  const symbols = checkCurrencySymbols()
   const models = checkModels()
   const errors = checkErrors()
 
@@ -1049,7 +1349,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`типов: ${KNOWN_TYPES.size} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +

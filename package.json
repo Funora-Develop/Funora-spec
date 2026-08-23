@@ -8,7 +8,8 @@
   "scripts": {
     "validate": "node scripts/validate.js",
     "compat": "node scripts/compat.js",
-    "check": "npm run validate && npm run compat"
+    "check": "npm run validate && npm run compat",
+    "conformance": "node scripts/conformance.js"
   },
   "devDependencies": {
     "js-yaml": "^4.1.0"

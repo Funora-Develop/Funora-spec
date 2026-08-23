@@ -29,6 +29,22 @@ This repository is being designed. There is no released package and nothing to i
 
 Models, events, errors, capabilities and service descriptions. Every entity and event has a stable identifier and a schema version. This repository is the source of truth: if two SDKs disagree, the spec decides.
 
+## Where things live
+
+| Path | What is there |
+|---|---|
+| [`spec/`](spec) | The contract itself: models, events, errors, capabilities, services. |
+| [`spec/conformance/not-implemented.yaml`](spec/conformance/not-implemented.yaml) | What the contract declares and the reference implementation does not do. Read it before relying on a mechanism. |
+| [`spec/conformance/coverage.yaml`](spec/conformance/coverage.yaml) | How each spec file is checked: by generation, by a test, or by rationale. |
+| [`spec/conformance/canonical-form.vectors.json`](spec/conformance/canonical-form.vectors.json) | Vectors for the canonical form and the event fingerprint. Readable by any implementation. |
+| [`spec/canonical-form.yaml`](spec/canonical-form.yaml) | Normative serialization rules. |
+| [`docs/`](docs) | Rationale for the decisions taken. Not normative. |
+
+Start with the second row. A mechanism declared in the contract and absent from
+the reference implementation looks like it works, and the list exists precisely
+so that this does not happen.
+
+
 ## The wider project
 
 Funora is one contract implemented natively in several languages. You change the language,
@@ -41,7 +57,7 @@ taxonomy mean the same thing everywhere.
 | [Funora-spec](https://github.com/Funora-Develop/Funora-spec) | The canonical contract every SDK implements. | `design` |
 | [Funora-codegen](https://github.com/Funora-Develop/Funora-codegen) | Generates the boring, repetitive part of every SDK. | `design` |
 | [Funora-conformance](https://github.com/Funora-Develop/Funora-conformance) | The test contract between languages. | `design` |
-| [Funora-python](https://github.com/Funora-Develop/Funora-python) | Reference implementation of the Funora contract. | `design` |
+| [Funora-python](https://github.com/Funora-Develop/Funora-python) | Reference implementation of the Funora contract. | `draft` |
 | [Funora-javascript](https://github.com/Funora-Develop/Funora-javascript) | TypeScript source, JavaScript and type declarations on output. | `planned` |
 | [Funora-java](https://github.com/Funora-Develop/Funora-java) | Java SDK. | `planned` |
 | [Funora-dotnet](https://github.com/Funora-Develop/Funora-dotnet) | .NET SDK. | `planned` |

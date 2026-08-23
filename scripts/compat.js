@@ -36,6 +36,50 @@ const RANK = { none: 0, patch: 1, minor: 2, major: 3, forbidden: 4 }
 const changes = []
 
 /**
+ * Сообщает, расширился ли набор допустимых типов.
+ *
+ * @param {string|string[]|undefined} was Тип до изменения.
+ * @param {string|string[]|undefined} now Тип после изменения.
+ * @returns {boolean} true, если новый набор содержит весь прежний и ещё что-то.
+ */
+function widens(was, now) {
+  const before = new Set(was === undefined ? [] : [].concat(was))
+  const after = new Set(now === undefined ? [] : [].concat(now))
+  if (after.size <= before.size) return false
+  for (const item of before) {
+    if (!after.has(item)) return false
+  }
+  return true
+}
+
+/**
+ * Сравнивает объявления типа, учитывая массивы.
+ *
+ * @param {string|string[]|undefined} was Тип до изменения.
+ * @param {string|string[]|undefined} now Тип после изменения.
+ * @returns {boolean} true, если типы совпадают по содержимому.
+ */
+function sameType(was, now) {
+  const left = was === undefined ? [] : [].concat(was)
+  const right = now === undefined ? [] : [].concat(now)
+  if (left.length !== right.length) return false
+  const l = [...left].sort()
+  const r = [...right].sort()
+  return l.every((item, index) => item === r[index])
+}
+
+/**
+ * Показывает объявление типа человеку.
+ *
+ * @param {string|string[]|undefined} value Тип.
+ * @returns {string} Читаемое представление.
+ */
+function showType(value) {
+  if (value === undefined) return 'нет'
+  return [].concat(value).join('|')
+}
+
+/**
  * Регистрирует изменение спецификации.
  *
  * @param {string} kind Класс изменения из spec/compat-rules.yaml.
@@ -134,6 +178,148 @@ function parse(rel, text) {
 }
 
 /**
+ * Сравнивает объявленные возможности.
+ *
+ * Файл не сравнивался вовсе: смена начального состояния возможности с supported
+ * на unsupported превращала работающий код в отказ ещё до запроса, и
+ * классификация об этом молчала.
+ *
+ * @param {object} was Прежнее содержимое spec/capabilities.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffCapabilities(was, now) {
+  const rel = 'spec/capabilities.yaml'
+  const before = was.capabilities || {}
+  const after = now.capabilities || {}
+
+  for (const name of Object.keys(after)) {
+    if (!(name in before)) {
+      change('add_capability', rel, `возможность ${name} объявлена`)
+      continue
+    }
+    if (before[name].initial !== after[name].initial) {
+      change('change_capability_initial', rel,
+        `возможность ${name}: начальное состояние ${before[name].initial} -> ${after[name].initial}`)
+    }
+  }
+  for (const name of Object.keys(before)) {
+    if (!(name in after)) change('remove_capability', rel, `возможность ${name} удалена`)
+  }
+}
+
+/**
+ * Сравнивает политики повторов и их пределы.
+ *
+ * @param {object} was Прежнее содержимое spec/protocol/retry-policy.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffRetry(was, now) {
+  const rel = 'spec/protocol/retry-policy.yaml'
+  const before = was.policies || {}
+  const after = now.policies || {}
+  const fields = ['max_attempts', 'base_ms', 'multiplier', 'cap_ms', 'jitter',
+                  'respect_retry_after', 'fail_closed', 'account_scoped']
+
+  for (const name of Object.keys(after)) {
+    if (!(name in before)) continue
+    for (const field of fields) {
+      if (before[name][field] !== after[name][field]) {
+        change('change_retry_policy', rel,
+          `политика ${name}: ${field} ${before[name][field]} -> ${after[name][field]}`)
+      }
+    }
+  }
+}
+
+/**
+ * Сравнивает числа бюджета.
+ *
+ * @param {object} was Прежнее содержимое spec/runtime/budget.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffBudget(was, now) {
+  const rel = 'spec/runtime/budget.yaml'
+
+  for (const bucket of Object.keys(now.buckets || {})) {
+    const before = (was.buckets || {})[bucket]
+    const after = now.buckets[bucket]
+    if (!before) continue
+    for (const field of ['capacity', 'refill_per_second', 'burst']) {
+      if (before[field] !== after[field]) {
+        change('change_budget_numbers', rel,
+          `ведро ${bucket}: ${field} ${before[field]} -> ${after[field]}`)
+      }
+    }
+  }
+
+  for (const key of Object.keys(now.limits || {})) {
+    const before = (was.limits || {})[key]
+    if (before !== undefined && before !== now.limits[key]) {
+      change('change_budget_numbers', rel, `предел ${key}: ${before} -> ${now.limits[key]}`)
+    }
+  }
+}
+
+/**
+ * Сравнивает таблицу «вердикт - ошибка».
+ *
+ * От таблицы зависит, повторит клиент запрос или остановится навсегда.
+ *
+ * @param {object} was Прежнее содержимое spec/protocol/response-classes.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffVerdicts(was, now) {
+  const rel = 'spec/protocol/response-classes.yaml'
+  const flatten = (doc) => {
+    const out = {}
+    for (const [cls, rows] of Object.entries(doc.verdict_errors || {})) {
+      for (const [reason, error] of Object.entries(rows || {})) {
+        out[`${cls}/${reason}`] = error
+      }
+    }
+    return out
+  }
+  const before = flatten(was)
+  const after = flatten(now)
+
+  for (const key of Object.keys(after)) {
+    if (!(key in before)) {
+      change('add_verdict_mapping', rel, `пара ${key} описана`)
+    } else if (before[key] !== after[key]) {
+      change('change_verdict_mapping', rel,
+        `пара ${key}: ${before[key] || 'null'} -> ${after[key] || 'null'}`)
+    }
+  }
+  for (const key of Object.keys(before)) {
+    if (!(key in after)) change('remove_verdict_mapping', rel, `пара ${key} удалена`)
+  }
+}
+
+/**
+ * Сравнивает словарь доменных типов.
+ *
+ * @param {object} was Прежнее содержимое spec/types.yaml.
+ * @param {object} now Нынешнее содержимое.
+ * @returns {void}
+ */
+function diffTypes(was, now) {
+  const rel = 'spec/types.yaml'
+  const before = Object.keys(was.types || {})
+  const after = Object.keys(now.types || {})
+
+  for (const name of after) {
+    if (!before.includes(name)) change('add_domain_type', rel, `тип ${name} объявлен`)
+  }
+  for (const name of before) {
+    if (!after.includes(name)) change('remove_domain_type', rel, `тип ${name} удалён`)
+  }
+}
+
+/**
  * Сравнивает одну схему модели или события.
  *
  * @param {string} rel Путь к файлу.
@@ -164,8 +350,22 @@ function diffSchema(rel, was, now) {
     if (!wasReq.has(name) && nowReq.has(name)) {
       change('optional_to_required', rel, `поле ${name} стало обязательным`)
     }
-    if (a.type !== b.type) {
-      change('narrow_type', rel, `поле ${name}: тип изменился с ${a.type} на ${b.type}`)
+    // Тип может быть строкой либо массивом: ["string", "null"] означает поле,
+    // допускающее пустоту. Сравнение через !== для массивов сравнивает ссылки,
+    // а не содержимое, и объявляло изменением каждое поле с пустотой - на
+    // пустом диффе классификатор требовал major.
+    //
+    // Хуже самой ошибки её последствие: классификатор, кричащий всегда, не
+    // отличается от молчащего. Настоящее ломающее изменение тонуло бы среди
+    // четырнадцати выдуманных.
+    if (!sameType(a.type, b.type)) {
+      // Сужение и расширение различаются, и различие не косметическое.
+      // Расширение - было T, стало T либо U - ломает читателя: его разбор знает
+      // только T. Сужение ломает писателя. Оба major, но причина разная, и по
+      // ней решают, кого предупреждать.
+      const kind = widens(a.type, b.type) ? 'widen_type' : 'narrow_type'
+      change(kind, rel,
+        `поле ${name}: тип изменился с ${showType(a.type)} на ${showType(b.type)}`)
     }
     if (a['x-funora-type'] !== b['x-funora-type']) {
       change('change_x_funora_type', rel,
@@ -332,6 +532,17 @@ function diffVersion(was, now) {
   if (na > wa) bump = 'major'
   else if (nb > wb) bump = 'minor'
   else if (nc > wc) bump = 'patch'
+
+  // Нулевой мажор. Пока первая часть версии - ноль, контракт объявлен
+  // неустоявшимся, и ломающее изменение выражается второй частью: 0.1.0 ->
+  // 0.2.0. Иначе первое же ломающее изменение требовало бы 1.0.0, то есть
+  // объявляло бы контракт устоявшимся ровно тогда, когда он ломается.
+  //
+  // Правило нужно было завести: четыре захода подряд меняли контракт ломающе,
+  // и объявить это было нечем - классификатор требовал major, а major в нуле
+  // означал бы совсем не то.
+  if (wa === 0 && na === 0 && bump === 'minor') bump = 'major'
+
   return { was: w, now: n, bump }
 }
 
@@ -425,7 +636,6 @@ function main() {
 
   const rules = yaml.load(fs.readFileSync(path.join(ROOT, SPEC, 'compat-rules.yaml'), 'utf8'))
   const bumpOf = (kind) => {
-    if (kind === 'canonical_form_change') return (rules.canonical_form_change || {}).bump || 'major'
     const r = (rules.changes || {})[kind]
     return r ? r.bump : 'major'
   }
@@ -438,14 +648,28 @@ function main() {
     process.exit(0)
   }
 
+  for (const rel of oldFiles) {
+    if (newFiles.includes(rel)) continue
+    if (rel.includes('/events/') && rel.endsWith('.schema.json')) {
+      change('remove_event_type', rel, 'вид события удалён')
+    } else if (rel.includes('/models/')) {
+      change('remove_operation', rel, 'модель удалена')
+    }
+  }
+
   for (const rel of newFiles) {
     const now = parse(rel, fs.readFileSync(path.join(ROOT, rel), 'utf8'))
     const was = parse(rel, readAt(base, rel))
     if (!now) continue
 
     if (!was) {
-      if (rel.includes('/models/') || rel.includes('/events/')) {
-        change('add_operation', rel, 'новый файл схемы')
+      if (rel.includes('/events/') && rel.endsWith('.schema.json')) {
+        // Именно вид события, а не операция. Прежде оба случая шли одним
+        // классом, и перечень классов изменений содержал add_event_type,
+        // которым никто не пользовался: класс объявлен и не действует.
+        change('add_event_type', rel, 'новый вид события')
+      } else if (rel.includes('/models/')) {
+        change('add_operation', rel, 'новая модель')
       }
       continue
     }
@@ -460,6 +684,16 @@ function main() {
       diffDelivery(was, now)
     } else if (rel.includes('/extraction/') && rel.endsWith('.yaml')) {
       diffExtraction(rel, was, now)
+    } else if (rel.endsWith('capabilities.yaml')) {
+      diffCapabilities(was, now)
+    } else if (rel.endsWith('protocol/retry-policy.yaml')) {
+      diffRetry(was, now)
+    } else if (rel.endsWith('protocol/response-classes.yaml')) {
+      diffVerdicts(was, now)
+    } else if (rel.endsWith('runtime/budget.yaml')) {
+      diffBudget(was, now)
+    } else if (rel.endsWith('spec/types.yaml')) {
+      diffTypes(was, now)
     }
   }
 

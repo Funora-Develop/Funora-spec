@@ -29,6 +29,22 @@
 
 Модели, события, ошибки, capabilities и описания сервисов. У каждой сущности и каждого события есть стабильный идентификатор и версия схемы. Это источник истины: если два SDK расходятся, решает спецификация.
 
+## Где что лежит
+
+| Путь | Что там |
+|---|---|
+| [`spec/`](spec) | Сам контракт: модели, события, ошибки, возможности, службы. |
+| [`spec/conformance/not-implemented.yaml`](spec/conformance/not-implemented.yaml) | Что контракт объявляет, а эталонная реализация не делает. Читать до того, как положиться на механизм. |
+| [`spec/conformance/coverage.yaml`](spec/conformance/coverage.yaml) | Как проверяется каждый файл спецификации: порождением, сверкой либо обоснованием. |
+| [`spec/conformance/canonical-form.vectors.json`](spec/conformance/canonical-form.vectors.json) | Векторы канонической формы и отпечатка события. Читаются любой реализацией. |
+| [`spec/canonical-form.yaml`](spec/canonical-form.yaml) | Нормативные правила сериализации. |
+| [`docs/`](docs) | Объяснения, зачем принято то или иное решение. Не нормативны. |
+
+Начинать со второй строки таблицы. Объявленное в контракте и не сделанное в
+эталонной реализации выглядит работающим, и перечень существует ровно затем,
+чтобы этого не случилось.
+
+
 ## Проект целиком
 
 Funora - это один контракт, реализованный нативно на нескольких языках. Меняется язык,
@@ -41,7 +57,7 @@ Funora - это один контракт, реализованный натив
 | [Funora-spec](https://github.com/Funora-Develop/Funora-spec) | Канонический контракт, который реализует каждый SDK. | `design` |
 | [Funora-codegen](https://github.com/Funora-Develop/Funora-codegen) | Генерирует скучную повторяющуюся часть каждого SDK. | `design` |
 | [Funora-conformance](https://github.com/Funora-Develop/Funora-conformance) | Тестовый контракт между языками. | `design` |
-| [Funora-python](https://github.com/Funora-Develop/Funora-python) | Эталонная реализация контракта Funora. | `design` |
+| [Funora-python](https://github.com/Funora-Develop/Funora-python) | Эталонная реализация контракта Funora. | `draft` |
 | [Funora-javascript](https://github.com/Funora-Develop/Funora-javascript) | Исходник на TypeScript, на выходе JavaScript и декларации типов. | `planned` |
 | [Funora-java](https://github.com/Funora-Develop/Funora-java) | Java SDK. | `planned` |
 | [Funora-dotnet](https://github.com/Funora-Develop/Funora-dotnet) | .NET SDK. | `planned` |

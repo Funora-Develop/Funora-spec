@@ -30,6 +30,14 @@ files:
     mechanism: generated
     note: >-
       capabilities.py: перечисление возможностей, начальные состояния, правило допустимости вызова.
+  spec/canonical-form.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_canonical.py: каждое правило обязано называть, чем оно
+      проверяется, и названное обязано существовать. Файл появился потому, что
+      правила жили в прозе docs/canonical-json.md - вне реестра, вне валидатора
+      и вне классификатора изменений: их можно было переписать на
+      противоположные, и обе сборки оставались зелёными.
   spec/compat-rules.yaml:
     mechanism: verified
     note: >-
@@ -38,6 +46,44 @@ files:
     mechanism: verified
     note: >-
       tests/test_spec_coverage.py: этот файл сверяется с составом спецификации.
+  spec/conformance/canonical-form.vectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_canonical.py: векторы канонической формы и отпечатка события
+      прогоняются дословно. Файл появился потому, что docs/canonical-json.md
+      объявлял обязательные векторы, а не существовало ни одного - правила
+      можно было переписать на противоположные, и обе сборки остались бы
+      зелёными.
+  spec/conformance/rate-budget.vectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_rate_budget_vectors.py: трассы бюджета прогоняются дословно.
+      Набор был объявлен в spec/runtime/budget.yaml одним словом: числа вёдер
+      сверялись со спецификацией, а поведение, которое из них следует, - залп,
+      единица учёта и правило допуска по классу - не проверялось ничем.
+  spec/conformance/resume.vectors.json:
+    mechanism: verified
+    note: >-
+      tests/test_resume_vectors.py: сценарии перезапуска прогоняются дословно.
+      Свойство было объявлено в spec/events/delivery.yaml как
+      conformance_suite: resume и проверить его было нечем - а ловушка там
+      настоящая: реализация, сохранившая метки показанием своего секундомера,
+      после перезапуска выдаёт товар дважды.
+  spec/conformance/runner-protocol.yaml:
+    mechanism: verified
+    note: >-
+      tests/test_conformance.py: реализация отвечает по объявленному протоколу,
+      пропуск без ссылки на реестр неисполненного считается отказом. Ось версий
+      была заведена в spec/version.yaml заранее и до сих пор ничего не
+      описывала - менять было нечего, потому что набора не существовало.
+  spec/conformance/skeleton-format.yaml:
+    mechanism: generated
+    note: >-
+      skeleton_format.py: версия формата снимков, перечень читаемых версий и
+      классы знаков в подписи текста. Прежде версия была литералом в
+      _skeleton.py, а описание формата жило только в README фикстур эталонной
+      реализации - вторая реализация не могла ни построить такой же скелет, ни
+      проверить, что построила.
   spec/conformance/not-implemented.yaml:
     mechanism: verified
     note: >-
@@ -119,9 +165,12 @@ files:
     note: >-
       tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
   spec/extraction/chats.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
-      tests/test_spec_selectors.py и tests/test_chats.py: селекторы и правила разбора списка диалогов.
+      extraction.py: селекторы разбора переписки. Прежде каждый жил в двух
+      местах - объявлением здесь и литералом в коде, - и расхождение молчало:
+      проверки гоняют разбор по снимкам, а текст спецификации с кодом не
+      сверял никто.
   spec/extraction/observed-selectors.json:
     mechanism: verified
     note: >-
@@ -133,15 +182,36 @@ files:
   spec/extraction/rules.yaml:
     mechanism: verified
     note: >-
-      tests/test_chats.py, tests/test_orders.py и tests/test_thread.py: три исхода чтения атрибута, дубли идентификаторов, повышение уровня повреждения до страницы.
+      scripts/validate.js: объявленные уровни уверенности применяются ко всем
+      пометкам confidence в spec/extraction - недопустимый уровень роняет
+      проверку. Поведение, описанное прочими разделами файла, закреплено в
+      tests/test_chats.py, tests/test_orders.py и tests/test_thread.py: три
+      исхода чтения атрибута, дубли идентификаторов, повышение уровня
+      повреждения до страницы.
+
+      Прежде запись называла только вторую половину, и файл не читал НИ ОДИН
+      из названных наборов: проверялось поведение, которое он описывает, а не
+      он сам. Пометку assumed, запрещённую этим же файлом, не заметил бы никто.
   spec/extraction/session.yaml:
     mechanism: generated
     note: >-
       response_classes.py: таблица кодов ответа. Прежде жила рукописной копией в классификаторе.
   spec/extraction/updates.yaml:
-    mechanism: prose
+    mechanism: verified
     note: >-
-      Запись наблюдений о канале обновлений площадки и о том, чего в нём НЕ наблюдали. Реализация канал не использует, и это записано в spec/conformance/not-implemented.yaml и в docs/limits.md.
+      tests/test_spec_selectors.py: селекторы разделов tags и positions входят
+      в перечень наблюдённых и сверяются со снимками наравне с прочими -
+      пометка observed обязана держаться.
+
+      Остальное - запись наблюдений о канале обновлений площадки и о том, чего
+      в нём НЕ наблюдали. Реализация канал не использует, и это записано в
+      spec/conformance/not-implemented.yaml как updates_channel и в
+      docs/limits.md.
+
+      Механизм был объявлен прозой, хотя часть файла сверяется машиной. Хуже
+      того, узел positions использовал синоним location вместо selector и
+      выходил из-под сверки молча: пометка observed стояла, а проверить её было
+      нечем.
   spec/models/account.schema.json:
     mechanism: verified
     note: >-
@@ -251,9 +321,12 @@ files:
     note: >-
       operations.py.
   spec/types.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
-      scripts/validate.js: каждый x-funora-type в схемах обязан быть в словаре.
+      extraction.py: таблица «знак валюты - код ISO 4217» из types.money.
+      Прежде файл был verified: имена типов проверял scripts/validate.js как
+      допустимые значения x-funora-type. Проверка осталась, а механизм у
+      записи может быть только один, и порождение сильнее.
   spec/version.yaml:
     mechanism: generated
     note: >-
