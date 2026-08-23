@@ -1723,6 +1723,20 @@ function checkServices(caps, errIds) {
 
   checkReversibility(ops)
 
+  // Перечень covers у записей реестра обязан называть существующие операции.
+  // Запись, покрывающая несуществующее, покрывает пустоту, а читатель считает
+  // её действующей.
+  const notImplemented = readYaml(path.join(SPEC, 'conformance', 'not-implemented.yaml')) || {}
+  for (const [name, entry] of Object.entries(notImplemented.items || {})) {
+    for (const one of ((entry || {}).covers) || []) {
+      if (!ops.has(String(one))) {
+        fail('spec/conformance/not-implemented.yaml',
+          `запись «${name}»: covers называет операцию «${one}», которой среди ` +
+          'объявленных нет. Покрытие пустоты читается как покрытие')
+      }
+    }
+  }
+
   // Какие возможности вправду привязаны хоть к одной операции.
   const bound = new Set()
   for (const { op } of ops.values()) {

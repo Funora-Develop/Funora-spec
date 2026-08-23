@@ -362,18 +362,21 @@ files:
     note: >-
       operations.py: безопасность, возможность, класс запроса.
     not_implemented:
+      - account_service_operations
       - session_health_cache
   spec/services/catalog.yaml:
     mechanism: generated
     note: >-
       operations.py.
     not_implemented:
+      - catalog_service_operations
       - catalog_categories_cache
   spec/services/chats.yaml:
     mechanism: generated
     note: >-
       operations.py.
     not_implemented:
+      - chats_service_operations
       - chats_send_governor
       - cursor_pagination
       - domain_not_found
@@ -382,6 +385,7 @@ files:
     note: >-
       operations.py.
     not_implemented:
+      - lots_service_operations
       - domain_write_operations
       - lots_deactivate_guards
       - lots_update_price_audit
@@ -390,12 +394,15 @@ files:
     note: >-
       operations.py.
     not_implemented:
+      - market_service_operations
       - market_snapshot_completeness
       - market_transport_lane
   spec/services/orders.yaml:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - orders_get_operation
   spec/types.yaml:
     mechanism: generated
     note: >-
