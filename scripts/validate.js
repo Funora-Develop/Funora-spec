@@ -467,8 +467,6 @@ function checkVersion() {
         + `spec_version «${v.spec_version}»`)
     }
   }
-    }
-  }
 }
 
 /**
