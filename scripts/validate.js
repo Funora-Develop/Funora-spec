@@ -470,6 +470,127 @@ function checkVersion() {
 }
 
 /**
+ * Сверяет носителей состояния заказа с таблицей соответствия.
+ *
+ * Одно и то же объявлено в двух местах одного файла: перечень классов у
+ * носителей в fields.status.carriers и он же по строкам в status_mapping. Проза
+ * тут ни при чём - оба перечня машиночитаемы, и не сличал их никто.
+ *
+ * Разойдись они, и SDK, взявший перечень носителей, не опознает ни одной
+ * строки: страница объявляется нечитаемой при неповреждённой разметке, продавец
+ * не узнаёт об оплате, товар не выдан.
+ *
+ * @returns {number} Сколько носителей проверено.
+ */
+function checkStatusCarriers() {
+  const rel = 'spec/extraction/orders.yaml'
+  const doc = readYaml(path.join(SPEC, 'extraction', 'orders.yaml')) || {}
+  const status = ((doc.fields || {}).status) || {}
+  const carriers = status.carriers || []
+  const mapping = doc.status_mapping || {}
+  const entries = mapping.entries || []
+
+  if (carriers.length === 0) {
+    fail(rel, 'у состояния заказа не объявлено ни одного носителя. Читать ' +
+      'состояние станет неоткуда, и каждая реализация выберет носителя сама')
+    return 0
+  }
+  if (entries.length === 0) {
+    fail(rel, 'status_mapping не объявляет ни одной записи, а носители ' +
+      'объявлены. Сверять перечни классов будет не с чем')
+    return 0
+  }
+
+  const primary = carriers.filter((one) => one.role === 'primary')
+  if (primary.length !== 1) {
+    fail(rel, `носителей с ролью primary ${primary.length}, а обязан быть ` +
+      'ровно один. Ноль - и читать состояние неоткуда; два - и при их ' +
+      'расхождении неизвестно, чьё слово главнее')
+  }
+
+  const same = (left, right) => {
+    const a = [...new Set(left)].sort()
+    const b = [...new Set(right)].sort()
+    return a.length === b.length && a.every((one, i) => one === b[i])
+  }
+
+  if (primary.length === 1) {
+    const declared = primary[0].values || []
+    const fromMapping = entries.map((one) => one.cell_class).filter(Boolean)
+    if (!same(declared, fromMapping)) {
+      fail(rel, `носитель primary объявляет классы [${[...declared].sort()}], ` +
+        `а status_mapping - [${[...new Set(fromMapping)].sort()}]. SDK, ` +
+        'взявший первый перечень, не опознает ни одной строки и объявит ' +
+        'страницу нечитаемой при неповреждённой разметке: продавец не узнает ' +
+        'об оплате, товар не выдан')
+    }
+  }
+
+  // Односторонний носитель свидетельствует только о наличии. В таблице ему
+  // отвечают ТОЛЬКО непустые модификаторы: запись с пустым модификатором и
+  // означает «этого носителя здесь нет».
+  for (const one of carriers.filter((c) => c.one_way === true)) {
+    const declared = one.values || []
+    const fromMapping = entries
+      .map((e) => e.row_class)
+      .filter((v) => v !== null && v !== undefined && String(v).length > 0)
+    if (!same(declared, fromMapping)) {
+      fail(rel, `односторонний носитель объявляет классы ` +
+        `[${[...declared].sort()}], а непустые модификаторы строк в ` +
+        `status_mapping - [${[...new Set(fromMapping)].sort()}]. Перекрёстная ` +
+        'сверка перестанет ловить переименование, ради которого второй ' +
+        'носитель и читается')
+    }
+  }
+
+  // Класс ячейки в таблице обязан быть свой у каждой записи: один класс, ведущий
+  // к двум состояниям, - прямое противоречие, и разрешается оно у каждой
+  // реализации по-своему, порядком перебора.
+  //
+  // Состояние тоже своё у каждой: две записи с одним состоянием означают, что
+  // второе состояние из перечисления не порождается вовсе. Перечень классов при
+  // этом остаётся прежним, и сверка множеств выше такую пропажу не ловит - это
+  // и показала мутация «из таблицы выпала запись».
+  for (const [field, what] of [['cell_class', 'класс ячейки'], ['status', 'состояние']]) {
+    const seen = new Map()
+    for (const one of entries) {
+      const value = one[field]
+      if (value === null || value === undefined) continue
+      if (seen.has(value)) {
+        fail(rel, `status_mapping объявляет ${what} «${value}» дважды. ` +
+          (field === 'cell_class'
+            ? 'Один класс, ведущий к двум состояниям, - противоречие, и каждая ' +
+              'реализация разрешит его своим порядком перебора'
+            : 'Два класса, ведущие к одному состоянию, означают, что какое-то ' +
+              'состояние перечисления не порождается вовсе - и заметить это ' +
+              'сверкой перечней нельзя, перечень остаётся прежним'))
+      }
+      seen.set(value, true)
+    }
+  }
+
+  // Запись таблицы обязана называть состояние, объявленное перечислением
+  // модели: иначе SDK вернёт значение, которого в его же типе нет.
+  const known = new Set()
+  const model = path.join(SPEC, 'models', 'order.schema.json')
+  if (fs.existsSync(model)) {
+    const schema = JSON.parse(fs.readFileSync(model, 'utf8'))
+    for (const one of ((schema.properties || {}).status || {}).enum || []) known.add(one)
+  }
+  if (known.size > 0) {
+    for (const one of entries) {
+      if (one.status && !known.has(one.status)) {
+        fail(rel, `status_mapping объявляет состояние «${one.status}», ` +
+          'которого нет в перечислении spec/models/order.schema.json. ' +
+          'Реализация вернула бы значение вне собственного типа')
+      }
+    }
+  }
+
+  return carriers.length
+}
+
+/**
  * Проверяет машиночитаемый состав версии события.
  *
  * Состав входит в отпечаток, а отпечаток - идентичность события. Объявление
@@ -1891,13 +2012,14 @@ function main() {
   checkBudget()
   const naming = checkNaming()
   const extraction = checkExtraction()
+  const carriers = checkStatusCarriers()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
   console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | файлов без своей версии: ${axes} | составов версии: ${revisionParts} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
-    `наблюдённых селекторов: ${extraction.selectors.length} | ` +
+    `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ` +
     `вердиктов: ${responseRows}`)
 
   if (warnings.length) {
