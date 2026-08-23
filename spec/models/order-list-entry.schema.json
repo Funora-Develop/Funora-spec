@@ -61,10 +61,15 @@
       "x-funora-observed-value": "flag",
       "description": "Присутствует ли контрагент на площадке, по классу-признаку."
     },
+    "price": {
+      "$ref": "https://funora.dev/spec/0.1.0/models/observed.schema.json",
+      "x-funora-observed-value": "money",
+      "description": "Сумма заказа с кодом валюты. Знак берётся из отдельного узла ячейки цены и переводится в код по таблице, наблюдённой переключателем площадки. Знак вне таблицы даёт ненаблюдённое значение, а не угаданный код: придуманное соответствие приписало бы чужую валюту чужому заказу молча."
+    },
     "amount_text": {
       "$ref": "https://funora.dev/spec/0.1.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
-      "description": "Сумма текстом, как показана. НЕ разобрана в минорные единицы: разделитель разрядов и позиция символа валюты наблюдались только для одной локали, и разбор в число был бы догадкой."
+      "description": "Сумма и знак текстом, как показаны. Поле остаётся рядом с price: по нему видно, как выглядит цена, которую разобрать не удалось - например в валюте, которой в таблице ещё нет."
     },
     "currency_symbol_text": {
       "$ref": "https://funora.dev/spec/0.1.0/models/observed.schema.json",
@@ -94,6 +99,7 @@
     "counterparty_name",
     "counterparty_href",
     "counterparty_online",
+    "price",
     "amount_text",
     "currency_symbol_text",
     "time_text",

@@ -321,9 +321,12 @@ files:
     note: >-
       operations.py.
   spec/types.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
-      scripts/validate.js: каждый x-funora-type в схемах обязан быть в словаре.
+      extraction.py: таблица «знак валюты - код ISO 4217» из types.money.
+      Прежде файл был verified: имена типов проверял scripts/validate.js как
+      допустимые значения x-funora-type. Проверка осталась, а механизм у
+      записи может быть только один, и порождение сильнее.
   spec/version.yaml:
     mechanism: generated
     note: >-
