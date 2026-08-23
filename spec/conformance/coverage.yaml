@@ -139,6 +139,7 @@ files:
       events.py: виды событий, ключи упорядочивания, параметры отпечатка.
     not_implemented:
       - dedup_eviction_policy
+      - first_sale_from_empty_start
       - event_identity_source
       - lane_dropping
       - ordering_causality
