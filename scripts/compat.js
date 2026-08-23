@@ -448,6 +448,68 @@ function diffVerdicts(was, now) {
 }
 
 /**
+ * Сравнивает свод правил канонической формы.
+ *
+ * Каноническая форма - основа отпечатка события. Смена любого её правила меняет
+ * байты, от которых берётся хэш, и обнуляет сохранённые ключи идемпотентности у
+ * ВСЕХ пользователей сразу. Класс canonical_form_change для этого объявлен, а
+ * порождало его только изменение canonical_form_version - то есть только тогда,
+ * когда о смене уже вспомнили сами.
+ *
+ * @param {object} was Свод до изменения.
+ * @param {object} now Свод после изменения.
+ * @returns {void}
+ */
+function diffCanonicalForm(was, now) {
+  const rel = 'spec/canonical-form.yaml'
+  // Пояснительные поля из сравнения исключены: правка объяснения ничего не
+  // ломает, а шум от неё научил бы не читать этот класс изменений.
+  const PROSE = new Set(['why', 'rationale', 'note', 'checked_by', 'example', 'summary'])
+
+  // Правила лежат СПИСКОМ, а личность у них - поле id. Ключевать индексом
+  // нельзя: перестановка двух правил выглядела бы как правка обоих, и класс
+  // изменения, обнуляющий все сохранённые ключи идемпотентности, кричал бы на
+  // косметике. Кричащий по пустякам класс перестают читать.
+  const flatten = (doc) => {
+    const out = new Map()
+    const rules = (doc || {}).rules || []
+    const list = Array.isArray(rules)
+      ? rules.map((body, i) => [(body || {}).id === undefined ? `#${i}` : String(body.id), body])
+      : Object.entries(rules)
+    for (const [id, body] of list) {
+      if (!body || typeof body !== 'object') {
+        out.set(String(id), JSON.stringify(body))
+        continue
+      }
+      const kept = {}
+      for (const [key, value] of Object.entries(body)) {
+        if (!PROSE.has(key)) kept[key] = value
+      }
+      out.set(String(id), JSON.stringify(kept, Object.keys(kept).sort()))
+    }
+    return out
+  }
+
+  const a = flatten(was)
+  const b = flatten(now)
+
+  for (const [id, body] of a) {
+    if (!b.has(id)) {
+      change('canonical_form_change', rel, `правило «${id}» канонической формы удалено`)
+      continue
+    }
+    if (b.get(id) !== body) {
+      change('canonical_form_change', rel, `правило «${id}» канонической формы изменилось`)
+    }
+  }
+  for (const id of b.keys()) {
+    if (!a.has(id)) {
+      change('canonical_form_change', rel, `добавлено правило «${id}» канонической формы`)
+    }
+  }
+}
+
+/**
  * Сравнивает словарь доменных типов.
  *
  * @param {object} was Прежнее содержимое spec/types.yaml.
@@ -680,7 +742,7 @@ function diffDelivery(was, now) {
  * @param {object} now Документ версии в рабочем дереве.
  * @returns {{was: string, now: string, bump: string}} Версии и объявленный bump.
  */
-function diffVersion(was, now) {
+function diffVersion(was, now, zeroMajor) {
   if (was && now && was.canonical_form_version !== now.canonical_form_version) {
     change('canonical_form_change', 'spec/version.yaml',
       `версия канонической формы изменилась с ${was.canonical_form_version} на ` +
@@ -704,7 +766,12 @@ function diffVersion(was, now) {
   // Правило нужно было завести: четыре захода подряд меняли контракт ломающе,
   // и объявить это было нечем - классификатор требовал major, а major в нуле
   // означал бы совсем не то.
-  if (wa === 0 && na === 0 && bump === 'minor') bump = 'major'
+  //
+  // Величина берётся из объявления, а не из литерала. Литерал повторял
+  // объявление и мог с ним разойтись молча: правило переписали бы на patch, а
+  // классификатор продолжал бы поднимать минор.
+  const declaredZero = (zeroMajor && zeroMajor.breaking_bumps) || 'minor'
+  if (wa === 0 && na === 0 && bump === declaredZero) bump = 'major'
 
   return { was: w, now: n, bump }
 }
@@ -855,6 +922,8 @@ function main() {
       diffVerdicts(was, now)
     } else if (rel.endsWith('runtime/budget.yaml')) {
       diffBudget(was, now)
+    } else if (rel.endsWith('spec/canonical-form.yaml')) {
+      diffCanonicalForm(was, now)
     } else if (rel.endsWith('spec/types.yaml')) {
       diffTypes(was, now)
     }
@@ -866,7 +935,7 @@ function main() {
 
   const vWas = parse('spec/version.yaml', readAt(base, 'spec/version.yaml'))
   const vNow = parse('spec/version.yaml', fs.readFileSync(path.join(ROOT, SPEC, 'version.yaml'), 'utf8'))
-  const v = diffVersion(vWas, vNow)
+  const v = diffVersion(vWas, vNow, rules.zero_major)
 
   console.log(`базовая точка: ${base}`)
   console.log(`версия: ${v.was} -> ${v.now} (объявленный bump: ${v.bump})`)

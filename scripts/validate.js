@@ -1480,6 +1480,61 @@ function checkChangeClasses() {
     }
   }
 
+  // Сторона классификации. Объявление говорит, ЧЬИМИ глазами смотрят на
+  // изменение, и от него зависит знак у половины таблицы. Читателя не было, и
+  // объявление могло разойтись с таблицей молча.
+  const SIDES = ['sdk_consumer', 'sdk_author']
+  const side = rules.classification_side
+  if (!SIDES.includes(side)) {
+    fail(rel, `classification_side «${side}» вне перечня ${SIDES.join(', ')}. ` +
+      'Значение вне перечня проходило любое, а от стороны зависит знак у ' +
+      'половины классов')
+  }
+  // Знаки объявлены для ОБЕИХ сторон, а не только для нынешней. Проверка,
+  // срабатывающая при одном значении, обходится сменой этого значения: объяви
+  // сторону авторской - и таблица с потребительскими знаками проходит молча.
+  // Ровно это и показала мутация.
+  //
+  // Со стороны потребителя ослабление гарантии ломающее, а усиление - нет. Со
+  // стороны автора знаки зеркальны: ему ломает то, что сужает его свободу.
+  const SIGNS = {
+    sdk_consumer: {
+      required_to_optional: 'major',
+      optional_to_required: 'minor',
+      narrow_type: 'major',
+      widen_type: 'major',
+    },
+    sdk_author: {
+      required_to_optional: 'minor',
+      optional_to_required: 'major',
+      narrow_type: 'minor',
+      widen_type: 'minor',
+    },
+  }
+  if (SIGNS[side]) {
+    const expected = SIGNS[side]
+    for (const [kind, want] of Object.entries(expected)) {
+      const got = ((rules.changes || {})[kind] || {}).bump
+      if (got && got !== want) {
+        fail(rel, `объявлена классификация со стороны «${side}», а класс ` +
+          `${kind} держит bump «${got}» вместо «${want}». Ослабление поля до ` +
+          'необязательного уехало бы минором, и обновившийся по минору ' +
+          'пользователь получил бы пустоту там, где его код читал значение ' +
+          'напрямую: в Python это падение в рантайме, в C - разыменование NULL')
+      }
+    }
+  }
+
+  // Правило нулевого мажора исполняет классификатор, и величину он теперь
+  // читает отсюда. Мусорное значение не совпало бы ни с чем, и ломающее
+  // изменение проехало бы без единого слова - хуже, чем неверное значение.
+  const zero = rules.zero_major || {}
+  if (!['major', 'minor', 'patch'].includes(zero.breaking_bumps)) {
+    fail(rel, `zero_major.breaking_bumps «${zero.breaking_bumps}» вне перечня ` +
+      'major, minor, patch. Классификатор сравнивает с этой величиной, и при ' +
+      'мусорной он не совпадёт ни с чем: ломающее изменение уедет молча')
+  }
+
   for (const [name, body] of Object.entries(rules.changes || {})) {
     if (!['major', 'minor', 'patch', 'forbidden'].includes(body.bump)) {
       fail(rel, `у класса «${name}» непонятный bump «${body.bump}»`)

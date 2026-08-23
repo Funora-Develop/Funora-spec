@@ -102,7 +102,19 @@ types:
         заказу чужую валюту при первой же смене настройки.
 
     language_mapping:
-      python: int + Decimal в helper
+      # Строка единственного существующего языка разложена на поля и приведена к
+      # правде. Стояло «int + Decimal в helper», а Decimal не встречается в
+      # реализации ни разу: обещан был помощник, которого нет. Теперь строка
+      # машиночитаема и сверяется с реализацией поведенчески.
+      #
+      # Остальные пять - намерение, а не контракт: реализаций этих языков не
+      # существует, и сверять их не с чем. Записаны в
+      # spec/conformance/not-implemented.yaml как money_mapping_for_absent_languages,
+      # чтобы читающий отличал намерение от действующего обязательства.
+      python:
+        storage: int
+        arithmetic: int
+        verified_by: tests/test_money.py эталонной реализации
       typescript: bigint
       java: long + BigDecimal в helper
       dotnet: long + decimal в helper
