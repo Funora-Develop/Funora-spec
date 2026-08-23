@@ -50,7 +50,10 @@ files:
       ревизиями. Плюс раздел deprecation: три класса требуют предварительной
       пометки x-funora-deprecated, и классификатор отклоняет удаление
       непомеченного либо помеченного позже, чем требует min_deprecation_minors.
-      Форму самой пометки сверяет scripts/validate.js.
+      Форму самой пометки сверяет scripts/validate.js. Плюс раздел conditions:
+      три условия правил вычисляются, а не только объявляются -
+      enum_has_unknown_fallback, migration_note и провизорность чисел бюджета.
+      Условие не выполнено - класс изменения поднимается до major.
   spec/conformance/coverage.yaml:
     mechanism: verified
     note: >-
