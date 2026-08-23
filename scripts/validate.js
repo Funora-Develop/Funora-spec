@@ -470,6 +470,110 @@ function checkVersion() {
 }
 
 /**
+ * Проверяет машиночитаемый состав версии события.
+ *
+ * Состав входит в отпечаток, а отпечаток - идентичность события. Объявление
+ * прозой сверить было нечем, и два объявления из восьми разошлись с реализацией
+ * молча: watch.primed обещал константу primed при настоящей cold_start, а
+ * snapshot.incomplete обещал три части при четырёх.
+ *
+ * Здесь проверяется ФОРМА объявления. Что реализация вправду складывает
+ * объявленное, проверяется поведенчески на её стороне: версия в событие не
+ * кладётся, и сверить состав можно только пересчётом отпечатка.
+ *
+ * @param {object} doc Разобранный spec/events/delivery.yaml.
+ * @returns {number} Сколько видов объявили состав.
+ */
+function checkRevisionParts(doc) {
+  const rel = 'spec/events/delivery.yaml'
+  const block = doc.revision_parts || {}
+  const sources = (doc.revision_source || {}).sources || {}
+  let declared = 0
+
+  if (!String(block.every_producible_kind_declares_one || '').trim()) {
+    fail(rel, 'revision_parts не объявляет правила о том, что состав обязан ' +
+      'быть у каждого порождаемого вида. Без правила вид заведут без состава, ' +
+      'и его версию не будет сверять никто')
+  }
+
+  for (const [kind, entry] of Object.entries(block)) {
+    if (kind === 'every_producible_kind_declares_one') continue
+    declared += 1
+
+    if (!(kind in sources)) {
+      fail(rel, `revision_parts объявляет состав для вида «${kind}», которого ` +
+        'нет в revision_source.sources. Состав без источника - объявление о ' +
+        'виде, которого контракт не знает')
+    }
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      fail(rel, `revision_parts[${kind}]: ожидалось отображение`)
+      continue
+    }
+
+    const hasParts = Array.isArray(entry.parts)
+    const hasExcuse = String(entry.not_in_payload || '').trim().length > 0
+    if (hasParts === hasExcuse) {
+      fail(rel, `revision_parts[${kind}]: обязано быть ровно одно из parts и ` +
+        'not_in_payload. Оба сразу означают два объявления одного состава, ни ' +
+        'одного - что состав не сверяет никто')
+      continue
+    }
+    if (!hasParts) continue
+
+    if (entry.parts.length === 0) {
+      fail(rel, `revision_parts[${kind}]: перечень частей пуст. Пустая версия ` +
+        'даёт один отпечаток всем событиям вида, и все они, кроме первого, ' +
+        'исчезнут как повторы')
+      continue
+    }
+
+    entry.parts.forEach((part, i) => {
+      const at = `revision_parts[${kind}].parts[${i}]`
+      if (!part || typeof part !== 'object' || Array.isArray(part)) {
+        fail(rel, `${at}: ожидалось отображение`)
+        return
+      }
+      const isConstant = 'constant' in part
+      const isFrom = 'from' in part
+      if (isConstant === isFrom) {
+        fail(rel, `${at}: часть обязана быть либо constant, либо from`)
+        return
+      }
+      if (isConstant) {
+        if (typeof part.constant !== 'string' || !part.constant.trim()) {
+          fail(rel, `${at}: constant обязан быть непустой строкой`)
+        }
+        if ('joined_by' in part) {
+          fail(rel, `${at}: joined_by у константы бессмыслен - склеивать нечего`)
+        }
+        return
+      }
+      const from = [].concat(part.from)
+      if (from.length === 0 || from.some((one) => typeof one !== 'string' || !one.trim())) {
+        fail(rel, `${at}: from обязан называть ключ нагрузки либо непустой ` +
+          'перечень ключей')
+        return
+      }
+      if (from.length > 1 && !String(part.joined_by || '').length) {
+        fail(rel, `${at}: несколько ключей нагрузки без joined_by. Склеить их ` +
+          'без объявленного знака каждая реализация склеит по-своему, и ' +
+          'отпечатки разойдутся')
+      }
+      if (from.length === 1 && 'joined_by' in part) {
+        fail(rel, `${at}: joined_by при единственном ключе бессмыслен`)
+      }
+      const sep = String(part.joined_by || '')
+      if (sep && (sep.includes('\u001e') || sep.includes('\u001f'))) {
+        fail(rel, `${at}: joined_by содержит разделитель частей либо полей ` +
+          'отпечатка. Внутренний знак, совпавший с внешним, даёт двум разным ' +
+          'событиям один отпечаток, и второе исчезает молча')
+      }
+    })
+  }
+  return declared
+}
+
+/**
  * Запрещает второе объявление версии события.
  *
  * Нормативный перечень один - revision_source.sources: там все виды сразу, и
@@ -1767,6 +1871,8 @@ function main() {
   const enums = checkEnumOpenness()
   const axes = checkSingleVersionAxis()
   checkNoSecondRevisionDeclaration()
+  const revisionParts = checkRevisionParts(
+    readYaml(path.join(SPEC, 'events', 'delivery.yaml')) || {})
   const marks = checkDeprecationMarks(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const errorNames = checkErrorNamesResolve(
@@ -1787,7 +1893,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | файлов без своей версии: ${axes} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | файлов без своей версии: ${axes} | составов версии: ${revisionParts} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
