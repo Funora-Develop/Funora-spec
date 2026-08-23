@@ -89,10 +89,12 @@ function showType(value) {
  *   классам с requires_deprecation: пометка ставится на само объявление и
  *   вместе с ним исчезает, значит искать её надо в базовой точке и в момент,
  *   когда объявление ещё под рукой.
+ * @param {object|null} [now] Объявление, каким оно стало. Нужно классам с
+ *   requires: условие вычисляется по выпускаемому объявлению.
  * @returns {void}
  */
-function change(kind, where, what, was) {
-  changes.push({ kind, where, what, was: was || null })
+function change(kind, where, what, was, now) {
+  changes.push({ kind, where, what, was: was || null, now: now || null })
 }
 
 /**
@@ -107,6 +109,64 @@ function git(args) {
   } catch (e) {
     return null
   }
+}
+
+/**
+ * Вычисляет условия, объявленные у классов изменений.
+ *
+ * Два условия были объявлены и не вычислялись ничем. Правило читалось как
+ * «допустимо ТОЛЬКО если», а работало как «допустимо».
+ *
+ * @param {object} c Изменение.
+ * @param {object} rules Разобранный spec/compat-rules.yaml.
+ * @param {object} budget Разобранный spec/runtime/budget.yaml из рабочего дерева.
+ * @param {object} version Разобранный spec/version.yaml из рабочего дерева.
+ * @returns {string|null} Причина, по которой условие не выполнено, либо null.
+ */
+function unmetCondition(c, rules, budget, version) {
+  const rule = (rules.changes || {})[c.kind] || {}
+
+  if (rule.requires_migration_note === true) {
+    const at = (version && version.spec_version) || ''
+    const notes = ((version || {}).migration_notes || {})[at] || []
+    const field = (c.now || {}).field || ''
+    const found = [].concat(notes).some((one) => {
+      const about = String((one || {}).about || '')
+      return about.includes(field) && String((one || {}).what || '').trim()
+    })
+    if (!found) {
+      return `в spec/version.yaml нет заметки о переносе под версию «${at}», ` +
+        `называющей поле «${field}». Читающий модель не ломается, ломается ` +
+        'собирающий объект сам - в тестах и фикстурах, - а класс изменения ' +
+        'минор, и в перечне он этого не увидит'
+    }
+    return null
+  }
+
+  if (rule.requires === 'enum_has_unknown_fallback') {
+    const node = c.now || {}
+    if (node['x-funora-closed'] !== false) {
+      return 'перечисление не объявлено открытым: значения придумываем мы, и ' +
+        'новое значение ломает исчерпывающий разбор у пользователя без всякого ' +
+        'запасного варианта'
+    }
+    const fallback = node['x-funora-unknown-fallback']
+    if (!fallback || !(node.enum || []).includes(fallback)) {
+      return 'у открытого перечисления нет запасного значения, куда деть ' +
+        'незнакомое'
+    }
+    return null
+  }
+
+  if (rule.conditional_on === 'version.provisional') {
+    if (!budget || budget.provisional !== true) {
+      return 'пометка provisional снята: числа бюджета перестали быть ' +
+        'уточняемыми наблюдением, и их смена стала сломом контракта'
+    }
+    return null
+  }
+
+  return null
 }
 
 /**
@@ -423,8 +483,10 @@ function diffSchema(rel, was, now) {
 
   for (const name of Object.keys(nowProps)) {
     if (!(name in wasProps)) {
+      // Имя поля передаётся дальше: условие migration_note ищет заметку,
+      // чей about его называет.
       change(nowReq.has(name) ? 'add_required_field' : 'add_optional_field', rel,
-        `добавлено поле ${name}`)
+        `добавлено поле ${name}`, null, { field: name })
       continue
     }
     const a = wasProps[name]
@@ -461,7 +523,13 @@ function diffSchema(rel, was, now) {
     }
     const wasEnum = new Set(a.enum || [])
     const nowEnum = new Set(b.enum || [])
-    for (const v of nowEnum) if (!wasEnum.has(v)) change('add_enum_value', rel, `поле ${name}: добавлено значение ${v}`)
+    for (const v of nowEnum) {
+      if (wasEnum.has(v)) continue
+      // Условие enum_has_unknown_fallback вычисляется по НОВОМУ
+      // объявлению: важно, есть ли запасное значение у того, что
+      // выпускается, а не у того, что было.
+      change('add_enum_value', rel, `поле ${name}: добавлено значение ${v}`, null, b)
+    }
     for (const v of wasEnum) {
       if (nowEnum.has(v)) continue
       // Значение перечисления - строка, повесить ключ на неё негде.
@@ -810,13 +878,35 @@ function main() {
     process.exit(0)
   }
 
+  // Условия правил. Класс, чьё условие не выполнено, перестаёт быть послаблением:
+  // add_enum_value допустим минором ТОЛЬКО при запасном значении, а смена чисел
+  // бюджета - ТОЛЬКО пока они помечены провизорными.
+  let budgetNow = null
+  try {
+    budgetNow = yaml.load(fs.readFileSync(path.join(ROOT, SPEC, 'runtime', 'budget.yaml'), 'utf8'))
+  } catch (e) {
+    budgetNow = null
+  }
+  const unmet = []
+
   let required = 'none'
   const byKind = new Map()
   for (const c of changes) {
-    const b = bumpOf(c.kind)
+    let b = bumpOf(c.kind)
+    const why = unmetCondition(c, rules, budgetNow, vNow)
+    if (why) {
+      unmet.push(`${c.where}: ${c.what} - ${why}`)
+      if (RANK[b] < RANK['major']) b = 'major'
+    }
     if (RANK[b] > RANK[required]) required = b
     if (!byKind.has(c.kind)) byKind.set(c.kind, [])
     byKind.get(c.kind).push(c)
+  }
+
+  if (unmet.length) {
+    console.log('')
+    console.log(`условий правил не выполнено: ${unmet.length} (класс поднят до major)`)
+    for (const one of unmet) console.log(`  ${one}`)
   }
 
   console.log('')

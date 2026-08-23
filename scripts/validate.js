@@ -470,6 +470,73 @@ function checkVersion() {
 }
 
 /**
+ * Требует у каждого перечисления объявленной открытости.
+ *
+ * Перечисление либо закрыто - значения придумываем мы, - либо открыто, и тогда
+ * значения зеркалят площадку и растут без нашего участия. Разница не
+ * косметическая: у открытого обязано быть запасное значение, иначе новый статус
+ * на стороне площадки ломает исчерпывающий разбор У ПОЛЬЗОВАТЕЛЯ.
+ *
+ * Пометка стояла у двадцати одного перечисления из двадцати двух. Требовать её
+ * было нечему, и двадцать второе - как раз открытое - осталось без неё.
+ *
+ * @returns {number} Сколько перечислений проверено.
+ */
+function checkEnumOpenness() {
+  const CLOSED = 'x-funora-closed'
+  const FALLBACK = 'x-funora-unknown-fallback'
+  let checked = 0
+
+  /**
+   * Обходит узел схемы вглубь.
+   *
+   * @param {string} rel Файл.
+   * @param {string} at Путь до узла.
+   * @param {*} node Узел.
+   * @returns {void}
+   */
+  const visit = (rel, at, node) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => visit(rel, `${at}[${i}]`, item))
+      return
+    }
+    if (Array.isArray(node.enum)) {
+      checked += 1
+      const closed = node[CLOSED]
+      if (closed !== true && closed !== false) {
+        fail(rel, `${at}: перечисление без пометки ${CLOSED}. Закрыто оно или ` +
+          'открыто - решает, ломает ли пользователя новое значение, и решать ' +
+          'это каждой из шести реализаций по-своему нельзя')
+      } else if (closed === false) {
+        const fallback = node[FALLBACK]
+        if (!fallback) {
+          fail(rel, `${at}: открытое перечисление не называет запасного ` +
+            `значения в ${FALLBACK}. Новое значение площадки станет ошибкой ` +
+            'разбора у пользователя, и случится это без нашего участия')
+        } else if (!node.enum.includes(fallback)) {
+          fail(rel, `${at}: запасным названо «${fallback}», а в enum его нет. ` +
+            'Запасное значение, которого не существует, не запасное')
+        }
+      }
+    }
+    for (const [key, value] of Object.entries(node)) {
+      visit(rel, at ? `${at}.${key}` : key, value)
+    }
+  }
+
+  const files = [
+    ...walk(path.join(SPEC, 'models'), '.schema.json'),
+    ...walk(path.join(SPEC, 'events'), '.schema.json'),
+  ]
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    visit(rel, '', JSON.parse(fs.readFileSync(file, 'utf8')))
+  }
+  return checked
+}
+
+/**
  * Проверяет пометки устаревшего.
  *
  * Пометка - предусловие удаления: классификатор отклоняет удаление
@@ -1613,6 +1680,7 @@ function main() {
   const confidences = checkConfidence()
   checkVersion()
   const symbols = checkCurrencySymbols()
+  const enums = checkEnumOpenness()
   const marks = checkDeprecationMarks(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const errorNames = checkErrorNamesResolve(
@@ -1633,7 +1701,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
