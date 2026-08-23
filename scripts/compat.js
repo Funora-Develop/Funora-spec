@@ -412,6 +412,64 @@ function diffBudget(was, now) {
 }
 
 /**
+ * Сравнивает предусловия одной операции.
+ *
+ * Предусловия не сравнивались вовсе, при том что именно они решают, когда вызов
+ * отклоняется. Появление обязательного отклоняет вызовы, которые вчера
+ * проходили; снятие убирает отказ, на который вызывающий построил защиту, - и
+ * второе опаснее, потому что не проявляется отказом, а проявляется испорченными
+ * данными.
+ *
+ * @param {string} rel Файл службы.
+ * @param {string} id Идентификатор операции.
+ * @param {object[]} was Предусловия до изменения.
+ * @param {object[]} now Предусловия после изменения.
+ * @returns {void}
+ */
+function diffPreconditions(rel, id, was, now) {
+  const byId = (list) => {
+    const out = new Map()
+    for (const one of list || []) {
+      if (one && one.id !== undefined) out.set(String(one.id), one)
+    }
+    return out
+  }
+  const before = byId(was)
+  const after = byId(now)
+
+  for (const [name, one] of after) {
+    if (before.has(name)) continue
+    if (one.required === true && one.kind === 'state') {
+      // Условие на стороне площадки вызывающий не подаёт и повлиять на него не
+      // может. Его появление в контракте описывает бывшее, а не вводит новое.
+      change('document_state_precondition', rel,
+        `${id}: описано предусловие площадки «${name}»`)
+    } else if (one.required === true) {
+      change('add_required_precondition', rel,
+        `${id}: появилось обязательное предусловие «${name}», которое вызывающий ` +
+        'обязан подать')
+    } else {
+      change('add_optional_field', rel,
+        `${id}: появилось необязательное предусловие «${name}»`)
+    }
+  }
+  for (const name of before.keys()) {
+    if (!after.has(name)) {
+      change('remove_precondition', rel, `${id}: снято предусловие «${name}»`)
+    }
+  }
+  for (const [name, one] of after) {
+    const old = before.get(name)
+    if (!old) continue
+    if (Boolean(old.required) !== Boolean(one.required)) {
+      change('change_precondition', rel,
+        `${id}: предусловие «${name}» стало ` +
+        `${one.required ? 'обязательным' : 'необязательным'}`)
+    }
+  }
+}
+
+/**
  * Сравнивает нормативный порядок шагов классификации.
  *
  * Порядок решает, какой из двух сработавших признаков даст вердикт, и смена его
@@ -728,6 +786,8 @@ function diffService(rel, was, now) {
 
   for (const [id, op] of Object.entries(b)) {
     if (!(id in a)) { change('add_operation', rel, `добавлена операция ${id}`); continue }
+
+    diffPreconditions(rel, id, a[id].preconditions, op.preconditions)
 
     for (const [field, kind, why] of SCALAR_FIELDS) {
       if (a[id][field] === op[field]) continue

@@ -304,10 +304,38 @@ function capabilitiesCases(version) {
     }
   }
 
+  // Состав веток сверяется с требованием из spec/capabilities.yaml, а не с
+  // самим набором. Прежде здесь стояло «перечень непуст», и этого мало: убери
+  // ветку unsupported - двадцать два вектора исчезают, а раннер печатает
+  // «отказов: 0» и выходит с нулём. Набор, который вправе тихо уменьшиться,
+  // показывает согласие там, где перестал спрашивать.
+  const required = (caps.conformance_requirements || {})
+  const wanted = required.per_capability_branches || []
+  if (wanted.length === 0) {
+    refuse('spec/capabilities.yaml: не объявлено conformance_requirements.'
+      + 'per_capability_branches. Без него набор вправе уменьшиться до одной '
+      + 'ветки, и никто не заметит')
+  }
+
   const branches = (doc.per_capability || {}).branches || []
-  if (branches.length === 0) {
-    refuse('capabilities: per_capability.branches пуст - требование спецификации '
-      + 'о векторе на каждую возможность не исполнялось бы')
+  for (const want of wanted) {
+    const got = branches.find((one) => one.state === want.state)
+    if (!got) {
+      refuse(`capabilities: в per_capability.branches нет ветки «${want.state}», `
+        + 'а spec/capabilities.yaml объявляет её обязательной. Без неё набор '
+        + 'перестаёт спрашивать у реализаций, что они делают в этом состоянии, '
+        + 'и продолжает показывать согласие')
+      continue
+    }
+    if (got.allowed !== want.allowed) {
+      refuse(`capabilities: ветка «${want.state}» объявлена allowed: `
+        + `${got.allowed}, а требуется ${want.allowed}`)
+    }
+    if (want.typed_error === 'required' && !got.error) {
+      refuse(`capabilities: ветка «${want.state}» не называет класса ошибки, `
+        + 'а требование объявляет его обязательным. Вызывающий пишет except по '
+        + 'классу, и «просто отклонено» ему нечем ловить')
+    }
   }
   for (const id of ids) {
     for (const branch of branches) {
@@ -315,6 +343,13 @@ function capabilitiesCases(version) {
     }
   }
 
+  // Начальное состояние тоже обязано проверяться, и обязанность объявлена не
+  // здесь: check: false молча уносил двадцать два случая.
+  if (required.initial_state_required === true && (doc.initial_state || {}).check !== true) {
+    refuse('capabilities: spec/capabilities.yaml требует проверки начального '
+      + 'состояния, а набор объявляет initial_state.check не равным true. '
+      + 'Состояние до первой пробы решает поведение при самом первом вызове')
+  }
   if ((doc.initial_state || {}).check === true) {
     for (const id of ids) {
       const initial = (caps.capabilities[id] || {}).initial
