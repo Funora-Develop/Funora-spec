@@ -29,7 +29,12 @@ files:
   spec/capabilities.yaml:
     mechanism: generated
     note: >-
-      capabilities.py: перечисление возможностей, начальные состояния, правило допустимости вызова.
+      capabilities.py: перечисление возможностей, начальные состояния, правило
+      допустимости вызова. Плюс scripts/validate.js: описательная таблица
+      состояний сверяется с нормативными предикатами - признак opt_in_required
+      обязан точно совпасть со списком requires_opt_in, is_usable не смеет
+      называть неработающее состояние, списки не пересекаются, а состояние вне
+      обоих допустимо ровно одно - unsupported.
   spec/canonical-form.yaml:
     mechanism: verified
     note: >-
