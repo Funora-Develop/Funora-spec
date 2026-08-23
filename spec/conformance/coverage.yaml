@@ -92,6 +92,8 @@ files:
     mechanism: generated
     note: >-
       errors.py: иерархия ошибок, коды ABI, признаки повторяемости.
+    not_implemented:
+      - parse_error_class
   spec/events/chat-unread-changed.schema.json:
     mechanism: verified
     note: >-
@@ -100,6 +102,10 @@ files:
     mechanism: generated
     note: >-
       events.py: виды событий, ключи упорядочивания, параметры отпечатка.
+    not_implemented:
+      - event_identity_source
+      - lane_dropping
+      - ordering_causality
   spec/events/envelope.schema.json:
     mechanism: verified
     note: >-
@@ -171,6 +177,8 @@ files:
       местах - объявлением здесь и литералом в коде, - и расхождение молчало:
       проверки гоняют разбор по снимкам, а текст спецификации с кодом не
       сверял никто.
+    not_implemented:
+      - chats_sending_form
   spec/extraction/observed-selectors.json:
     mechanism: verified
     note: >-
@@ -212,6 +220,8 @@ files:
       того, узел positions использовал синоним location вместо selector и
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
+    not_implemented:
+      - updates_channel
   spec/models/account.schema.json:
     mechanism: verified
     note: >-
@@ -292,10 +302,21 @@ files:
     mechanism: generated
     note: >-
       retry.py: политики повторов и пределы.
+    not_implemented:
+      - retry_conformance_suite
+      - single_flight_reauth
   spec/runtime/budget.yaml:
     mechanism: generated
     note: >-
       budget.py: вёдра, пределы, расписание. Генератор отказывает на неизвестном ключе раздела limits.
+    not_implemented:
+      - admission_control
+      - budget_account_bucket
+      - budget_exact_trace
+      - budget_request_preemption
+      - handler_timeout_for_plain_calls
+      - outbound_governor
+      - write_bucket_unit
   spec/services/account.yaml:
     mechanism: generated
     note: >-
@@ -304,18 +325,31 @@ files:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - catalog_categories_cache
   spec/services/chats.yaml:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - chats_send_governor
+      - cursor_pagination
+      - domain_not_found
   spec/services/lots.yaml:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - domain_write_operations
+      - lots_deactivate_guards
+      - lots_update_price_audit
   spec/services/market.yaml:
     mechanism: generated
     note: >-
       operations.py.
+    not_implemented:
+      - market_snapshot_completeness
+      - market_transport_lane
   spec/services/orders.yaml:
     mechanism: generated
     note: >-
@@ -327,6 +361,8 @@ files:
       Прежде файл был verified: имена типов проверял scripts/validate.js как
       допустимые значения x-funora-type. Проверка осталась, а механизм у
       записи может быть только один, и порождение сильнее.
+    not_implemented:
+      - instant_attributes
   spec/version.yaml:
     mechanism: generated
     note: >-

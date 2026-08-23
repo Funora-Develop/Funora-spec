@@ -160,6 +160,48 @@ function checkCurrencySymbols() {
 }
 
 /**
+ * Ищет в текстах спецификации имена классов ошибок, которых нет.
+ *
+ * Класс убирают из errors.yaml, а имя остаётся в чужом описании, в правиле
+ * извлечения, в поле why вектора - и читается как обещание. Сегодня так
+ * осталось четыре ссылки на давно переименованную запись, и нашлись они
+ * разбором, а не сборкой.
+ *
+ * Ищется по форме имени, а не по перечню мест: перечень мест устаревает первым.
+ *
+ * @param {Set<string>} known Имена объявленных классов ошибок.
+ * @returns {number} Сколько упоминаний проверено.
+ */
+function checkErrorNamesResolve(known) {
+  const NAME = /\b([A-Z][A-Za-z0-9]*Error)\b/g
+  let checked = 0
+
+  const files = [...walk(SPEC, '.yaml'), ...walk(SPEC, '.json')]
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    // errors.yaml объявляет их сам, и там имя не ссылка, а определение.
+    if (rel.endsWith('spec/errors/errors.yaml')) continue
+
+    const text = fs.readFileSync(file, 'utf8')
+    const seen = new Set()
+    let hit = NAME.exec(text)
+    while (hit !== null) {
+      seen.add(hit[1])
+      hit = NAME.exec(text)
+    }
+    for (const name of seen) {
+      checked += 1
+      if (!known.has(name)) {
+        fail(rel, `упомянут класс ошибки «${name}», которого в errors.yaml нет. ` +
+          `Имя убранного класса читается как обещание: вызывающий напишет except ` +
+          `и будет ждать того, чего не бывает`)
+      }
+    }
+  }
+  return checked
+}
+
+/**
  * Проверяет одно свойство схемы на соответствие правилам скаляров и перечислений.
  *
  * @param {string} file Относительный путь к файлу схемы, для сообщения об ошибке.
@@ -398,13 +440,31 @@ function checkVersion() {
       'обязан объявить, на каких локалях он проверен')
   }
 
-  // Версия в моделях не должна опережать объявленную.
-  for (const file of walk(path.join(SPEC, 'models'), '.schema.json')) {
+  // Штамп версии обязан стоять В КАЖДОЙ схеме и совпадать с объявленной.
+  //
+  // Прежде обходились только spec/models, а схем со штампом тридцать четыре:
+  // семнадцать событийных не проверял никто. Подъём версии правится вручную во
+  // всех файлах сразу, и забытая половина разошлась бы молча - именно тот
+  // случай, ради которого штамп и стоит.
+  //
+  // Отсутствие штампа - тоже нарушение. Прежнее условие пропускало схему без
+  // него: она выглядела бы вечно совместимой.
+  const stamped = [
+    ...walk(path.join(SPEC, 'models'), '.schema.json'),
+    ...walk(path.join(SPEC, 'events'), '.schema.json'),
+  ]
+  for (const file of stamped) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
     const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
     const declared = doc['x-funora-spec-version']
-    if (declared && declared !== v.spec_version) {
-      fail(path.relative(ROOT, file).replace(/\\/g, '/'),
-        `x-funora-spec-version «${declared}» не совпадает с spec_version «${v.spec_version}»`)
+    if (!declared) {
+      fail(rel, 'нет x-funora-spec-version. Схема без штампа выглядит вечно '
+        + 'совместимой: подъём версии её не касается, и расхождение молчит')
+      continue
+    }
+    if (declared !== v.spec_version) {
+      fail(rel, `x-funora-spec-version «${declared}» не совпадает с `
+        + `spec_version «${v.spec_version}»`)
     }
   }
 }
@@ -816,6 +876,43 @@ function checkNotImplementedLinks() {
         `с declared_in: ${file} там нет. Ссылка на несуществующее выглядит ` +
         `выполненным обещанием`)
     }
+  }
+
+  // Связь в ОБЕ стороны, и вторая половина важнее первой. Пока ссылок не было,
+  // запись реестра можно было вырезать, и не замечал этого никто: проверки
+  // перебирают items, а удалённая запись не перебирается. Обещание исчезало
+  // вместе с обещанием о нём.
+  //
+  // Ссылка машиночитаемая, а не прозой в note. Проза разрешается только в
+  // сторону «файл -> реестр»: по ней нельзя спросить, названа ли ЭТА запись.
+  const named = new Map()
+  for (const [file, body] of Object.entries(coverage.files || {})) {
+    for (const key of (body || {}).not_implemented || []) {
+      if (!items[key]) {
+        fail(rel, `запись покрытия «${file}» называет неисполненным «${key}», ` +
+          `которого в реестре нет. Либо запись сняли и ссылку забыли, либо ` +
+          `ссылка написана с опечаткой`)
+        continue
+      }
+      const where = String(items[key].declared_in || '').split('#')[0]
+      if (where !== file) {
+        fail(rel, `«${key}» назван в покрытии файла «${file}», а объявлен в ` +
+          `«${where}». Ссылка обязана стоять там, где механизм объявлен`)
+      }
+      if (named.has(key)) {
+        fail(rel, `«${key}» назван дважды: в «${named.get(key)}» и в «${file}»`)
+      }
+      named.set(key, file)
+    }
+  }
+
+  for (const key of Object.keys(items)) {
+    if (named.has(key)) continue
+    const where = String(items[key].declared_in || '').split('#')[0]
+    fail('spec/conformance/not-implemented.yaml',
+      `запись «${key}» не держится ничем: в покрытии файла «${where}» её имени ` +
+      `нет. Такую запись можно вырезать, и ни одна проверка этого не заметит - ` +
+      `обещание исчезнет вместе с обещанием о нём`)
   }
 
   return checked
@@ -1333,6 +1430,8 @@ function main() {
   const confidences = checkConfidence()
   checkVersion()
   const symbols = checkCurrencySymbols()
+  const errorNames = checkErrorNamesResolve(
+    new Set(Object.keys(readYaml(path.join(SPEC, 'errors', 'errors.yaml')).errors || {})))
   const models = checkModels()
   const errors = checkErrors()
 
@@ -1349,7 +1448,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
