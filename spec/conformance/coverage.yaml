@@ -42,6 +42,8 @@ files:
       называть неработающее состояние, списки не пересекаются, а состояние вне
       обоих допустимо ровно одно - unsupported.
     not_implemented:
+      - orders_events_capability
+      - reviews_service
       - probe_laziness
       - probe_single_flight
       - capability_profile
