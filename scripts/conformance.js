@@ -212,6 +212,130 @@ function resumeCases(version) {
 }
 
 /**
+ * Собирает случаи набора capabilities.
+ *
+ * Проверяется решение о допуске, а не проба: проба ходит на площадку, и
+ * воспроизвести её вектором нельзя. Решение объявлено нормативным в predicates
+ * и обязано совпадать у всех реализаций - разойдись они, один и тот же код на
+ * двух SDK уйдёт в разные ветки, и вторая сделает не то, что задумано, молча.
+ *
+ * Случаи трёх видов. Таблица решений - полный перебор пяти состояний на два
+ * значения включения. Перебор по каждой возможности - требование
+ * spec/capabilities.yaml#requirements, и ловит он реализацию, у которой одна
+ * возможность обработана особо. Начальное состояние - то, с чего возможность
+ * стартует до первой пробы.
+ *
+ * @param {number} version Версия протокола.
+ * @returns {object[]} Пары «что уезжает реализации» и «чем сверять».
+ */
+function capabilitiesCases(version) {
+  const doc = vectorFile('capabilities.vectors.json', version)
+  if (doc === null) return []
+
+  const caps = yaml.load(fs.readFileSync(path.join(SPEC, 'capabilities.yaml'), 'utf8'))
+  const states = Object.keys(caps.states || {})
+  const out = []
+
+  /**
+   * Превращает строку решения в пару «спросить, судить».
+   *
+   * @param {string} id Идентификатор случая.
+   * @param {string} capability Возможность, на которой проверяется решение.
+   * @param {object} row Строка вектора.
+   * @returns {object} Пара.
+   */
+  const decisionCase = (id, capability, row) => {
+    if (row.allowed !== true && row.allowed !== false) {
+      refuse(`capabilities «${id}»: строка не объявила allowed`)
+    }
+    if (row.allowed === false && !row.error) {
+      refuse(`capabilities «${id}»: отказ объявлен без класса ошибки. `
+        + 'Вызывающий пишет except по классу, и «просто отклонено» ему нечем ловить')
+    }
+    if (row.allowed === true && row.error) {
+      refuse(`capabilities «${id}»: вызов разрешён и назван класс ошибки. `
+        + 'Одно из двух неверно')
+    }
+    if (!states.includes(row.state)) {
+      refuse(`capabilities «${id}»: состояние «${row.state}» не объявлено `
+        + 'в spec/capabilities.yaml')
+    }
+    return {
+      ask: {
+        id,
+        suite: 'capabilities',
+        kind: 'capability_decision',
+        capability,
+        state: row.state,
+        opted_in: row.opted_in === true,
+        ...(row.why === undefined ? {} : { why: row.why }),
+      },
+      judge: {
+        value: row.allowed ? 'разрешено' : row.error,
+      },
+    }
+  }
+
+  // Первая возможность перечня служит носителем таблицы решений: решение от
+  // конкретной возможности не зависит, и это как раз проверяет перебор ниже.
+  const ids = Object.keys(caps.capabilities || {})
+  if (ids.length === 0) refuse('capabilities: в spec/capabilities.yaml нет ни одной возможности')
+  const carrier = ids[0]
+
+  const rows = (doc.decision || {}).rows || []
+  const seen = new Set()
+  for (const row of rows) {
+    seen.add(`${row.state}/${row.opted_in === true}`)
+    out.push(decisionCase(
+      `capabilities/решение/${row.state}/${row.opted_in === true ? 'включено' : 'не включено'}`,
+      carrier, row))
+  }
+
+  // Перебор обязан быть ПОЛНЫМ. Пропущенная строка - это состояние, о котором
+  // набор молчит, и молчит он ровно там, где реализации расходятся: у
+  // experimental признак usable равен true, и без строки «не включено» решение
+  // по признаку вместо предиката проходит.
+  for (const state of states) {
+    for (const opted of [true, false]) {
+      if (!seen.has(`${state}/${opted}`)) {
+        refuse(`capabilities: в таблице решений нет строки «${state}, `
+          + `${opted ? 'включено' : 'не включено'}». Перебор обязан быть полным`)
+      }
+    }
+  }
+
+  const branches = (doc.per_capability || {}).branches || []
+  if (branches.length === 0) {
+    refuse('capabilities: per_capability.branches пуст - требование спецификации '
+      + 'о векторе на каждую возможность не исполнялось бы')
+  }
+  for (const id of ids) {
+    for (const branch of branches) {
+      out.push(decisionCase(`capabilities/${id}/${branch.state}`, id, branch))
+    }
+  }
+
+  if ((doc.initial_state || {}).check === true) {
+    for (const id of ids) {
+      const initial = (caps.capabilities[id] || {}).initial
+      if (!initial) refuse(`capabilities «${id}»: не объявлено начальное состояние`)
+      out.push({
+        ask: {
+          id: `capabilities/${id}/начальное`,
+          suite: 'capabilities',
+          kind: 'capability_initial',
+          capability: id,
+          why: 'Состояние до первой пробы решает поведение при самом первом вызове.',
+        },
+        judge: { value: initial },
+      })
+    }
+  }
+
+  return out
+}
+
+/**
  * Собирает случаи набора rate-budget.
  *
  * @param {number} version Версия протокола.
@@ -454,6 +578,7 @@ function main() {
     ...canonicalCases(version),
     ...resumeCases(version),
     ...rateBudgetCases(version),
+    ...capabilitiesCases(version),
   ]
   const answers = ask(command, cases)
 
