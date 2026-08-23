@@ -543,6 +543,86 @@ function checkSinglePipelineDeclaration() {
 }
 
 /**
+ * Сверяет двустороннюю связь возможности с полем модели.
+ *
+ * Возможность вправе утверждать нечто о поле модели - например, что отсутствие
+ * значения означает «не наблюдали», а не ноль. Утверждение прозой сверить
+ * нечем: сними пометку со схемы, и примечание останется обещать различие,
+ * которого нет.
+ *
+ * Связь двусторонняя нарочно. Указатель, срабатывающий только при своём
+ * присутствии, снимается вместе с собой: удали его - и проверять станет нечего,
+ * а обе стороны останутся зелёными. Обратная ссылка в схеме этого не даёт.
+ *
+ * @param {object} doc Разобранный spec/capabilities.yaml.
+ * @returns {number} Сколько связей проверено.
+ */
+function checkCapabilityModelLinks(doc) {
+  const rel = 'spec/capabilities.yaml'
+  const POINTER = 'model_field_declared_in'
+  const BACK = 'x-funora-governed-by'
+  let checked = 0
+
+  const forward = new Map()
+  for (const [id, c] of Object.entries(doc.capabilities || {})) {
+    const target = (c || {})[POINTER]
+    if (!target) continue
+    checked += 1
+    forward.set(id, String(target))
+
+    const m = /^(spec\/models\/[\w.-]+\.schema\.json)#properties\.([\w]+)$/.exec(String(target))
+    if (!m) {
+      fail(rel, `${id}: указатель ${POINTER} «${target}» не разбирается. ` +
+        'Ожидается вид spec/models/файл.schema.json#properties.имя')
+      continue
+    }
+    const file = path.join(ROOT, m[1])
+    if (!fs.existsSync(file)) {
+      fail(rel, `${id}: указатель ведёт в файл «${m[1]}», которого нет`)
+      continue
+    }
+    const schema = JSON.parse(fs.readFileSync(file, 'utf8'))
+    const field = ((schema.properties || {})[m[2]])
+    if (!field) {
+      fail(rel, `${id}: указатель ведёт на поле «${m[2]}», которого в схеме нет`)
+      continue
+    }
+    if (field['x-funora-observability'] !== 'unobserved-possible') {
+      fail(rel, `${id}: возможность указывает на поле «${m[2]}», а у того нет ` +
+        'пометки unobserved-possible. Автор второго SDK, читающий схему как ' +
+        'контракт, отдаст пустое значение неотличимо от нуля, и бот, считающий ' +
+        'от остатка, примет пустой счёт за нулевой')
+    }
+    if (field[BACK] !== id) {
+      fail(rel, `${id}: поле «${m[2]}» не указывает обратно на эту возможность ` +
+        `(стоит «${field[BACK] || 'ничего'}»). Односторонний указатель ` +
+        'снимается вместе с собой, и проверять станет нечего')
+    }
+  }
+
+  // Обратная сторона: поле, назвавшее возможность, обязано быть ею названо.
+  for (const file of walk(path.join(SPEC, 'models'), '.schema.json')) {
+    const at = path.relative(ROOT, file).split(path.sep).join('/')
+    const schema = JSON.parse(fs.readFileSync(file, 'utf8'))
+    for (const [name, field] of Object.entries(schema.properties || {})) {
+      const owner = (field || {})[BACK]
+      if (!owner) continue
+      if (!(owner in (doc.capabilities || {}))) {
+        fail(at, `properties.${name}: ${BACK} называет возможность «${owner}», ` +
+          'которой в реестре возможностей нет')
+        continue
+      }
+      if (forward.get(owner) !== `${at}#properties.${name}`) {
+        fail(at, `properties.${name}: поле указывает на «${owner}», а та не ` +
+          'указывает обратно сюда. Связь односторонняя, и одну её половину ' +
+          'можно снять молча')
+      }
+    }
+  }
+  return checked
+}
+
+/**
  * Проверяет объявленные обратные операции.
  *
  * reversible_by - обещание, на котором строят откат: сделал запись, не сложилось
@@ -1154,6 +1234,36 @@ function loadCapabilities() {
   //
   // Реализация обязана выводить решение из предикатов. Но таблицу читают
   // глазами, и лгущая таблица уводит автора второго SDK ровно туда же.
+  // Требования к набору соответствия. Раздел держит набор от тихого
+  // уменьшения, и снять его - значит снять эту защиту.
+  const req = doc.conformance_requirements || {}
+  const wanted = req.per_capability_branches
+  if (!Array.isArray(wanted) || wanted.length === 0) {
+    fail(rel, 'не объявлено conformance_requirements.per_capability_branches. ' +
+      'Без него набор соответствия вправе уменьшиться до одной ветки, и раннер ' +
+      'напечатает «отказов: 0», перестав спрашивать')
+  } else {
+    const states = new Set(wanted.map((one) => one && one.state))
+    for (const must of ['supported', 'unsupported']) {
+      if (!states.has(must)) {
+        fail(rel, `conformance_requirements не требует ветки «${must}». ` +
+          'Требование раздела requirements называет обе, и машиночитаемое ' +
+          'обязано ему отвечать - иначе проза требует, а исполняется другое')
+      }
+    }
+    for (const one of wanted) {
+      if (typeof (one || {}).allowed !== 'boolean') {
+        fail(rel, `conformance_requirements: у ветки «${(one || {}).state}» не ` +
+          'объявлено allowed. Ветка без ожидаемого исхода ничего не требует')
+      }
+    }
+  }
+  if (req.initial_state_required !== true) {
+    fail(rel, 'conformance_requirements.initial_state_required не равно true. ' +
+      'Начальное состояние решает поведение при самом первом вызове, до первой ' +
+      'пробы, и не проверять его значит не проверять первый вызов вовсе')
+  }
+
   const st = doc.states || {}
   const pr = doc.predicates || {}
   if (pr.normative !== true) {
@@ -1340,6 +1450,81 @@ function checkServices(caps, errIds) {
 
       for (const e of op.errors || []) {
         if (!errIds.has(e)) fail(rel, `${id}: ссылается на несуществующий код ошибки «${e}»`)
+      }
+
+      // Отказ о невыполненном предусловии обязан называть, ЧТО именно не
+      // выполнено. Иначе вызывающий гадает и повторяет вслепую - а у
+      // невосполнимых операций повтор тратит то, чего не вернуть.
+      if ((op.errors || []).includes('funora.domain.precondition_failed')) {
+        const pre = op.preconditions || []
+        if (!pre.some((one) => (one || {}).required === true)) {
+          fail(rel, `${id}: объявлен отказ precondition_failed, а обязательного ` +
+            'предусловия нет ни одного. Вызывающий не узнает, что не выполнено, ' +
+            'и повторит вслепую')
+        }
+        for (const one of pre) {
+          if (!(one || {}).id || !String((one || {}).summary || '').trim()) {
+            fail(rel, `${id}: предусловие без идентификатора либо без описания. ` +
+              'Отказ сошлётся на него, а прочитать будет нечего')
+          }
+          // Вид решает класс изменения при появлении предусловия: input -
+          // вызывающий обязан подать, state - условие площадки, на которое он
+          // повлиять не может. Без вида классификатор считает всякое появление
+          // сломом и приучает обходить себя.
+          if (!['input', 'state'].includes((one || {}).kind)) {
+            fail(rel, `${id}: у предусловия «${(one || {}).id}» не объявлен вид ` +
+              '(input либо state). Без него классификатор не отличит новое ' +
+              'ограничение от описания бывшего и потребует мажор за правку ' +
+              'документации')
+            continue
+          }
+
+          // Вид обязан быть ПРОВЕРЯЕМ, а не объявлен на слово. Иначе он лазейка:
+          // пометь ввод состоянием - и ломающее изменение уценится до патча,
+          // а вызывающий узнает о новом обязательном поле из отказа.
+          //
+          // Различает их ключ идемпотентности. То, что вызывающий ПОДАЁТ и что
+          // меняет исход, обязано в него входить: иначе два разных вызова
+          // схлопнутся в один ключ. Условие площадки в ключе не стоит - подать
+          // его нельзя.
+          const key = op.idempotency_key_from
+          if (one.kind === 'input') {
+            if (!Array.isArray(key)) {
+              fail(rel, `${id}: предусловие «${one.id}» объявлено вводимым, а ` +
+                'ключа идемпотентности у операции нет. Проверить, что ' +
+                'вызывающий вправду его подаёт, нечем - а на этом виде стоит ' +
+                'класс изменения')
+            } else if (!key.includes(one.id)) {
+              fail(rel, `${id}: предусловие «${one.id}» объявлено вводимым, а в ` +
+                'ключе идемпотентности его нет. Либо оно не вводится вызывающим ' +
+                'и вид ему state, либо ключ неполон - и тогда два разных вызова ' +
+                'схлопнутся в один')
+            }
+          } else if (Array.isArray(key) && key.includes(one.id)) {
+            fail(rel, `${id}: предусловие «${one.id}» объявлено состоянием ` +
+              'площадки, а стоит в ключе идемпотентности. В ключ входит то, что ' +
+              'подаёт вызывающий: значит это ввод, и его появление - слом, а не ' +
+              'описание бывшего')
+          }
+        }
+      }
+
+      // Возможность обязана принадлежать той же службе, что и операция.
+      // Проверялось только то, что она объявлена: подмена на существующую
+      // возможность чужой службы проходила молча, и операция чтения диалогов
+      // оказывалась под возможностью лотов.
+      if (op.capability) {
+        // Имя службы даёт ФАЙЛ, а не префикс идентификатора операции: в
+        // account.yaml лежат session.health и capabilities, и по префиксу
+        // операции они принадлежали бы разным службам.
+        const service = path.basename(rel, '.yaml')
+        const owner = String(op.capability).split('.')[0]
+        if (service !== owner) {
+          fail(rel, `${id}: привязана к возможности «${op.capability}» чужой ` +
+            `службы «${owner}». Проверялось лишь то, что возможность объявлена, ` +
+            'и подмена одной на другую проходила молча: вызов уходил бы в ' +
+            'отказ по состоянию, к нему не относящемуся')
+        }
       }
 
       if (CONDITIONAL.test(op.summary || '') && !op.capability) {
@@ -2270,6 +2455,7 @@ function main() {
   const errors = checkErrors()
 
   const caps = loadCapabilities()
+  checkCapabilityModelLinks(readYaml(path.join(SPEC, 'capabilities.yaml')) || {})
   const errDoc = readYaml(path.join(SPEC, 'errors', 'errors.yaml'))
   const errByStableId = new Map(
     Object.values(errDoc.errors || {}).map(e => [e.stable_id, e])
