@@ -160,6 +160,48 @@ function checkCurrencySymbols() {
 }
 
 /**
+ * Ищет в текстах спецификации имена классов ошибок, которых нет.
+ *
+ * Класс убирают из errors.yaml, а имя остаётся в чужом описании, в правиле
+ * извлечения, в поле why вектора - и читается как обещание. Сегодня так
+ * осталось четыре ссылки на давно переименованную запись, и нашлись они
+ * разбором, а не сборкой.
+ *
+ * Ищется по форме имени, а не по перечню мест: перечень мест устаревает первым.
+ *
+ * @param {Set<string>} known Имена объявленных классов ошибок.
+ * @returns {number} Сколько упоминаний проверено.
+ */
+function checkErrorNamesResolve(known) {
+  const NAME = /\b([A-Z][A-Za-z0-9]*Error)\b/g
+  let checked = 0
+
+  const files = [...walk(SPEC, '.yaml'), ...walk(SPEC, '.json')]
+  for (const file of files) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    // errors.yaml объявляет их сам, и там имя не ссылка, а определение.
+    if (rel.endsWith('spec/errors/errors.yaml')) continue
+
+    const text = fs.readFileSync(file, 'utf8')
+    const seen = new Set()
+    let hit = NAME.exec(text)
+    while (hit !== null) {
+      seen.add(hit[1])
+      hit = NAME.exec(text)
+    }
+    for (const name of seen) {
+      checked += 1
+      if (!known.has(name)) {
+        fail(rel, `упомянут класс ошибки «${name}», которого в errors.yaml нет. ` +
+          `Имя убранного класса читается как обещание: вызывающий напишет except ` +
+          `и будет ждать того, чего не бывает`)
+      }
+    }
+  }
+  return checked
+}
+
+/**
  * Проверяет одно свойство схемы на соответствие правилам скаляров и перечислений.
  *
  * @param {string} file Относительный путь к файлу схемы, для сообщения об ошибке.
@@ -1370,6 +1412,8 @@ function main() {
   const confidences = checkConfidence()
   checkVersion()
   const symbols = checkCurrencySymbols()
+  const errorNames = checkErrorNamesResolve(
+    new Set(Object.keys(readYaml(path.join(SPEC, 'errors', 'errors.yaml')).errors || {})))
   const models = checkModels()
   const errors = checkErrors()
 
@@ -1386,7 +1430,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
