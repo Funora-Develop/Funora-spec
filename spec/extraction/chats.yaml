@@ -173,6 +173,7 @@ message:
 
   own_id:
     from: Атрибут id элемента сообщения
+    type: entity_id
     shape: 18 знаков латиницы, цифр и пунктуации
     confidence: observed
     note: >-
@@ -199,6 +200,7 @@ message:
       title_attribute:
         present: true
         confidence: observed
+        type: x-funora-plain
         shape: 20 знаков с кириллицей, цифрами и пунктуацией
         note: >-
           Полная форма даты рядом с краткой. Разбирать её всё равно нельзя -
