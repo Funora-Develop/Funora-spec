@@ -440,13 +440,33 @@ function checkVersion() {
       'обязан объявить, на каких локалях он проверен')
   }
 
-  // Версия в моделях не должна опережать объявленную.
-  for (const file of walk(path.join(SPEC, 'models'), '.schema.json')) {
+  // Штамп версии обязан стоять В КАЖДОЙ схеме и совпадать с объявленной.
+  //
+  // Прежде обходились только spec/models, а схем со штампом тридцать четыре:
+  // семнадцать событийных не проверял никто. Подъём версии правится вручную во
+  // всех файлах сразу, и забытая половина разошлась бы молча - именно тот
+  // случай, ради которого штамп и стоит.
+  //
+  // Отсутствие штампа - тоже нарушение. Прежнее условие пропускало схему без
+  // него: она выглядела бы вечно совместимой.
+  const stamped = [
+    ...walk(path.join(SPEC, 'models'), '.schema.json'),
+    ...walk(path.join(SPEC, 'events'), '.schema.json'),
+  ]
+  for (const file of stamped) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
     const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
     const declared = doc['x-funora-spec-version']
-    if (declared && declared !== v.spec_version) {
-      fail(path.relative(ROOT, file).replace(/\\/g, '/'),
-        `x-funora-spec-version «${declared}» не совпадает с spec_version «${v.spec_version}»`)
+    if (!declared) {
+      fail(rel, 'нет x-funora-spec-version. Схема без штампа выглядит вечно '
+        + 'совместимой: подъём версии её не касается, и расхождение молчит')
+      continue
+    }
+    if (declared !== v.spec_version) {
+      fail(rel, `x-funora-spec-version «${declared}» не совпадает с `
+        + `spec_version «${v.spec_version}»`)
+    }
+  }
     }
   }
 }
