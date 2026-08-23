@@ -470,6 +470,46 @@ function checkVersion() {
 }
 
 /**
+ * Требует единственной оси версий.
+ *
+ * Двадцать два файла объявляли в шапке собственную version, все двадцать две
+ * стояли на 0.1.0 при spec_version 0.3.0, и не читал их никто: проверка
+ * требовала, чтобы поле БЫЛО, и не требовала, чтобы оно что-нибудь значило.
+ * Отставание на три минора молчало.
+ *
+ * Вторая ось на одну вещь хуже отсутствия оси: она выглядит как обещание, что
+ * файл версионируется отдельно, и читающий рассчитывает по ней на
+ * совместимость, которой никто не поддерживает.
+ *
+ * @returns {number} Сколько файлов проверено.
+ */
+function checkSingleVersionAxis() {
+  const version = readYaml(path.join(SPEC, 'version.yaml')) || {}
+  const rule = version.single_version_axis
+  if (!rule || !rule.rule) {
+    fail('spec/version.yaml', 'не объявлено правило единственной оси версий. ' +
+      'Без него поле version снова заведётся в шапке каждого файла и снова ' +
+      'отстанет молча')
+  }
+
+  let checked = 0
+  for (const file of walk(SPEC, '.yaml')) {
+    const rel = path.relative(ROOT, file).split(path.sep).join('/')
+    if (rel === 'spec/version.yaml') continue
+    checked += 1
+    const doc = readYaml(file)
+    if (!doc || typeof doc !== 'object') continue
+    if ('version' in doc) {
+      fail(rel, 'поле version верхнего уровня. Ось версий одна и живёт в ' +
+        'spec/version.yaml. Своя версия у файла - обещание отдельной ' +
+        'совместимости, которой никто не поддерживает: прежние двадцать две ' +
+        'отстали на три минора, и отставание молчало')
+    }
+  }
+  return checked
+}
+
+/**
  * Требует у каждого перечисления объявленной открытости.
  *
  * Перечисление либо закрыто - значения придумываем мы, - либо открыто, и тогда
@@ -1484,7 +1524,8 @@ function checkExtraction() {
     const doc = readYaml(file)
     if (!doc) continue
 
-    if (!doc.version) fail(rel, 'нет поля version')
+    // Требование поля version снято вместе с самим полем: см. проверку
+    // единственной оси версий ниже.
 
     // Ссылка на снимок наследуется от ближайшего предка, который её объявил.
     // Иначе evidence пришлось бы повторять у каждого поля, а повторение в таком
@@ -1681,6 +1722,7 @@ function main() {
   checkVersion()
   const symbols = checkCurrencySymbols()
   const enums = checkEnumOpenness()
+  const axes = checkSingleVersionAxis()
   const marks = checkDeprecationMarks(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const errorNames = checkErrorNamesResolve(
@@ -1701,7 +1743,7 @@ function main() {
   const extraction = checkExtraction()
   const responseRows = checkResponseClasses(new Set(errByStableId.keys()))
 
-  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
+  console.log(`пометок уверенности: ${confidences} | классов изменений: ${changeClasses} | типов: ${KNOWN_TYPES.size} | знаков валют: ${symbols} | перечислений: ${enums} | файлов без своей версии: ${axes} | пометок устаревшего: ${marks} | имён ошибок: ${errorNames} | схем: ${models} | ошибок: ${errors} | ` +
     `возможностей: ${caps.size} | операций: ${ops} | политик: ${policies} | ` +
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
