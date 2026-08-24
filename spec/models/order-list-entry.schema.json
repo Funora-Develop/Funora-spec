@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.8.0/models/order-list-entry.schema.json",
-  "x-funora-spec-version": "0.8.0",
+  "$id": "https://funora.dev/spec/0.9.0/models/order-list-entry.schema.json",
+  "x-funora-spec-version": "0.9.0",
   "title": "OrderListEntry",
   "description": "Запись заказа, какой её отдаёт чтение списка продаж.\n\nСокращённая проекция заказа, отличимая от Order по типу. Полную запись Order из списка собрать нельзя: там нет ни валюты машиночитаемо, ни момента времени, ни разделения покупателя и продавца - см. cannot_be_built_from_list в spec/extraction/orders.yaml.\n\nСхема описывает то, что первая реализация вправду возвращает. Прежде тип был объявлен в spec/services/orders.yaml именем с примечанием «схема появится вместе с первой реализацией», и второй SDK писать было не по чему: единственным описанием формы был docstring на русском.",
   "type": "object",
@@ -22,67 +22,67 @@
       "description": "Порядковый номер строки в списке, с нуля."
     },
     "status": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "order_status",
       "description": "Состояние заказа. Перечисление ОТКРЫТО: наблюдались два значения из скольких-то, и носитель вне таблицы даёт not_observed, а не выдуманное значение."
     },
     "status_carrier": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Класс-носитель состояния, как он стоит в разметке. Сохраняется именно затем, чтобы по нему узнали, как выглядит состояние, которого в таблице ещё нет."
     },
     "order_number_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Номер заказа, как он показан на странице."
     },
     "description_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Описание заказа текстом."
     },
     "category_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Раздел, к которому относится заказ, текстом."
     },
     "counterparty_name": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Имя контрагента текстом. Разделения на покупателя и продавца список не даёт: в строке один человек, и кто он - зависит от того, чей это список."
     },
     "counterparty_href": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес профиля контрагента."
     },
     "counterparty_online": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "flag",
       "description": "Присутствует ли контрагент на площадке, по классу-признаку."
     },
     "price": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "money",
       "description": "Сумма заказа с кодом валюты. Знак берётся из отдельного узла ячейки цены и переводится в код по таблице, наблюдённой переключателем площадки. Знак вне таблицы даёт ненаблюдённое значение, а не угаданный код: придуманное соответствие приписало бы чужую валюту чужому заказу молча."
     },
     "amount_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Сумма и знак текстом, как показаны. Поле остаётся рядом с price: по нему видно, как выглядит цена, которую разобрать не удалось - например в валюте, которой в таблице ещё нет."
     },
     "currency_symbol_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Символ валюты текстом, отдельно от суммы."
     },
     "time_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Время заказа текстом. Метки относительные - «два часа назад», - и точного момента страница не даёт."
     },
     "time_ago_text": {
-      "$ref": "https://funora.dev/spec/0.8.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.9.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Давность заказа текстом. Именно давность, а не остаток срока, хотя имя класса в разметке подсказывает второе."
     }
