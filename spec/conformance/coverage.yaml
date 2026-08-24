@@ -283,6 +283,15 @@ files:
     mechanism: generated
     note: >-
       response_classes.py: таблица кодов ответа. Прежде жила рукописной копией в классификаторе.
+  spec/extraction/showcase.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы витрины, имена атрибутов, признаки. Плюс
+      tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке
+      user.logged.ru, каждый счётчик сверяется с числом найденных узлов.
+    not_implemented:
+      - showcase_truncation
+
   spec/extraction/updates.yaml:
     mechanism: generated
     note: >-
@@ -399,6 +408,21 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/showcase-offer.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_showcase.py: каждое поле схемы собирается разбором строки.
+
+  spec/models/showcase-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_showcase.py: полнота, причины и счётчики сверяются со схемой.
+
+  spec/models/showcase-section.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_showcase.py: заголовок и ссылки раздела собираются разбором.
+
   spec/models/thread.schema.json:
     mechanism: verified
     note: >-
