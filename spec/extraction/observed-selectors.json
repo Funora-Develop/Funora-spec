@@ -436,6 +436,13 @@
     "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
   },
   {
+    "selector": "form.orders-filter",
+    "evidence": [
+      "orders-trade.empty.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.empty_list.filter_stays"
+  },
+  {
     "selector": "html[lang]",
     "evidence": [
       "orders-trade.logged.ru",
@@ -446,6 +453,13 @@
     "where": "spec/extraction/session.yaml:session.locale",
     "count_observed": 1,
     "scope": "document"
+  },
+  {
+    "selector": "p.lead",
+    "evidence": [
+      "orders-trade.empty.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.empty_list.marker"
   },
   {
     "selector": "span.badge",
