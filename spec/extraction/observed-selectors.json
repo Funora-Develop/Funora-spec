@@ -530,6 +530,15 @@
     "scope": "document"
   },
   {
+    "selector": "button.dyn-table-continue",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.pagination.continue_button",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "div.hidden[data-orders]",
     "evidence": [
       "orders-trade.logged.ru",
@@ -551,6 +560,15 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
+  },
+  {
+    "selector": "form.dyn-table-form",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.pagination.form",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "form.orders-filter",
