@@ -154,6 +154,15 @@
     "scope": "document"
   },
   {
+    "selector": ".dyn-table",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.table",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".dyn-table-body",
     "evidence": [
       "orders-trade.logged.ru"
@@ -161,11 +170,38 @@
     "where": "spec/extraction/orders.yaml:orders.rows_container"
   },
   {
+    "selector": ".dyn-table-body",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.rows_container",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".media-user-name",
     "evidence": [
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/chats.yaml:chats.contact_list.fields.counterparty_name"
+  },
+  {
+    "selector": ".media-user-name a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.author_name",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".media-user-name a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.author_href",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".menu-item-login",
@@ -255,6 +291,87 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/updates.yaml:updates.tags.locations[2]"
+  },
+  {
+    "selector": ".review-container",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.row.wrapper",
+    "count_observed": 6,
+    "scope": "document"
+  },
+  {
+    "selector": ".review-item",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.row",
+    "count_observed": 6,
+    "scope": "document"
+  },
+  {
+    "selector": ".review-item-date",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.date_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".review-item-detail",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.detail_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".review-item-order a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.order_href",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".review-item-photo a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.author_photo_href",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".review-item-rating .rating > div",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.rating",
+    "count_observed": 2,
+    "scope": "row"
+  },
+  {
+    "selector": ".review-item-text",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.fields.text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".reviews-filter",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.filter",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".tc-date-left",
@@ -441,6 +558,15 @@
       "orders-trade.empty.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.empty_list.filter_stays"
+  },
+  {
+    "selector": "form[action$=\"/users/reviews\"]",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/reviews.yaml:reviews.filter.endpoint",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "html[lang]",

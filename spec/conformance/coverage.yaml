@@ -43,7 +43,6 @@ files:
       обоих допустимо ровно одно - unsupported.
     not_implemented:
       - orders_events_capability
-      - reviews_service
       - probe_laziness
       - probe_single_flight
       - capability_profile
@@ -233,6 +232,15 @@ files:
     mechanism: verified
     note: >-
       tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке.
+  spec/extraction/reviews.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы отзывов, имена атрибутов, признаки. Плюс
+      tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке
+      user.logged.ru, каждый счётчик сверяется с числом найденных узлов.
+    not_implemented:
+      - reviews_foreign_profile_unobserved
+
   spec/extraction/orders.yaml:
     mechanism: generated
     note: >-
@@ -352,6 +360,20 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/reviews-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_reviews.py: полнота, причины и счётчики строк сверяются со
+      схемой на снимке user.logged.ru.
+    not_implemented:
+      - reviews_page_totality
+
+  spec/models/review.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_reviews.py: каждое поле схемы собирается разбором, и обёртка
+      Observed сверяется с объявленным видом значения.
+
   spec/models/user.schema.json:
     mechanism: verified
     note: >-
@@ -423,6 +445,13 @@ files:
       - market_service_operations
       - market_snapshot_completeness
       - market_transport_lane
+  spec/services/reviews.yaml:
+    mechanism: generated
+    note: >-
+      contract.py: перечень операций, их возможности, класс запроса и
+      безопасность. Плюс проверка «объявленная операция реализована либо
+      перечислена в реестре неисполненного».
+
   spec/services/orders.yaml:
     mechanism: generated
     note: >-

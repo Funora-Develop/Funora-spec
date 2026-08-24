@@ -133,10 +133,15 @@ capabilities:
     source: probe
     initial: unknown
     governed_without_operation: model_field
-    model_field_declared_in: spec/models/account.schema.json#properties.balance
+    model_field_declared_in: spec/models/account.schema.json#properties.balances
     note: >-
       Баланс показан не на всех страницах и не всем типам аккаунтов - потому
       source и probe, а не static.
+
+      Указатель ведёт на balances, а не на balance, и это не переименование.
+      Перепись знаков валют по /account/balance от 23.08.2026 нашла на одной
+      странице три разные валюты в узлах span.balances-value. Скалярного баланса
+      у аккаунта нет; есть перечень по валютам.
 
       Прежде здесь стояло второе предложение: «отсутствие значения не равно нулю:
       поле помечено unobserved-possible в модели». Это утверждение о СХЕМЕ, а не
@@ -258,10 +263,17 @@ capabilities:
     note: Оговорка blueprint «если операция существует и протестирована».
 
   reviews.get:
-    governed_without_operation: not_implemented
-    summary: Чтение отзывов по заказу или профилю.
+    summary: Чтение отзывов с профиля продавца.
     source: probe
     initial: unknown
+    note: >-
+      До 0.8.0 здесь стояло governed_without_operation: not_implemented -
+      возможность объявлена, а звать через неё нечего. Операция появилась, и
+      пометка снята.
+
+      source остаётся probe, а не static: наблюдался только собственный профиль.
+      Отдаёт ли чужой ту же разметку - неизвестно, и объявлять поддержку
+      заранее значило бы обещать непроверенное.
 
   protocol.locale:
     summary: >-
