@@ -1,0 +1,367 @@
+# Извлечение страницы одного заказа.
+#
+# ГЛАВНОЕ ПРО ЭТУ СТРАНИЦУ. Восемь её параметров подписаны локализованными
+# метками в узлах h5 БЕЗ КЛАССА, и различить поля между собой разметка не даёт.
+# Два из восьми совпадают побайтово вместе с обёрткой и цепочкой предков - 624
+# байта против 624 байт, - и отличаются только положением.
+#
+# Отсюда всё устройство раздела. Читается то, у чего есть СВОЙ якорь - класс,
+# атрибут, ссылка; остальное отдаётся перечнем «метка и значение» как есть, без
+# выдуманных имён. Разбор, назвавший восьмой параметр «гарантией» по его месту,
+# соврал бы в тот день, когда площадка переставит колонки, - и соврал бы молча.
+#
+# Проверено пятьюдесятью семью независимыми разборами: из пятидесяти трёх
+# утверждений об адресуемости устояло одиннадцать. Опровержения почти все
+# улучшали адрес, а не отменяли поле.
+
+evidence: order.logged.ru
+
+sources:
+  order:
+    path: /orders/{id}/
+    evidence: order.logged.ru
+    note: >-
+      Снимок сделан с заказа, где аккаунт наблюдений - ПРОДАВЕЦ. Стороны на
+      странице не помечены структурно, и утверждать, что страница покупателя
+      выглядит так же, нельзя.
+
+# --- Что читается своим якорем ----------------------------------------------
+identity:
+  order_number:
+    selector: ".review-container"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      order_number:
+        name: data-order
+        type: entity_id
+        confidence: observed
+        evidence: order.logged.ru
+        observed_signature: "T8:ad"
+    role: >-
+      Номер заказа В АТРИБУТЕ, а не в тексте заголовка. Заголовок его тоже
+      несёт, но голым текстовым узлом до тега переноса: читать оттуда значило бы
+      резать строку по вёрстке.
+
+      Узел принадлежит виджету отзыва, и это выглядит странно - но виджету нужно
+      знать, к какому заказу вязать отзыв, и потому номер лежит там машиночитаемо.
+
+  status_carrier:
+    selector: "h1.page-header > span"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: class
+    type: x-funora-plain
+    role: >-
+      Носитель состояния заказа. Адресуется ПОЛОЖЕНИЕМ в заголовке, а не своим
+      классом: класс здесь - значение, и селектор по нему находил бы узел лишь
+      пока заказ в этом самом состоянии.
+
+    observed_values: ["text-success"]
+    enum_is_closed: false
+    unknown_fallback: required
+    values_note: >-
+      Наблюдено ОДНО состояние на одном заказе. Прочие цветовые классы того же
+      семейства - text-danger, text-warning, text-primary, text-info - на этой
+      странице дают ноль совпадений, и это не значит, что их не бывает: значит,
+      что их не видели.
+
+      Перечисление поэтому открыто, и незнакомый класс обязан дать
+      ненаблюдённое значение, а не ошибку и не догадку.
+
+  refund_available:
+    selector: 'form[action$="/orders/refund"]'
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: presence
+    role: >-
+      Форма возврата средств. Читается как ПРИЗНАК ДОСТУПНОСТИ, а не как
+      операция: операций записи контракт в нынешней редакции не описывает вовсе.
+
+      Присутствие формы означает, что площадка показала продавцу возможность
+      вернуть деньги. Что она означает для покупателя - неизвестно, снимок один.
+
+  category_link:
+    selector: '.param-item:has(a[href*="/lots/"])'
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      category_href:
+        name: href
+        selector: '.param-item a[href*="/lots/"]'
+        confidence: observed
+        evidence: order.logged.ru
+    observed_shape: "https://funpay.com/lots/{id}/"
+    role: >-
+      Единственный параметр, чьё значение - ссылка на раздел. Тем и адресуется:
+      не классом, которого у него нет, а наличием ссылки нужной формы.
+
+      Признак слабее класса и объявлен слабым нарочно. Окажись однажды ссылка и
+      у другого параметра - селектор найдёт два узла, и разбор обязан заметить
+      это, а не взять первый.
+
+  amount_block:
+    selector: ".param-item:has(> div > span.h1)"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: text
+    type: x-funora-plain
+    role: >-
+      Блок суммы целиком - число и знак валюты вместе. Разделяются они в коде, а
+      не селектором.
+
+      Прежде тут напрашивался span.h1.mr4.text-bold для числа и span.h1 + strong
+      для знака. Оба находят по одному узлу и оба опираются на УТИЛИТАРНЫЕ
+      классы: mr4 это отступ, text-bold это начертание. Редизайн вправе их
+      переставить, ничего не меняя по существу, и разбор потерял бы сумму молча.
+
+    observed_parts:
+      - "число: подпись T1:d - одна цифра"
+      - "знак валюты: подпись T1:o - один знак вне ASCII"
+    code_not_readable: >-
+      Код валюты со страницы не читается. Переключатель валют несёт
+      локализованный текст, а data-атрибут есть только у тех валют, НА КОТОРЫЕ
+      можно переключиться, - то есть у чужих, а не у текущей.
+
+# --- Контрагент --------------------------------------------------------------
+counterparty:
+  link:
+    selector: ".chat-header .media-user-name a"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      profile_href:
+        name: href
+        confidence: observed
+        evidence: order.logged.ru
+    observed_shape: "https://funpay.com/users/{id}/"
+    role: Имя контрагента и адрес его профиля.
+
+  account_flags:
+    selector: ".chat-header .media-user"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: class
+    observed_classes: "media media-user offline banned"
+    role: >-
+      Состояние учётной записи контрагента, токенами класса.
+
+    banned_is_new: >-
+      Класс banned наблюдён ВПЕРВЫЕ здесь. Словарь присутствия, выведенный по
+      списку продаж, знает два токена - online и offline, - и banned в него не
+      входит.
+
+      Это не поломка разбора списка: там опознание идёт пересечением с
+      наблюдённым словарём, и строка с классами «offline banned» даст offline
+      верно. Это пробел в описании: блокировка контрагента - факт, который
+      продавцу важен, а контракт о нём молчал.
+
+    banned_is_not_presence: >-
+      Токен объявляется ОТДЕЛЬНЫМ признаком, а не третьим значением присутствия.
+      Присутствие отвечает на «в сети ли он сейчас», блокировка - на «жив ли
+      аккаунт вообще», и сводить их в одно поле значило бы потерять одно из двух:
+      на снимке узел несёт offline И banned разом.
+
+# --- Отзыв по заказу ---------------------------------------------------------
+review:
+  container:
+    selector: ".review-container"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      rating:
+        name: data-rating
+        confidence: observed
+        evidence: order.logged.ru
+      rating_max:
+        name: data-rating-max
+        type: opaque
+        confidence: observed
+        evidence: order.logged.ru
+        observed_signature: "T1:d"
+
+  empty_is_positive:
+    observed: true
+    how: >-
+      Атрибут data-rating ПРИСУТСТВУЕТ и ПУСТ. Это положительное свидетельство
+      того, что отзыва нет, - а не отсутствие узла, из которого пришлось бы
+      выводить то же самое неудачей поиска.
+
+      Рядом лежит data-rating-max с одной цифрой: шкалу объявляет сама площадка.
+      Это второе, независимое от страницы профиля подтверждение того, что оценок
+      пять, - там перечисление закрыто по выпадающему списку фильтра.
+
+    consequence: >-
+      Пустой отзыв читается ПОЛНО: отсутствие оценки объявляется по признаку, а
+      не по неудаче. Локализованный текст .review-empty-text для этого не нужен
+      и правилом не является.
+
+  author:
+    selector: ".review-item-row[data-author]"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      author_id:
+        name: data-author
+        type: entity_id
+        confidence: observed
+        evidence: order.logged.ru
+        observed_signature: "T8:d"
+    role: >-
+      Идентификатор автора отзыва в атрибуте. Восемь цифр - та же форма, что у
+      собственного идентификатора в data-user.
+
+# --- Переписка на странице заказа --------------------------------------------
+chat:
+  widget:
+    selector: ".chat.chat-float"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      node_id:
+        name: data-id
+        type: entity_id
+        confidence: observed
+        evidence: order.logged.ru
+        observed_signature: "T9:d"
+      tag:
+        name: data-tag
+        type: opaque
+        confidence: observed
+        evidence: order.logged.ru
+        observed_signature: "T8:ad"
+    role: >-
+      САМОЕ ЦЕННОЕ НА СТРАНИЦЕ, помимо самого заказа: идентификатор диалога.
+
+      По нему чтение заказа отдаёт вызывающему ручку, которой переписку можно
+      прочесть целиком отдельной операцией. Без него пришлось бы искать диалог
+      по имени контрагента, а имя ключом быть не может.
+
+  messages:
+    selector: ".chat-msg-item"
+    confidence: observed
+    count_observed: 5
+    scope: document
+    reads: attribute
+    attributes:
+      message_id:
+        name: id
+        confidence: observed
+        evidence: order.logged.ru
+        type: entity_id
+        observed_signature: "T18:adp"
+
+  truncation:
+    observed: unknown
+    what_is_known: >-
+      На странице заказа пять сообщений; в снимке отдельной страницы переписки
+      того же вида - одиннадцать. Это РАЗНЫЕ диалоги, и вычитать одно из другого
+      нельзя.
+
+    why_it_matters: >-
+      Признака усечения на странице заказа не нашлось ни одного - ни кнопки
+      догрузки, ни счётчика. Отсюда НЕ следует, что переписка полна: сегодня уже
+      был случай, когда отсутствие догрузки объявили по неудаче поиска и
+      ошиблись.
+
+      Поэтому переписка со страницы заказа объявляется НЕПОЛНОЙ всегда, а
+      вызывающему отдаётся идентификатор диалога, чтобы прочесть её целиком.
+      Запись реестра - order_chat_truncation.
+
+  full_chat_link:
+    selector: "a.chat-control[href]"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    attributes:
+      chat_href:
+        name: href
+        confidence: observed
+        evidence: order.logged.ru
+    observed_shape: "https://funpay.com/chat/?{query}"
+
+# --- Восемь параметров, которые не адресуются --------------------------------
+params:
+  container:
+    selector: ".param-list"
+    confidence: observed
+    count_observed: 1
+    scope: document
+
+  item:
+    selector: ".param-item"
+    confidence: observed
+    count_observed: 8
+    scope: document
+
+  label:
+    selector: ".param-item > h5"
+    confidence: observed
+    count_observed: 8
+    scope: document
+    reads: text
+    type: x-funora-plain
+    role: >-
+      Метка параметра. Локализованный текст в узле БЕЗ КЛАССА - у всех восьми
+      одинаково.
+
+  why_no_names: >-
+    Полям не даются имена, и это главное решение раздела.
+
+    Различить их можно было бы только по тексту метки, а текст локализован:
+    правило, читающее «Дата», умрёт на английской локали молча. Различить по
+    положению нельзя: порядок площадка не обещала.
+
+    Два параметра из восьми к тому же совпадают ПОБАЙТОВО - 624 байта против
+    624, вместе с обёрткой и цепочкой предков. У них одинакова даже длина
+    значения. Разделить их не может ничто, кроме порядка.
+
+  what_is_returned: >-
+    Перечень пар «метка и значение», в порядке появления, как есть. Вызывающий
+    видит ровно то, что показала страница, и ни одного выдуманного имени.
+
+    Это не отговорка, а годная вещь: карточку заказа по такому перечню
+    показывают целиком и на любой локали.
+
+  what_would_close_it:
+    - >-
+      Снимок того же заказа на другой локали. Значения, которые не изменятся, -
+      идентификаторы и суммы; изменившиеся - локализованные поля. Имён это не
+      даст, но разделит поля на разряды.
+    - >-
+      Снимок заказа в другом состоянии, где одного из двух близнецов нет вовсе:
+      станет видно, какая позиция пропадает первой.
+
+  traps_found:
+    - >-
+      Класс text-bold выглядит якорем значения, но даёт по документу ТРИ
+      совпадения, а не два: третье - внутри блока суммы.
+    - >-
+      Класс text-nowrap даёт ровно два совпадения, и это в точности те два
+      узла, которые между собой неразличимы. Годен как якорь ПАРЫ и бесполезен
+      как якорь одного поля.
+    - >-
+      Окно возврата вложено ВНУТРЬ восьмого параметра, а не лежит рядом.
+      Поэтому «.param-item button» даёт четыре совпадения, и всякий обход по
+      элементам внутри параметра утащит форму возврата с её полями.
+    - >-
+      Классы mr4, mb10, h1, text-bold, text-nowrap уникальны в этом снимке, но
+      выражают отступ и начертание, а не смысл. Смысловые якоря на странице
+      только у блока возврата: btn-refund, help-form, modal-refund.
