@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.10.0/models/reviews-page.schema.json",
-  "x-funora-spec-version": "0.10.0",
+  "$id": "https://funora.dev/spec/0.11.0/models/reviews-page.schema.json",
+  "x-funora-spec-version": "0.11.0",
   "title": "ReviewsPage",
   "description": "Результат чтения отзывов с профиля.\n\nЗаписи отдаются МЕТОДОМ, а не полем, по той же причине, что и у списка продаж: открытый список делает неполноту незаметной.\n\nПОЛНОТА ЗДЕСЬ СЛАБЕЕ, ЧЕМ У СПИСКА ПРОДАЖ, и разница объявлена. complete означает «прочитаны все строки, которые страница отдала», а не «прочитаны все отзывы продавца». Сверить не с чем: управления постраничным выводом на странице нет ни одного узла, а число отзывов в шапке показано локализованным текстом в две строки. Запись реестра - reviews_page_totality.",
   "type": "object",
@@ -44,14 +44,14 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.10.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.11.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения. Пустой список означает, что повреждений не нашлось, а не что их не искали."
     },
     "entries": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.10.0/models/review.schema.json"
+        "$ref": "https://funora.dev/spec/0.11.0/models/review.schema.json"
       },
       "description": "Собранные отзывы."
     }

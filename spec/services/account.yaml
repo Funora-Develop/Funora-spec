@@ -41,6 +41,29 @@ operations:
       - funora.protocol.changed
       - funora.transport
 
+  account.balance:
+    summary: >-
+      Читает страницу баланса: балансы по валютам и операции по счёту.
+    capability: account.balance
+    safety: safe
+    request_class: interactive
+    returns: BalancePage
+    errors:
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+    notes:
+      - >-
+        Возвращает перечень балансов, а не одно значение: страница показывает
+        три узла значения, по одному на валюту.
+      - >-
+        Кода валюты не даёт ни одному из них - страница несёт только знак, а
+        соответствие между знаком и кодом не однозначно.
+      - >-
+        Операции по счёту приходят той же операцией чтения, потому что лежат на
+        той же странице. Отдельного запроса за ними нет, и делать его значило бы
+        ходить на площадку дважды за одним ответом.
+
   session.health:
     summary: >-
       Проверяет пригодность сессии самым дешёвым доступным способом.
