@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.12.0/models/showcase-offer.schema.json",
+  "x-funora-spec-version": "0.12.0",
+  "title": "ShowcaseOffer",
+  "description": "Одно предложение на публичной витрине продавца.\n\nНЕ Lot и намеренно отличается от него типом. Lot требует признака включённости и цены с кодом валюты; витрина не даёт ни того ни другого - она показывает то, что видит покупатель.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "offer_href": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Адрес предложения ЦЕЛИКОМ, непрозрачной строкой.\n\nИдентификатор лежит в строке запроса, а формат скелета заменяет её одной подписью: разобрать параметр по снимку нельзя, и проверить такой разбор тоже нечем. Правило, которое ни одна проверка не покрывает, уже однажды обошлось дорого - на разборе суммы со страницы заказа."
+    },
+    "description_text": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Описание предложения. Свободный текст."
+    },
+    "price_text": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Цена БЕЗ знака валюты, как показана: знак лежит отдельным узлом внутри ячейки."
+    },
+    "currency_symbol_text": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Знак валюты. Кода валюты витрина не даёт."
+    },
+    "sort_value": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Значение сортировки из атрибута ячейки цены. Цифры с пунктуацией - похоже на цену числом.\n\n«Похоже» здесь не вежливость: значение в снимке замаскировано, и утверждать, что это именно цена, нельзя. Наблюдено, что атрибут есть, что он числоподобен и что таблица объявлена сортируемой."
+    },
+    "amount_text": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Остаток, если раздел его показывает.\n\nКолонка есть НЕ ВО ВСЕХ разделах, и это наблюдено. Отсутствие узла - факт о разделе, а не о нашем незнании; различить эти два случая по снимку нечем, узла нет в обоих."
+    },
+    "server_text": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Сервер, если раздел его показывает. Колонка тоже есть не везде."
+    },
+    "auto_delivery": {
+      "$ref": "https://funora.dev/spec/0.12.0/models/observed.schema.json",
+      "x-funora-observed-value": "flag",
+      "description": "Признак автоматической выдачи. Читается наличием значка у предложения - положительным свидетельством, а не отсутствием."
+    },
+    "row_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Место строки в разделе, считая с нуля."
+    }
+  },
+  "required": [
+    "offer_href",
+    "description_text",
+    "price_text",
+    "currency_symbol_text",
+    "sort_value",
+    "amount_text",
+    "server_text",
+    "auto_delivery",
+    "row_index"
+  ]
+}

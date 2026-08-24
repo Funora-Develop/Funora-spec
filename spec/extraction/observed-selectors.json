@@ -1,5 +1,12 @@
 [
   {
+    "selector": ".auto-dlv-icon",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.optional_columns.auto_delivery"
+  },
+  {
     "selector": ".cf-turnstile",
     "evidence": [
       "orders-trade.guest.ru"
@@ -299,6 +306,33 @@
     "scope": "document"
   },
   {
+    "selector": ".offer-list-title h3 a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.sections.title",
+    "count_observed": 13,
+    "scope": "document"
+  },
+  {
+    "selector": ".offer-list-title-button a",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.sections.manage_link",
+    "count_observed": 13,
+    "scope": "document"
+  },
+  {
+    "selector": ".offer-tc-container",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.sections.container",
+    "count_observed": 13,
+    "scope": "document"
+  },
+  {
     "selector": ".order-desc .text-muted",
     "evidence": [
       "orders-trade.logged.ru"
@@ -498,6 +532,13 @@
     "scope": "document"
   },
   {
+    "selector": ".tc-amount",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.optional_columns.amount"
+  },
+  {
     "selector": ".tc-date-left",
     "evidence": [
       "account-balance.logged.ru"
@@ -530,6 +571,15 @@
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.time_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-desc-text",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.fields.description_text",
     "count_observed": 1,
     "scope": "row"
   },
@@ -615,6 +665,15 @@
     "scope": "row"
   },
   {
+    "selector": ".tc-price",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.fields.price_cell",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
     "selector": ".tc-price .unit",
     "evidence": [
       "account-balance.logged.ru"
@@ -633,6 +692,24 @@
     "scope": "row"
   },
   {
+    "selector": ".tc-price .unit",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.fields.currency_symbol_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-price > div",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.fields.price_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
     "selector": ".tc-seller-sum",
     "evidence": [
       "orders-trade.logged.ru"
@@ -640,6 +717,13 @@
     "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text",
     "count_observed": 1,
     "scope": "row"
+  },
+  {
+    "selector": ".tc-server",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.optional_columns.server"
   },
   {
     "selector": ".tc-status",
@@ -759,6 +843,15 @@
     ],
     "where": "spec/extraction/orders.yaml:orders.row",
     "count_observed": 8,
+    "scope": "document"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/showcase.yaml:showcase.offers.row",
+    "count_observed": 158,
     "scope": "document"
   },
   {
