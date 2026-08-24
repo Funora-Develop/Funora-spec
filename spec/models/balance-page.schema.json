@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.11.0/models/balance-page.schema.json",
+  "x-funora-spec-version": "0.11.0",
+  "title": "BalancePage",
+  "description": "Результат чтения страницы баланса: балансы и операции по счёту.\n\nБалансы отдаются полем, операции - методом. Разница не в прихоти: перечень балансов страница показывает целиком, а операции догружаются, и открытый список делал бы неполноту незаметной.\n\nСтраница снята ради балансов, а таблицу операций не искали вовсе: операции для неё в контракте не было объявлено ни одной.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "balances": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.11.0/models/balance.schema.json"
+      },
+      "description": "Балансы по валютам. Наблюдено три; порядок площадка не обещала, и искать нужную валюту следует по её знаку, а не по месту."
+    },
+    "completeness": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "unknown"
+      ],
+      "x-funora-closed": true,
+      "description": "Полнота чтения ОПЕРАЦИЙ, а не балансов.\n\nРешает кнопка догрузки: спрятана - показано всё, показана - есть что догружать. Смысл её класса наблюдён контрольной парой между этой страницей и профилем отзывов.\n\nСчёта без единой операции никто не видел, и пустая таблица даёт unknown."
+    },
+    "reason": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина. Наблюдаемые значения: all_rows_parsed, more_rows_available, pagination_control_missing, page_defects, empty_list_not_observed."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа."
+    },
+    "rows_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько кандидатов в операции нашлось, штук."
+    },
+    "rows_accepted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько операций собрано, штук."
+    },
+    "rows_rejected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько кандидатов отброшено, штук."
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.11.0/models/defect.schema.json"
+      },
+      "description": "Замеченные повреждения."
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.11.0/models/transaction.schema.json"
+      },
+      "description": "Собранные операции.\n\nПУСТОЙ ПЕРЕЧЕНЬ И ОТСУТСТВИЕ ИСТОРИИ - РАЗНЫЕ ОТВЕТЫ. Площадка вправе показать баланс и не показать историю; тогда балансы прочтутся, а операций не окажется. Отличить это от счёта без единой операции нечем: счёта без операций никто не видел, и полнота в таком случае объявляется unknown.\n\nПоле обязательно и всегда перечень - пустой либо нет. Пометки «может не наблюдаться» на нём поэтому не стоит: она означала бы, что поля может не быть вовсе, а перечень возвращается всегда.\n\nРазличие «истории нет» и «истории не показали» несёт не это поле, а пара completeness с reason: пустая таблица даёт unknown, потому что счёта без единой операции никто не видел."
+    }
+  },
+  "required": [
+    "balances",
+    "completeness",
+    "reason",
+    "observed_at",
+    "rows_total",
+    "rows_accepted",
+    "rows_rejected",
+    "defects",
+    "entries"
+  ]
+}

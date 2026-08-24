@@ -201,6 +201,15 @@
   {
     "selector": ".dyn-table-body",
     "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.rows_container",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".dyn-table-body",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.rows_container"
@@ -491,9 +500,27 @@
   {
     "selector": ".tc-date-left",
     "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.date_left_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-date-left",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.time_ago_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-date-time",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.date_text",
     "count_observed": 1,
     "scope": "row"
   },
@@ -507,6 +534,24 @@
     "scope": "row"
   },
   {
+    "selector": ".tc-finance",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.table",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".tc-header",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.header_is_not_a_row",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".tc-header",
     "evidence": [
       "orders-trade.logged.ru"
@@ -514,6 +559,33 @@
     "where": "spec/extraction/orders.yaml:orders.container.header",
     "count_observed": 1,
     "scope": "document"
+  },
+  {
+    "selector": ".tc-item",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.row",
+    "count_observed": 25,
+    "scope": "document"
+  },
+  {
+    "selector": ".tc-item",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.transaction_id",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-item",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.status",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-order",
@@ -527,9 +599,27 @@
   {
     "selector": ".tc-price",
     "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.amount_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-price",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.amount_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-price .unit",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.currency_symbol_text",
     "count_observed": 1,
     "scope": "row"
   },
@@ -554,9 +644,27 @@
   {
     "selector": ".tc-status",
     "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.status_text",
+    "count_observed": 1,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-status",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.status.carriers[0]"
+  },
+  {
+    "selector": ".tc-title",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.transactions.fields.title_text",
+    "count_observed": 1,
+    "scope": "row"
   },
   {
     "selector": ".tc-user .media-user",
@@ -656,6 +764,15 @@
   {
     "selector": "button.dyn-table-continue",
     "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.pagination.continue_button",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "button.dyn-table-continue",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/reviews.yaml:reviews.pagination.continue_button",
@@ -684,6 +801,15 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
+  },
+  {
+    "selector": "form.dyn-table-form",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.pagination.form",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "form.dyn-table-form",
@@ -768,6 +894,33 @@
     ],
     "where": "spec/extraction/chats.yaml:chats.unread_badge",
     "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "span.balances-delimiter",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.balances.delimiter",
+    "count_observed": 3,
+    "scope": "document"
+  },
+  {
+    "selector": "span.balances-list",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.balances.list",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "span.balances-value",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.balances.value",
+    "count_observed": 3,
     "scope": "document"
   }
 ]

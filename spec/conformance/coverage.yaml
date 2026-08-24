@@ -219,6 +219,16 @@ files:
     mechanism: verified
     note: >-
       tests/test_event_schemas.py: схема сверяется с нагрузкой, если вид порождается, и с правилами тела свойства в scripts/validate.js в любом случае.
+  spec/extraction/account.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы страницы баланса, имена атрибутов, признаки. Плюс
+      tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке
+      account-balance.logged.ru, каждый счётчик сверяется с числом найденных
+      узлов.
+    not_implemented:
+      - dyn_table_continue_request
+
   spec/extraction/chats.yaml:
     mechanism: generated
     note: >-
@@ -312,6 +322,21 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/balance.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_account.py: значение и идущий перед ним узел собираются разбором.
+
+  spec/models/balance-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_account.py: полнота, причины и счётчики строк сверяются со схемой.
+
+  spec/models/transaction.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_account.py: каждое поле схемы собирается разбором строки.
+
   spec/models/category.schema.json:
     mechanism: verified
     note: >-

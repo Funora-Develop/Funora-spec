@@ -1,0 +1,259 @@
+# Извлечение страницы баланса аккаунта.
+#
+# Страница снята 24.08.2026 и принесла две вещи, а не одну. Балансы - за ними и
+# шли: схема с 0.8.0 объявляла перечень balances по переписи знаков валют, и
+# разметка это подтвердила - три узла значения, ровно три.
+#
+# Второе не искали вовсе: ТАБЛИЦА ОПЕРАЦИЙ. Двадцать пять строк на той же
+# машинерии dyn-table, что список продаж и отзывы, с идентификатором в атрибуте,
+# состоянием в имени класса строки и суммой, отделённой от знака валюты. Операции
+# для неё в контракте не было объявлено вовсе - ни реализации, ни записи в
+# реестре неисполненного.
+#
+# И эта же страница ответила на вопрос, который полдня стоял открытым у отзывов:
+# что означает класс hidden у кнопки догрузки. Здесь кнопка НЕ спрятана при
+# двадцати пяти строках и продолжении - вторая сторона пары.
+
+evidence: account-balance.logged.ru
+
+sources:
+  balance:
+    path: /account/balance
+    evidence: account-balance.logged.ru
+    note: >-
+      Страница доступна только своему аккаунту. Чужого баланса не бывает, и
+      второй стороны у этого наблюдения не будет никогда.
+
+# --- Балансы ------------------------------------------------------------------
+balances:
+  list:
+    selector: "span.balances-list"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    note: >-
+      Перечень балансов в заголовке страницы. Лежит внутри h1, а не отдельным
+      разделом.
+
+  value:
+    selector: "span.balances-value"
+    confidence: observed
+    count_observed: 3
+    scope: document
+    reads: text
+    type: x-funora-plain
+    role: >-
+      Один баланс. Их три - ровно столько, сколько валют нашла перепись знаков
+      23.08.2026, и это второе, независимое подтверждение того, что скалярным
+      полем баланс не описывается.
+
+  delimiter:
+    selector: "span.balances-delimiter"
+    confidence: observed
+    count_observed: 3
+    scope: document
+    reads: text
+    type: x-funora-plain
+    role: >-
+      Узел перед каждым значением. Подпись - один знак вне ASCII.
+
+  delimiter_is_not_a_separator: >-
+    Разделителей ТРИ при трёх значениях, и первый стоит ПЕРЕД первым значением.
+    Разделяющий знак дал бы два на три значения; значит это не разделитель, а
+    часть своего значения - вероятнее всего знак валюты.
+
+    «Вероятнее всего» здесь не оговорка вежливости: сам знак замаскирован
+    подписью, и утверждать, что это именно валюта, по снимку нельзя. Наблюдено
+    строение - чередование, начинающееся с разделителя, - и оно исключает
+    прочтение «разделитель между значениями».
+
+  currency_code_not_readable: >-
+    Код валюты со страницы не читается. Знак есть, кода нет, и соответствие
+    между ними не однозначно.
+
+# --- Таблица операций ---------------------------------------------------------
+transactions:
+  table:
+    selector: ".tc-finance"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    note: >-
+      Внешний контейнер таблицы операций. Класс собственный и смысловой, в
+      отличие от прочих классов той же таблицы: tc, dyn-table, transactions -
+      общие для семейства виджетов.
+
+  rows_container:
+    selector: ".dyn-table-body"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    note: Тот же класс, что у списка продаж и у отзывов.
+
+  row:
+    selector: ".tc-item"
+    confidence: observed
+    count_observed: 25
+    scope: document
+
+  fields:
+    transaction_id:
+      selector: ".tc-item"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: attribute
+      attributes:
+        transaction_id:
+          name: data-transaction
+          type: entity_id
+          confidence: observed
+          evidence: account-balance.logged.ru
+          observed_signature: "T9:d"
+      role: Идентификатор операции. Девять цифр.
+
+    status:
+      selector: ".tc-item"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: class
+      type: x-funora-plain
+      observed_values: ["transaction-status-complete"]
+      enum_is_closed: false
+      unknown_fallback: required
+      role: >-
+        Состояние операции В ИМЕНИ КЛАССА строки, а не в тексте.
+
+      values_note: >-
+        Наблюдено ОДНО состояние на двадцати пяти строках: все двадцать пять
+        завершены. Фильтр над таблицей перечисляет четыре значения, но их имена
+        - локализованный текст, и связать текст с классом нечем.
+
+        Перечисление поэтому открыто: незнакомый класс обязан дать
+        ненаблюдённое значение, а не ошибку и не догадку.
+
+    status_text:
+      selector: ".tc-status"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: >-
+        Состояние словами. Локализовано, разбору не подлежит; отдаётся строкой
+        затем, что состояний наблюдено одно, и вызывающий, встретивший
+        незнакомый класс, увидит хотя бы подпись.
+
+    title_text:
+      selector: ".tc-title"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: Описание операции. Локализовано, отдаётся строкой.
+
+    date_text:
+      selector: ".tc-date-time"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: >-
+        Дата операции в том виде, в каком показана. Строкой, а не моментом
+        времени: запись локализована.
+
+    date_left_text:
+      selector: ".tc-date-left"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: >-
+        Вторая метка времени рядом с первой - похоже на «сколько назад».
+        Локализована, отдаётся строкой.
+
+    amount_text:
+      selector: ".tc-price"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: >-
+        Сумма операции. Знак валюты лежит ОТДЕЛЬНЫМ узлом внутри, и потому
+        собственный текст ячейки даёт сумму без знака - то же устройство, что у
+        цены в списке продаж.
+
+    currency_symbol_text:
+      selector: ".tc-price .unit"
+      confidence: observed
+      count_observed: 1
+      scope: row
+      reads: text
+      type: x-funora-plain
+      role: Знак валюты операции.
+
+  header_is_not_a_row:
+    selector: ".tc-header"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    note: >-
+      Заголовок таблицы. Несёт ячейку цены с тем же классом tc-price, что и
+      строки, и потому по документу таких ячеек двадцать шесть, а не двадцать
+      пять. Разбор обязан искать поля ВНУТРИ строки, а не по документу.
+
+# --- Догрузка -----------------------------------------------------------------
+# Этот раздел важнее, чем кажется: он закрывает вопрос, который полдня стоял
+# открытым у отзывов.
+pagination:
+  continue_button:
+    selector: "button.dyn-table-continue"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    evidence: account-balance.logged.ru
+    observed_classes: "btn btn-default dyn-table-continue"
+    role: >-
+      Кнопка догрузки. Здесь она НЕ СПРЯТАНА - при двадцати пяти строках и
+      продолжении.
+
+  form:
+    selector: "form.dyn-table-form"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    action_observed: "https://funpay.com/users/transactions"
+    hidden_fields_observed: 3
+    role: >-
+      Форма догрузки. Три скрытых поля - той же формы, что у догрузки отзывов:
+      у первого значение из восьми цифр, у второго на этой странице девять цифр,
+      третье пусто.
+
+      ИМЕНА ПОЛЕЙ В СНИМКЕ ЗАМАСКИРОВАНЫ, и собрать запрос догрузки по нему
+      нельзя. Запись реестра - dyn_table_continue_request.
+
+  what_hidden_means:
+    observed: true
+    means: Догружать больше нечего.
+    evidence: [account-balance.logged.ru, user.logged.ru]
+    how: >-
+      Контрольная пара между двумя страницами одного виджета:
+
+        отзывы, показаны все шесть          -> кнопка С классом hidden
+        операции, двадцать пять и есть ещё  -> кнопка БЕЗ класса hidden
+
+      Виджет один и тот же, dyn-table; класс один и тот же; форма догрузки у
+      обеих страниц одной формы. Два случая разошлись ровно так, как
+      предсказывало объяснение «спрятана, когда догружать нечего».
+
+    limit: >-
+      Пара снята с РАЗНЫХ страниц. Обратное объяснение требует, чтобы один и тот
+      же класс на одном и том же виджете означал разное в двух местах - это
+      возможно, но требует большего.
+
+      Пара на одной странице подтвердила бы вывод прямо.
