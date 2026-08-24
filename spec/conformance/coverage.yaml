@@ -242,6 +242,16 @@ files:
       - reviews_foreign_profile_unobserved
       - reviews_page_totality
 
+  spec/extraction/order.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы страницы одного заказа, имена атрибутов, признаки.
+      Плюс tests/test_spec_selectors.py: каждый объявленный селектор ищется на
+      снимке order.logged.ru, каждый счётчик сверяется с числом найденных узлов.
+    not_implemented:
+      - order_params_unnamed
+      - order_chat_truncation
+
   spec/extraction/orders.yaml:
     mechanism: generated
     note: >-
@@ -346,6 +356,12 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py: записи заказов со снимка и сверка множеств имён.
+  spec/models/order-view.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_order.py: каждое поле схемы собирается разбором на снимке
+      order.logged.ru, и обёртка Observed сверяется с объявленным видом значения.
+
   spec/models/order.schema.json:
     mechanism: verified
     note: >-
@@ -457,7 +473,6 @@ files:
     note: >-
       operations.py.
     not_implemented:
-      - orders_get_operation
   spec/types.yaml:
     mechanism: generated
     note: >-

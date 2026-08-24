@@ -32,6 +32,24 @@
     "where": "spec/extraction/chats.yaml:chats.sending.form"
   },
   {
+    "selector": ".chat-header .media-user",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.counterparty.account_flags",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".chat-header .media-user-name a",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.counterparty.link",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".chat-message-list",
     "evidence": [
       "chat-thread.logged.ru"
@@ -87,12 +105,30 @@
     "scope": "document"
   },
   {
+    "selector": ".chat-msg-item",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.chat.messages",
+    "count_observed": 5,
+    "scope": "document"
+  },
+  {
     "selector": ".chat-msg-text",
     "evidence": [
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/chats.yaml:chats.message.fields.text",
     "count_observed": 11,
+    "scope": "document"
+  },
+  {
+    "selector": ".chat.chat-float",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.chat.widget",
+    "count_observed": 1,
     "scope": "document"
   },
   {
@@ -286,11 +322,81 @@
     "where": "spec/extraction/session.yaml:session.content_markers[0]"
   },
   {
+    "selector": ".param-item",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.params.item",
+    "count_observed": 8,
+    "scope": "document"
+  },
+  {
+    "selector": ".param-item > h5",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.params.label",
+    "count_observed": 8,
+    "scope": "document"
+  },
+  {
+    "selector": ".param-item a[href*=\"/lots/\"]",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.category_link.attributes.category_href"
+  },
+  {
+    "selector": ".param-item:has(> div > span.h1)",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.amount_block",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".param-item:has(a[href*=\"/lots/\"])",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.category_link",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".param-item.chat-panel",
     "evidence": [
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/updates.yaml:updates.tags.locations[2]"
+  },
+  {
+    "selector": ".param-list",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.params.container",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".review-container",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.order_number",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".review-container",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.review.container",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".review-container",
@@ -354,6 +460,15 @@
     "where": "spec/extraction/reviews.yaml:reviews.fields.rating",
     "count_observed": 2,
     "scope": "row"
+  },
+  {
+    "selector": ".review-item-row[data-author]",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.review.author",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": ".review-item-text",
@@ -480,6 +595,15 @@
     "scope": "document"
   },
   {
+    "selector": "a.chat-control[href]",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.chat.full_chat_link",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "a.chat-msg-author-link",
     "evidence": [
       "chat-thread.logged.ru"
@@ -578,11 +702,29 @@
     "where": "spec/extraction/orders.yaml:orders.empty_list.filter_stays"
   },
   {
+    "selector": "form[action$=\"/orders/refund\"]",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.refund_available",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form[action$=\"/users/reviews\"]",
     "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/reviews.yaml:reviews.filter.endpoint",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "h1.page-header > span",
+    "evidence": [
+      "order.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.identity.status_carrier",
     "count_observed": 1,
     "scope": "document"
   },

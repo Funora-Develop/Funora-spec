@@ -64,11 +64,14 @@ operations:
       - funora.transport
 
   orders.get:
-    summary: Читает заказ по идентификатору.
+    summary: >-
+      Читает страницу одного заказа. Возвращает то, что страница вправду
+      показывает, - не полный Order: сторон она не разделяет, кода валюты не
+      даёт.
     capability: orders.get
     safety: safe
     request_class: interactive
-    returns: Order
+    returns: OrderView
     errors:
       - funora.domain.not_found
       - funora.auth.session_expired
