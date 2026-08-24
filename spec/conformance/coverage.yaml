@@ -285,7 +285,6 @@ files:
       нечем.
     not_implemented:
       - runner_error_shape
-      - runner_fourth_subscription
       - updates_channel
   spec/legal/platform-rules.yaml:
     mechanism: verified
