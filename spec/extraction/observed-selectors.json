@@ -850,11 +850,41 @@
     "scope": "row"
   },
   {
+    "selector": ".user-link-name",
+    "evidence": [
+      "chat.logged.ru",
+      "orders-trade.logged.ru",
+      "user.logged.ru",
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.identity.own_username",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
+    "count_observed": 2,
+    "scope": "document"
+  },
+  {
     "selector": "[data-sitekey]",
     "evidence": [
       "orders-trade.guest.ru"
     ],
     "where": "spec/extraction/session.yaml:session.markers.challenge_widget_on_login[1]",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "[data-user]",
+    "evidence": [
+      "chat.logged.ru",
+      "chat-thread.logged.ru",
+      "order.logged.ru",
+      "user.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.identity.own_user_id",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
     "count_observed": 1,
     "scope": "document"
   },
