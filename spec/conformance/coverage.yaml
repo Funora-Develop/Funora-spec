@@ -371,6 +371,16 @@ files:
     note: >-
       tests/test_catalog.py: вид, идентификатор и признак главного собираются разбором.
 
+  spec/models/capability-profile.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_whoami.py: профиль называет каждую возможность контракта.
+
+  spec/models/session-health.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_whoami.py: годность выводится из класса ответа, кэш держит срок.
+
   spec/models/category.schema.json:
     mechanism: verified
     note: >-
@@ -500,8 +510,6 @@ files:
     note: >-
       operations.py: безопасность, возможность, класс запроса.
     not_implemented:
-      - account_service_operations
-      - session_health_cache
   spec/services/catalog.yaml:
     mechanism: generated
     note: >-

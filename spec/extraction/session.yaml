@@ -144,6 +144,57 @@ markers:
 #
 # Прежде не узнавали вовсе. Страница на чужой локали разбиралась молча, и
 # вызывающий получал английские тексты, полагая их русскими.
+# --- Кто мы ------------------------------------------------------------------
+# Раздел отвечает на вопрос «от чьего имени работает клиент». Прежде на него
+# отвечать было нечем: схема пользователя утверждала, что идентификатор из
+# наблюдённых страниц не читается, и утверждение было ложным.
+identity:
+  own_user_id:
+    selector: "[data-user]"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    evidence: [chat.logged.ru, chat-thread.logged.ru, order.logged.ru, user.logged.ru]
+    reads: attribute
+    attributes:
+      own_user_id:
+        name: data-user
+        type: entity_id
+        confidence: observed
+        evidence: [chat.logged.ru, chat-thread.logged.ru, order.logged.ru, user.logged.ru]
+        observed_signature: "T8:d"
+    absent_in: [orders-trade.guest.ru]
+    role: >-
+      Идентификатор ТОГО, КТО СМОТРИТ. Восемь цифр.
+
+    not_on_every_page:
+      observed: true
+      where: >-
+        Есть на страницах с виджетом переписки: /chat/, страница заказа, профиль,
+        корень площадки. НЕТ на списке продаж и на странице баланса - виджета
+        там нет вовсе.
+      consequence: >-
+        Чтение аккаунта берёт страницу, где атрибут ЕСТЬ, и это не безразличная
+        подробность: с любой авторизованной страницы прочесть себя нельзя.
+
+        До 0.14.0 схема пользователя говорила «на всех четырёх авторизованных
+        снимках». Снимков стало семь, и на двух из них атрибута нет.
+
+  own_username:
+    selector: ".user-link-name"
+    confidence: observed
+    count_observed: 2
+    scope: document
+    reads: text
+    type: x-funora-plain
+    evidence: [chat.logged.ru, orders-trade.logged.ru, user.logged.ru, account-balance.logged.ru]
+    absent_in: [orders-trade.guest.ru]
+    role: >-
+      Собственное отображаемое имя в шапке. Узлов ДВА - настольное меню и
+      мобильное, - и значение в них одно и то же.
+
+      Имя ключом быть не может: оно меняется, а идентификатор нет.
+
 locale:
   selector: "html[lang]"
   attribute: lang
