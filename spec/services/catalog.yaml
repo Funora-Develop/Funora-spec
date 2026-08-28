@@ -13,11 +13,23 @@ service: catalog
 operations:
 
   catalog.categories:
-    summary: Читает дерево разделов каталога.
+    summary: >-
+      Читает каталог с корня площадки: игры, их варианты и разделы каждого.
     capability: catalog.categories
     safety: safe
     request_class: interactive
-    returns: Category[]
+    returns: CatalogPage
+    notes:
+      - >-
+        Возвращает страницу, а не голый перечень. Голый перечень делает
+        неполноту незаметной: вызывающий берёт его и не спрашивает, всё ли
+        прочитано, а неполный перечень неотличим от полного.
+      - >-
+        Возвращает НЕ Category: та требует локали отображения, а корень площадки
+        её у раздела не показывает - только у страницы целиком.
+      - >-
+        Читается только основной список. Избранное повторяет его целиком -
+        наблюдено, восемь карточек из восьми, - и новых сведений не даёт.
     cacheable:
       ttl_ms: 86400000
       invalidate_on: [adapter_version_change, protocol_changed, session_change]

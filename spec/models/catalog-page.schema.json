@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.13.0/models/catalog-page.schema.json",
+  "x-funora-spec-version": "0.13.0",
+  "title": "CatalogPage",
+  "description": "Результат чтения каталога с корня площадки.\n\nЧИТАЕТСЯ ТОЛЬКО ОСНОВНОЙ СПИСОК. Списков на странице два, и все восемь карточек избранного повторяют карточки основного - пересечение восемь из восьми, шестьдесят три адреса разделов тоже все есть в каталоге.\n\nИзбранное не пропускается по небрежности: оно наблюдено и признано не дающим новых сведений. Обход по документу вместо обхода внутри каталога удвоил бы восемь игр - молча, при полноте и нуле повреждений.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "completeness": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "unknown"
+      ],
+      "x-funora-closed": true,
+      "description": "Полнота прочитанного.\n\nОбъявляется ПОЛНОЙ по положительному доводу: число ссылок в указателе по буквам равно числу буквенных групп на странице, и подписи их текста совпадают по порядку - то есть указатель не обещает ни одной группы, которой на странице нет.\n\nКнопки догрузки на странице нет. Сама по себе её ненаходка доводом не является - это правило проекта, - но здесь она и не нужна: довод даёт указатель."
+    },
+    "reason": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина. Наблюдаемые значения: alphabet_index_agrees, alphabet_index_missing, alphabet_index_disagrees, page_defects."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа."
+    },
+    "cards_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько карточек нашлось в основном каталоге, штук."
+    },
+    "games_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько игр и вариантов собрано, штук. Больше числа карточек: часть карточек несёт по нескольку вариантов."
+    },
+    "sections_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько разделов собрано, штук."
+    },
+    "letter_groups": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько буквенных групп на странице, штук. Разделители алфавита, а не игры: лежат в том же контейнере и прямыми детьми того же узла."
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.13.0/models/defect.schema.json"
+      },
+      "description": "Замеченные повреждения."
+    },
+    "games": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.13.0/models/catalog-game.schema.json"
+      },
+      "description": "Игры каталога вместе с их вариантами."
+    }
+  },
+  "required": [
+    "completeness",
+    "reason",
+    "observed_at",
+    "cards_total",
+    "games_total",
+    "sections_total",
+    "letter_groups",
+    "defects",
+    "games"
+  ]
+}
