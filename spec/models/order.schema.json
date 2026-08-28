@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.14.0/models/order.schema.json",
-  "x-funora-spec-version": "0.14.0",
+  "$id": "https://funora.dev/spec/0.15.0/models/order.schema.json",
+  "x-funora-spec-version": "0.15.0",
   "title": "Order",
   "description": "Полная запись заказа.\n\nНИ ОДНА РЕАЛИЗАЦИЯ ЭТОГО НЕ СОБИРАЕТ. Из списка продаж запись собрать нельзя: там нет ни валюты машиночитаемо, ни момента времени, ни разделения покупателя и продавца - см. cannot_be_built_from_list в spec/extraction/orders.yaml. Страница отдельного заказа НАБЛЮДАЛАСЬ - 23.08.2026, снимок order.logged.ru лежит в наборе фикстур. До 24.08.2026 здесь стояло «не наблюдалась ни разу»: утверждение пережило собственное опровержение на сутки, потому что снимок положили и описание не перечитали.\n\nНе собирается модель по другой причине: операции orders.get нет.\n\nЧто реализация вправду возвращает, описано в order-list-entry.schema.json.\n\nПометка стоит здесь затем же, зачем у схем непорождаемых событий: схема без реализации описывает намерение, а читается как контракт. Второй SDK, написанный по ней, выдумает то, чего не наблюдал.\n\nЧЕГО СТРАНИЦА НЕ ДАЁТ, и потому Order с неё не собирается даже теперь, когда операция orders.get написана. Обязательными объявлены buyer и seller - страница же показывает ОДНОГО контрагента и не помечает структурно, на которой стороне мы сами. Обязательным объявлен amount вида money - money требует кода валюты, а страница даёт только знак, и код с неё не читается.\n\nСо страницы собирается OrderView - проекция, отличимая от Order по типу. Так же устроен список продаж: он отдаёт OrderListEntry, а не Order.",
   "type": "object",
@@ -34,13 +34,13 @@
       "description": "Исходная строка статуса, свободный текст. Нужна, чтобы unknown можно было расследовать, не поднимая сырой ответ."
     },
     "buyer": {
-      "$ref": "https://funora.dev/spec/0.14.0/models/user.schema.json"
+      "$ref": "https://funora.dev/spec/0.15.0/models/user.schema.json"
     },
     "seller": {
-      "$ref": "https://funora.dev/spec/0.14.0/models/user.schema.json"
+      "$ref": "https://funora.dev/spec/0.15.0/models/user.schema.json"
     },
     "amount": {
-      "$ref": "https://funora.dev/spec/0.14.0/models/money.schema.json",
+      "$ref": "https://funora.dev/spec/0.15.0/models/money.schema.json",
       "description": "Сумма заказа."
     },
     "quantity": {
