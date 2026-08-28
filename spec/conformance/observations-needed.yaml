@@ -126,10 +126,13 @@ items:
       Перечень предложений и снимок раздела - две операции витрины. Обе стоят на
       этой странице, и другой у них нет.
 
+      Третья операция на ней же: catalog.field_schema, чтение схемы полей
+      подкатегории. Корень площадки даёт разделы, но не их поля.
+
       ПУТЬ ИСПРАВЛЕН 24.08.2026 ПО ИЗМЕРЕНИЮ. Прежде здесь стоял /lots/, и это
       была догадка: снятие вернуло 404. Тем же измерением исправлен и путь к
       управлению лотами - оба адреса требуют номера раздела.
-    unblocks: [market_service_operations, market_transport_lane, market_snapshot_completeness]
+    unblocks: [market_service_operations, market_transport_lane, market_snapshot_completeness, catalog_field_schema]
     priority: 4
 
   # Пункт reviews снят 24.08.2026, и снят он БЕЗ наблюдения. Требуемое уже

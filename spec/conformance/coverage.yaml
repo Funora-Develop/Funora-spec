@@ -229,6 +229,15 @@ files:
     not_implemented:
       - dyn_table_continue_request
 
+  spec/extraction/catalog.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы каталога, имена атрибутов, признаки. Плюс
+      tests/test_spec_selectors.py: каждый объявленный селектор ищется на снимке
+      root.logged.ru, каждый счётчик сверяется с числом найденных узлов.
+    not_implemented:
+      - catalog_search_operation
+
   spec/extraction/chats.yaml:
     mechanism: generated
     note: >-
@@ -346,6 +355,21 @@ files:
     mechanism: verified
     note: >-
       tests/test_account.py: каждое поле схемы собирается разбором строки.
+
+  spec/models/catalog-game.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_catalog.py: варианты игры и их разделы собираются разбором.
+
+  spec/models/catalog-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_catalog.py: полнота, причины и счётчики сверяются со схемой.
+
+  spec/models/catalog-section.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_catalog.py: вид, идентификатор и признак главного собираются разбором.
 
   spec/models/category.schema.json:
     mechanism: verified
@@ -483,7 +507,7 @@ files:
     note: >-
       operations.py.
     not_implemented:
-      - catalog_service_operations
+      - catalog_field_schema
       - catalog_categories_cache
   spec/services/chats.yaml:
     mechanism: generated

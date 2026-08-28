@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/spec/0.13.0/models/catalog-section.schema.json",
+  "x-funora-spec-version": "0.13.0",
+  "title": "CatalogSection",
+  "description": "Раздел игры в каталоге.\n\nНЕ Category и намеренно отличается от неё типом. Category требует локали отображения, а корень площадки её у раздела не показывает - только у страницы целиком.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "href": {
+      "$ref": "https://funora.dev/spec/0.13.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Адрес раздела целиком."
+    },
+    "kind": {
+      "$ref": "https://funora.dev/spec/0.13.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Вид раздела из сегмента пути. Наблюдены два: lots и chips.\n\nСТРУКТУРНОГО ПРИЗНАКА ВИДА НЕ СУЩЕСТВУЕТ, и это наблюдение, а не удобство: все пять тысяч ссылок укладываются в четыре структурных отпечатка, и три из четырёх несут оба вида вперемешку. У самого узла ссылки нет ни класса, ни data-атрибута - только адрес.\n\nЧто означает второй вид - неизвестно, и контракт смысла ему не приписывает."
+    },
+    "section_id": {
+      "$ref": "https://funora.dev/spec/0.13.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор раздела из адреса."
+    },
+    "title_text": {
+      "$ref": "https://funora.dev/spec/0.13.0/models/observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Название раздела. Локализовано."
+    },
+    "is_main": {
+      "type": "boolean",
+      "description": "Совпадает ли адрес раздела с адресом самой игры.\n\nСовпадение наблюдено 864 раза из 864: ссылка на игру - это одновременно ПЕРВАЯ ссылка её списка разделов.\n\nГлавный раздел помечается, а не выбрасывается. Выброшенный, он унёс бы с собой сведение о том, какой раздел у игры главный - а наивный сбор «ссылка игры плюс все ссылки списка» удвоил бы его."
+    },
+    "position": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Место в списке разделов, считая с нуля."
+    }
+  },
+  "required": [
+    "href",
+    "kind",
+    "section_id",
+    "title_text",
+    "is_main",
+    "position"
+  ]
+}

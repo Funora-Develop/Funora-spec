@@ -231,6 +231,15 @@
     "scope": "document"
   },
   {
+    "selector": ".game-title",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.game.title.within_card",
+    "count_observed": 872,
+    "scope": "document"
+  },
+  {
     "selector": ".media-user-name",
     "evidence": [
       "chat-thread.logged.ru"
@@ -421,6 +430,69 @@
     ],
     "where": "spec/extraction/order.yaml:order.params.container",
     "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-game-item",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.game.card.within_list",
+    "count_observed": 850,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-game-item > .btn-group > button",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.game.switcher",
+    "count_observed": 36,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-game-item > .game-title",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.game.title",
+    "count_observed": 872,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-game-item > ul.list-inline",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.sections.list",
+    "count_observed": 872,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-game-item > ul.list-inline > li > a",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.sections.link",
+    "count_observed": 4315,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-games-all .promo-game-item",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.game.card",
+    "count_observed": 842,
+    "scope": "document"
+  },
+  {
+    "selector": ".promo-games-all .promo-game-list > .promo-game-list-title",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.lists.letter_groups",
+    "count_observed": 38,
     "scope": "document"
   },
   {
@@ -896,6 +968,24 @@
     "where": "spec/extraction/updates.yaml:updates.tags.locations[0]"
   },
   {
+    "selector": "div.promo-games.promo-games-all",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.lists.catalog",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "div.promo-games.promo-games-fav",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.lists.favourites",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form.dyn-table-form",
     "evidence": [
       "account-balance.logged.ru"
@@ -919,6 +1009,15 @@
       "orders-trade.empty.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.empty_list.filter_stays"
+  },
+  {
+    "selector": "form.promo-games-filter",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.search.form",
+    "count_observed": 1,
+    "scope": "document"
   },
   {
     "selector": "form[action$=\"/orders/refund\"]",
@@ -956,6 +1055,15 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/session.yaml:session.locale",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "nav.nav-abc",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.totality.alphabet_index",
     "count_observed": 1,
     "scope": "document"
   },
@@ -1014,6 +1122,15 @@
     ],
     "where": "spec/extraction/account.yaml:account.balances.value",
     "count_observed": 3,
+    "scope": "document"
+  },
+  {
+    "selector": "ul.list-inline",
+    "evidence": [
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.sections.list.within_card",
+    "count_observed": 872,
     "scope": "document"
   }
 ]
