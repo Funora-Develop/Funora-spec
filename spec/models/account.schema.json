@@ -1,18 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.14.0/models/account.schema.json",
-  "x-funora-spec-version": "0.14.0",
+  "$id": "https://funora.dev/spec/0.15.0/models/account.schema.json",
+  "x-funora-spec-version": "0.15.0",
   "title": "Account",
   "description": "Аккаунт продавца.\n\nНИ ОДНА РЕАЛИЗАЦИЯ ЭТОГО НЕ СОБИРАЕТ, но причина не та, что стояла здесь до 0.8.0. Прежний текст говорил: «баланс объявлен обязательным, а страница с балансом не наблюдалась». Оба утверждения были ложны.\n\nБаланс обязательным не объявлен - его нет в required, и не было ни в одной редакции. Страница наблюдалась 23.08.2026: перепись знаков валют по /account/balance лежит в observations/currency.account-balance.json.\n\nИ эта перепись опровергла форму поля. Она нашла на странице ТРИ разных знака валюты в узлах span.balances-value - рубль, доллар, евро. Одно скалярное поле такую страницу описать не может: второй SDK, написанный по прежней схеме, выбрал бы один баланс из трёх, и какой именно - зависело бы от порядка обхода.\n\nЧего перепись НЕ дала: скелета страницы. Селекторов у баланса поэтому нет, и до снимка их не будет - см. spec/conformance/observations-needed.yaml, пункт account_balance.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "user": {
-      "$ref": "https://funora.dev/spec/0.14.0/models/user.schema.json",
+      "$ref": "https://funora.dev/spec/0.15.0/models/user.schema.json",
       "description": "Профиль владельца сессии."
     },
     "balance": {
-      "$ref": "https://funora.dev/spec/0.14.0/models/money.schema.json",
+      "$ref": "https://funora.dev/spec/0.15.0/models/money.schema.json",
       "x-funora-deprecated": {
         "since": "0.8.0",
         "reason": "Одно скалярное значение не описывает наблюдённую страницу: перепись знаков валют от 23.08.2026 нашла на ней три разные валюты в узлах span.balances-value.",
@@ -37,7 +37,7 @@
     "balances": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.14.0/models/money.schema.json"
+        "$ref": "https://funora.dev/spec/0.15.0/models/money.schema.json"
       },
       "x-funora-observability": "unobserved-possible",
       "description": "Доступные балансы, по одному на валюту. Перечень, а не одно значение: перепись знаков по /account/balance нашла три разные валюты в узлах span.balances-value одной и той же страницы.\n\nПУСТОЙ ПЕРЕЧЕНЬ И ОТСУТСТВИЕ ПОЛЯ - РАЗНЫЕ ОТВЕТЫ. Отсутствие означает «не наблюдали»; пустой перечень означает «наблюдали, балансов нет». Возможность account.balance указывает сюда, а это поле - обратно на неё, и снять различие можно только с обеих сторон сразу.\n\nПорядок перечня контрактом не закреплён: он не наблюдён. Искать нужную валюту следует по её коду, а не по месту.\n\nУказателя на возможность здесь больше нет, и это не потеря связи. До 0.10.0 у account.balance не было ни одной операции, и она объяснялась указателем на это поле. Операция появилась, объяснение снято - объяснять отсутствие того, что присутствует, хуже умолчания.\n\nСобирает балансы теперь BalancePage, а не эта модель: страница отдаёт их вместе с операциями по счёту."
