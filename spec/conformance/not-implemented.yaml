@@ -1008,23 +1008,14 @@ items:
       отменить.
     symbols: []
 
-  chat_node_value_origin:
-    declared_in: spec/extraction/updates.yaml#action.send_message
-    awaits_observation: true
-    what: >-
-      Откуда берётся значение поля node действия отправки - строка 23 знаков.
-    why_not: >-
-      Разбор списка диалогов читает data-id, и это ДЕВЯТЬ ЦИФР - другая форма.
-      Подставить одно вместо другого нельзя.
-
-      Единственный носитель подходящей формы в снимках - атрибут data-name узла
-      виджета переписки. Он не объявлен ни в одном файле spec/extraction и не
-      читается ничем; соответствие его сетевому значению установлено бы по
-      ФОРМЕ, то есть выводом, а не наблюдением.
-    user_impact: >-
-      Без node запрос отправки не собрать вовсе: он называет, в какой диалог
-      писать. Ошибись здесь реализация - и сообщение уйдёт не тому.
-    symbols: []
+  # Запись chat_node_value_origin снята 29.08.2026. Поле node берётся из
+  # атрибута data-name узла .chat.chat-float - сверено в живой вкладке, не
+  # выведено по форме. Тем же наблюдением снята и двусмысленность с
+  # last_message: он берётся из data-node-msg активной строки списка, не из
+  # data-user-msg.
+  #
+  # Подробности - spec/extraction/updates.yaml, раздел
+  # action.where_every_field_comes_from.
 
   chats_send_return_type:
     declared_in: spec/services/chats.yaml#operations.chats.send_text.returns
