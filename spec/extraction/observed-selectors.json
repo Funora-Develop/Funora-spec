@@ -29,7 +29,7 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.content_markers[1]"
+    "where": "spec/extraction/session.yaml:session.content_markers[2]"
   },
   {
     "selector": ".chat-form form",
@@ -68,7 +68,7 @@
     "evidence": [
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.content_markers[2]"
+    "where": "spec/extraction/session.yaml:session.content_markers[3]"
   },
   {
     "selector": ".chat-msg-author-label",
@@ -178,14 +178,14 @@
       "chat.logged.ru",
       "chat-thread.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.content_markers[3]"
+    "where": "spec/extraction/session.yaml:session.content_markers[4]"
   },
   {
     "selector": ".content-account",
     "evidence": [
       "orders-trade.guest.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.content_markers[4]"
+    "where": "spec/extraction/session.yaml:session.content_markers[5]"
   },
   {
     "selector": ".content-account-login",
@@ -315,6 +315,20 @@
     "scope": "document"
   },
   {
+    "selector": ".navbar-toggle-logged",
+    "evidence": [
+      "chat.logged.ru",
+      "chat-thread.logged.ru",
+      "orders-trade.logged.ru",
+      "orders-trade.empty.ru",
+      "account-balance.logged.ru",
+      "order.logged.ru",
+      "user.logged.ru",
+      "root.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.content_markers[0]"
+  },
+  {
     "selector": ".offer-list-title h3 a",
     "evidence": [
       "user.logged.ru"
@@ -371,7 +385,7 @@
     "evidence": [
       "orders-trade.logged.ru"
     ],
-    "where": "spec/extraction/session.yaml:session.content_markers[0]"
+    "where": "spec/extraction/session.yaml:session.content_markers[1]"
   },
   {
     "selector": ".param-item",
