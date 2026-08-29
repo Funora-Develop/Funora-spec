@@ -322,6 +322,8 @@ files:
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
     not_implemented:
+      - chat_node_value_origin
+      - runner_action_empty_subscription
       - runner_error_shape
       - updates_channel
   spec/legal/platform-rules.yaml:
@@ -521,6 +523,8 @@ files:
     note: >-
       operations.py.
     not_implemented:
+      - chats_send_return_type
+      - reconciliation_procedure
       - chats_service_operations
       - chats_send_governor
       - cursor_pagination
