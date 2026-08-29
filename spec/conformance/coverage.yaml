@@ -247,7 +247,6 @@ files:
       сверял никто.
     not_implemented:
       - chats_sending_form
-      - csrf_token_unreadable_from_snapshot
   spec/extraction/observed-selectors.json:
     mechanism: verified
     note: >-
