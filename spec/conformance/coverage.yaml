@@ -322,7 +322,6 @@ files:
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
     not_implemented:
-      - chat_node_value_origin
       - runner_action_empty_subscription
       - runner_error_shape
       - updates_channel

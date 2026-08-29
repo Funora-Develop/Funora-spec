@@ -246,6 +246,46 @@ chat:
         confidence: observed
         evidence: order.logged.ru
         observed_signature: "T8:ad"
+      node_name:
+        name: data-name
+        type: opaque
+        confidence: observed
+        evidence: [order.logged.ru, chat-thread.logged.ru]
+        observed_signature: "T23:adp"
+        role: >-
+          СОСТАВНОЕ ИМЯ ДИАЛОГА, и это НЕ то же, что node_id. Двадцать три знака
+          с пунктуацией против девяти цифр.
+
+          Именно оно кладётся в поле node запроса отправки - сверено в живой
+          вкладке 29.08.2026, наблюдение network.send-origins. Прежде здесь
+          подставили бы node_id, потому что имя поля совпадает.
+      bookmarks_tag:
+        name: data-bookmarks-tag
+        type: opaque
+        confidence: observed
+        evidence: chat-thread.logged.ru
+        observed_signature: "T8:ad"
+        role: >-
+          Метка подписки на закладки диалогов.
+
+          НА СТРАНИЦЕ ЗАКАЗА ЕЁ НЕТ: тот виджет на закладки не подписан.
+          Свидетельством объявлен только chat-thread.logged.ru именно поэтому -
+          на order.logged.ru атрибута у узла нет вовсе.
+
+    not_on_every_page:
+      observed: true
+      where: >-
+        Атрибуты data-name, data-tag и data-id есть у виджета ТОЛЬКО при
+        открытом диалоге. На списке диалогов без выбранного собеседника у того
+        же узла класс chat-not-selected, и из пяти атрибутов остаются два -
+        data-user и data-bookmarks-tag.
+      consequence: >-
+        Отправить сообщение, прочитав только список диалогов, НЕЛЬЗЯ: в запросе
+        нужны node и tag, а их там нет. Нужна страница открытого диалога.
+
+        Признак объявляется положительный - НАЛИЧИЕ data-name, - а не
+        отсутствие класса chat-not-selected: класс может смениться, а без
+        значения запрос всё равно не собрать.
     role: >-
       САМОЕ ЦЕННОЕ НА СТРАНИЦЕ, помимо самого заказа: идентификатор диалога.
 

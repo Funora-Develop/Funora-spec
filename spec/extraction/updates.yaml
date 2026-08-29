@@ -35,6 +35,28 @@ tags:
   confidence: observed
   evidence: [orders-trade.logged.ru, chat.logged.ru, chat-thread.logged.ru]
 
+  carrier:
+    selector: "div.hidden[data-orders]"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    evidence: [orders-trade.logged.ru, chat.logged.ru, chat-thread.logged.ru]
+    attributes:
+      orders_tag:
+        name: data-orders
+        type: opaque
+        confidence: observed
+        evidence: [orders-trade.logged.ru, chat.logged.ru, chat-thread.logged.ru]
+        observed_signature: "T8:ad"
+    role: >-
+      Метка подписки на счётчики продаж, лежащая на странице сама по себе.
+
+      Объявлена ИМЕНОВАННЫМ селектором, а не только строкой в перечне мест ниже,
+      потому что её читает разбор. Перечень мест - опись наблюдения; читаемое же
+      обязано браться из порождённой таблицы, иначе спецификация и код
+      разойдутся молча.
+
   locations:
     - selector: "div.hidden[data-orders]"
       attributes: [data-orders, data-chat]
@@ -568,6 +590,60 @@ runner:
 
           Заголовка content-type в запросе нет, и это признак: тело
           многочастное, границу проставляет сам отправитель.
+
+    where_every_field_comes_from:
+      observed: true
+      observed_at: "2026-08-29"
+      evidence: [network.send-origins]
+      how_it_was_checked: >-
+        Сверкой в живой вкладке. Сборщик сравнивает значение поля запроса со
+        значениями атрибутов страницы В МОМЕНТ ЗАПРОСА и записывает ИМЯ
+        совпавшего атрибута либо false. Ни одного значения наружу не уходит.
+
+        Иначе было нельзя: скелет страницы и сетевая запись маскируют значения
+        независимо, и подписи «двадцать три знака латиницы с цифрами и
+        пунктуацией» совпадают у любых двух таких строк.
+
+        Атрибуты читаются ДО ухода запроса: приложение обновляет метки по
+        ответу.
+
+      action_data:
+        node: >-
+          Атрибут data-name узла .chat.chat-float. НЕ data-id: тот несёт девять
+          цифр, а node - двадцать три знака с пунктуацией. Формы разные, и
+          подставить одно вместо другого нельзя.
+        last_message: >-
+          Атрибут data-node-msg АКТИВНОЙ строки списка диалогов - a.contact-item
+          с классом active. Не data-user-msg: два эти атрибута несут разное, и
+          какое из двух кладётся в запрос, прежде было неизвестно.
+        content: Даётся вызывающим. Это текст сообщения, и сверке он не подлежит.
+
+      subscription:
+        orders_counters: "id из data-user, tag из data-orders"
+        chat_node: "id из data-name, tag из data-tag"
+        c-p-u: "id из data-id, tag из data-tag"
+        chat_bookmarks: >-
+          id из data-user, tag НЕ НАЙДЕН среди сверявшихся атрибутов. Кандидат -
+          data-bookmarks-tag того же узла .chat.chat-float: он объявлен носителем
+          метки подписки в этом же файле, но в перечень сверки не входил.
+          Проверяется следующим наблюдением.
+
+      response:
+        chat_node.id: "совпал с data-name"
+        chat_node.data.node.id: "совпал с data-id - то есть числовой вид того же диалога"
+        messages[].id: >-
+          НЕ СОВПАЛ ни с одним атрибутом страницы, и это ожидаемо: сообщение
+          новое, на странице его ещё нет. Для сверки по истории это и есть
+          затор - опознавать своё сообщение придётся ПОСЛЕ перечитывания.
+
+      what_this_makes_possible: >-
+        Запрос отправки собирается из наблюдённого ЦЕЛИКОМ, кроме одной метки.
+        Прежде здесь стояло, что поле node брать неоткуда.
+
+        Страница нужна СТРАНИЦА ОТКРЫТОГО ДИАЛОГА: на списке без открытого
+        диалога у виджета нет ни data-name, ни data-tag - там он несёт класс
+        chat-not-selected. Это не подробность: отправить, прочитав только
+        список, нельзя.
 
     request_headers: [accept, content-type, x-requested-with]
     request_headers_note: >-
