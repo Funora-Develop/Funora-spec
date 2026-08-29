@@ -971,6 +971,16 @@
     "scope": "document"
   },
   {
+    "selector": "body[data-app-data]",
+    "evidence": [
+      "chat.logged.ru",
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.identity.app_data",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "button.dyn-table-continue",
     "evidence": [
       "account-balance.logged.ru"

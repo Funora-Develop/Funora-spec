@@ -195,6 +195,69 @@ identity:
 
       Имя ключом быть не может: оно меняется, а идентификатор нет.
 
+  app_data:
+    selector: "body[data-app-data]"
+    confidence: observed
+    count_observed: 1
+    scope: document
+    reads: attribute
+    evidence: [chat.logged.ru, lots-trade.logged.ru]
+    absent_in: []
+    attributes:
+      app_data:
+        name: data-app-data
+        type: x-funora-plain
+        confidence: observed
+        evidence: [chat.logged.ru, lots-trade.logged.ru]
+        observed_keys: [csrf-token, locale, runnerCoordId, userId, webpush]
+    role: >-
+      Настройки страницы одним объектом JSON. Отсюда берётся ЗАЩИТНЫЙ ТОКЕН, без
+      которого не собрать ни одного запроса записи.
+
+    fields_observed:
+      csrf-token:
+        reads: "$csrf-token"
+        type: opaque_token
+        observed_signature: "T16:ad"
+        role: Защитный токен площадки. Шестнадцать знаков латиницы и цифр.
+      userId:
+        reads: "$userId"
+        type: entity_id
+        observed_signature: "T8:d"
+        role: >-
+          Тот же идентификатор, что в атрибуте data-user, вторым носителем.
+      locale:
+        reads: "$locale"
+        type: x-funora-plain
+        observed_signature: "T2:a"
+        role: Метка языка, третьим носителем после html[lang] и меню.
+      runnerCoordId:
+        reads: "$runnerCoordId"
+        type: opaque_token
+        observed_signature: "T35:adp"
+        role: >-
+          Опознаватель соединения канала обновлений. Наблюдался, не читается.
+      webpush.app:
+        reads: "$webpush.app"
+        type: opaque_token
+        observed_signature: "T11:adp"
+        role: Настройка push-уведомлений браузера. Наблюдалась, не читается.
+
+    why_it_took_two_format_versions: >-
+      Атрибут маскировался ЦЕЛИКОМ - одной подписью на сто пятьдесят один знак,
+      - и в снимке не было ни одного ключа этого объекта. Разбор, достающий
+      оттуда токен, проверить было не на чем, и все семь операций записи стояли
+      на этом одном месте.
+
+      Сняли затором в два шага: формат скелета v8 сохраняет КЛЮЧИ объекта и
+      маскирует значения, и авторизованная страница переснята новым форматом.
+      Читаемым стал ПУТЬ до токена, а не токен.
+
+    the_token_value_is_never_stored: >-
+      Ни в снимке, ни в фикстуре, ни в журнале значения токена нет и быть не
+      должно: это часть сессии владельца. Разбор проверяется тем, что находит
+      ключ и берёт его значение, а не тем, что значение известно заранее.
+
 locale:
   selector: "html[lang]"
   attribute: lang
