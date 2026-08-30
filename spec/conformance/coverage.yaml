@@ -486,6 +486,18 @@ files:
     mechanism: generated
     note: >-
       response_classes.py: классы ответа, таблица «вердикт - ошибка».
+  spec/protocol/reconciliation.yaml:
+    mechanism: generated
+    note: >-
+      reconciliation.py: три вердикта и расписание чтений. Кодогенератор при этом
+      ЗАПРЕЩАЕТ вердикт отрицания - not_delivered, failed, not_sent - и требует,
+      чтобы всякий объявленный вердикт был достижим шагом, а число пауз
+      совпадало с числом чтений и возрастало.
+
+      Запрет вердикта отрицания стоит в порождении, а не в прозе, потому что
+      цена его нарушения - второе сообщение покупателю: отсутствие в истории
+      свидетельство отрицательное, и объявлять по нему «не отправлено» нельзя.
+
   spec/protocol/send-outcome.yaml:
     mechanism: generated
     note: >-
@@ -536,7 +548,6 @@ files:
       operations.py.
     not_implemented:
       - chats_send_return_type
-      - reconciliation_procedure
       - chats_service_operations
       - chats_send_governor
       - cursor_pagination

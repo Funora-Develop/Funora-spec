@@ -971,6 +971,20 @@
     "scope": "document"
   },
   {
+    "selector": "a.user-link-dropdown",
+    "evidence": [
+      "chat-thread.logged.ru",
+      "chat.logged.ru",
+      "orders-trade.logged.ru"
+    ],
+    "where": "spec/extraction/session.yaml:session.identity.own_profile_link",
+    "absent_in": [
+      "orders-trade.guest.ru"
+    ],
+    "count_observed": 2,
+    "scope": "document"
+  },
+  {
     "selector": "body[data-app-data]",
     "evidence": [
       "chat.logged.ru",
