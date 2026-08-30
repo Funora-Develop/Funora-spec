@@ -987,6 +987,17 @@ function main() {
       change('remove_event_type', rel, 'вид события удалён')
     } else if (rel.includes('/models/')) {
       change('remove_operation', rel, 'модель удалена')
+    } else if (rel.includes('/extraction/') && rel.endsWith('.yaml')) {
+      // ЦЕЛЫЙ ФАЙЛ ИЗВЛЕЧЕНИЯ был для этой проверки невидим в обе стороны.
+      // Сравнение правил вызывалось только тогда, когда файл есть с обеих
+      // сторон; появление и исчезновение целого файла не попадало ни в один
+      // класс изменения, и проверка объявляла «изменений контракта не
+      // обнаружено» о правках, меняющих разбор у всех реализаций сразу.
+      //
+      // Класс add_extraction_field при этом был объявлен и действовал - но
+      // только внутри уже существовавшего файла. Объявлено и молчит - ровно то,
+      // что этот репозиторий запрещает.
+      diffExtraction(rel, parse(rel, readAt(base, rel)), null)
     }
   }
 
@@ -1003,6 +1014,10 @@ function main() {
         change('add_event_type', rel, 'новый вид события')
       } else if (rel.includes('/models/')) {
         change('add_operation', rel, 'новая модель')
+      } else if (rel.includes('/extraction/') && rel.endsWith('.yaml')) {
+        // См. довод у обратного случая выше: целый новый файл извлечения
+        // прежде не давал ни одного изменения.
+        diffExtraction(rel, null, now)
       }
       continue
     }

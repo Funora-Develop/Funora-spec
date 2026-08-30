@@ -7,6 +7,13 @@
     "where": "spec/extraction/showcase.yaml:showcase.offers.optional_columns.auto_delivery"
   },
   {
+    "selector": ".avatar-photo",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.seller_link"
+  },
+  {
     "selector": ".cf-turnstile",
     "evidence": [
       "orders-trade.guest.ru"
@@ -245,6 +252,13 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/chats.yaml:chats.contact_list.fields.counterparty_name"
+  },
+  {
+    "selector": ".media-user-name",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.seller_name"
   },
   {
     "selector": ".media-user-name a",
@@ -670,6 +684,13 @@
   {
     "selector": ".tc-desc-text",
     "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.description_text"
+  },
+  {
+    "selector": ".tc-desc-text",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/showcase.yaml:showcase.offers.fields.description_text",
@@ -758,6 +779,13 @@
   {
     "selector": ".tc-price",
     "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.price_cell"
+  },
+  {
+    "selector": ".tc-price",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.amount_text",
@@ -792,6 +820,13 @@
   {
     "selector": ".tc-price .unit",
     "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.currency_symbol_text"
+  },
+  {
+    "selector": ".tc-price .unit",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.currency_symbol_text",
@@ -817,6 +852,13 @@
   {
     "selector": ".tc-price > div",
     "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.price_text"
+  },
+  {
+    "selector": ".tc-price > div",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/showcase.yaml:showcase.offers.fields.price_text",
@@ -838,6 +880,13 @@
       "lots-trade.logged.ru"
     ],
     "where": "spec/extraction/lots.yaml:lots.fields.server_text"
+  },
+  {
+    "selector": ".tc-server",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.fields.server_text"
   },
   {
     "selector": ".tc-server",
@@ -995,6 +1044,29 @@
     "where": "spec/extraction/lots.yaml:lots.rows",
     "count_observed": 20,
     "scope": "document"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.rows",
+    "count_observed": 25,
+    "scope": "document"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.seller_trap"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "market-offers.trimmed.logged.ru"
+    ],
+    "where": "spec/extraction/market.yaml:market.markers.online"
   },
   {
     "selector": "a.tc-item",
