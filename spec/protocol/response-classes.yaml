@@ -42,6 +42,7 @@ rate_limited_is_separate:
 # --- Порядок шагов ----------------------------------------------------------
 pipeline:
   order_is_normative: true
+  classifies: классификация ответа площадки
   steps:
     - step: 1
       name: Код ответа
