@@ -480,6 +480,16 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py: повреждения разобранных снимков.
+  spec/models/lot-form.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: набор полей схемы сверяется с полями
+      funora._lot_form.LotForm - объявление против объявления, а не по снимку.
+      Сверка по снимку слепа к полю, которого на снимке не случилось.
+
+      tests/test_lot_edit.py и tests/test_update_price.py: сам разбор формы и
+      сборка запроса сохранения по ней.
+
   spec/models/lot.schema.json:
     mechanism: verified
     note: >-
