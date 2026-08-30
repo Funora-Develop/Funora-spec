@@ -1208,6 +1208,15 @@
     "scope": "document"
   },
   {
+    "selector": "form.form-offer-editor",
+    "evidence": [
+      "lot-edit.logged.ru"
+    ],
+    "where": "spec/extraction/lot-edit.yaml:lot-edit.form",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form.orders-filter",
     "evidence": [
       "orders-trade.empty.ru"
