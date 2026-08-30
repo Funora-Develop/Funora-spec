@@ -261,18 +261,15 @@ files:
     not_implemented:
       - chats_sending_form
   spec/extraction/lot-edit.yaml:
-    mechanism: verified
+    mechanism: generated
     note: >-
       tests/test_lot_edit.py: адрес сохранения читается дословно, все имена
       полей на месте, признак включённости читается наличием пометки checked, а
       значения полей в снимке отсутствуют.
 
-      Порождением не объявляется НАРОЧНО. Файл описывает форму, а не селекторы
-      извлечения: у полей нет ни селекторов, ни областей - есть имена, по
-      которым собирается запрос. Порождать из него нечего.
-
-      Ссылка на неисполненное стоит там, где механизм объявлен, - в
-      spec/services/lots.yaml, и повторять её здесь нельзя.
+      extraction.py: селектор формы правки и знак валюты. Прочее в файле -
+      ИМЕНА полей, а не селекторы: по ним собирается запрос сохранения, и
+      порождать из них нечего.
 
   spec/extraction/lots.yaml:
     mechanism: generated
@@ -640,9 +637,8 @@ files:
       operations.py.
     not_implemented:
       - lots_service_operations
-      - domain_write_operations
+      - domain_conflict_error
       - lots_deactivate_guards
-      - lots_update_price_audit
   spec/services/market.yaml:
     mechanism: generated
     note: >-
