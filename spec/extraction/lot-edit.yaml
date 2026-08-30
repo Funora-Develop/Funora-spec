@@ -33,6 +33,18 @@ form:
 # Имена наблюдены дословно, значения НЕ наблюдены и наблюдаться не будут: в них
 # цена, краткое и подробное описание лота и сообщение покупателю после оплаты.
 fields:
+  currency_symbol:
+    selector: ".form-control-feedback"
+    reads: text
+    scope: document
+    confidence: observed
+    count_observed: 1
+    evidence: lot-edit.logged.ru
+    role: >-
+      Знак валюты рядом с полем цены. Читается ЗНАКОМ, а не кодом: кода на
+      странице нет, и перевод знака в код делает общая таблица - та же, что у
+      списка продаж.
+
   csrf_token:
     confidence: observed
     evidence: lot-edit.logged.ru

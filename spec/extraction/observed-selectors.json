@@ -238,6 +238,15 @@
     "scope": "document"
   },
   {
+    "selector": ".form-control-feedback",
+    "evidence": [
+      "lot-edit.logged.ru"
+    ],
+    "where": "spec/extraction/lot-edit.yaml:lot-edit.fields.currency_symbol",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": ".game-title",
     "evidence": [
       "root.logged.ru"

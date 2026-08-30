@@ -682,20 +682,29 @@ function diffSchema(rel, was, now) {
       change('change_x_funora_type', rel,
         `поле ${name}: доменный тип изменился с ${a['x-funora-type'] || 'нет'} на ${b['x-funora-type'] || 'нет'}`)
     }
-    const wasEnum = new Set(a.enum || [])
-    const nowEnum = new Set(b.enum || [])
+    // ПЕРЕЧИСЛЕНИЕ ВНУТРИ МАССИВА ЛЕЖИТ НА ОДИН УРОВЕНЬ ГЛУБЖЕ, и без этой
+    // строки классификатор его не видел вовсе. Поймано на unsafe_marks:
+    // перечень объявлен закрытым, схема обещает, что «появление имени видно в
+    // перечне изменений», - а третье имя пришло и не было названо ничем.
+    //
+    // Обещание, которое нечем сдержать, хуже отсутствия обещания: читающий
+    // перечень исчерпывающе полагается на него и не добавляет ветку.
+    const wasItem = (a.type === 'array' && a.items) || a
+    const nowItem = (b.type === 'array' && b.items) || b
+    const wasEnum = new Set(wasItem.enum || [])
+    const nowEnum = new Set(nowItem.enum || [])
     for (const v of nowEnum) {
       if (wasEnum.has(v)) continue
       // Условие enum_has_unknown_fallback вычисляется по НОВОМУ
       // объявлению: важно, есть ли запасное значение у того, что
       // выпускается, а не у того, что было.
-      change('add_enum_value', rel, `поле ${name}: добавлено значение ${v}`, null, b)
+      change('add_enum_value', rel, `поле ${name}: добавлено значение ${v}`, null, nowItem)
     }
     for (const v of wasEnum) {
       if (nowEnum.has(v)) continue
       // Значение перечисления - строка, повесить ключ на неё негде.
       // Пометка живёт на несущем свойстве, в x-funora-deprecated-values.
-      const marks = a['x-funora-deprecated-values'] || {}
+      const marks = a['x-funora-deprecated-values'] || wasItem['x-funora-deprecated-values'] || {}
       change('remove_enum_value', rel, `поле ${name}: удалено значение ${v}`,
         marks[v] ? { 'x-funora-deprecated': marks[v] } : null)
     }
