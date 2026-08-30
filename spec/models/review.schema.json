@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.18.0/models/review.schema.json",
-  "x-funora-spec-version": "0.18.0",
+  "$id": "https://funora.dev/spec/0.19.0/models/review.schema.json",
+  "x-funora-spec-version": "0.19.0",
   "title": "Review",
   "description": "Отзыв, оставленный покупателем на профиле продавца.\n\nСобирается со страницы профиля - см. spec/extraction/reviews.yaml. Наблюдение стоило нуля походов на площадку: снимок профиля лежал в проекте с 23.08.2026, снятый ради идентификатора аккаунта.\n\nЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ. Ответа продавца - на снимке нет ни одного узла, который им был бы; момента времени - дата показана человеческой записью, локализованной и неразбираемой; суммы - подпись под отзывом тоже локализована. Все три отсутствуют по наблюдению, а не по недосмотру.",
   "type": "object",
@@ -13,37 +13,37 @@
       "description": "Место отзыва на странице, считая с нуля. Порядок площадка не обещала; поле служит для указания на строку в сообщении о повреждении."
     },
     "rating": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "rating",
       "description": "Оценка в звёздах, целое от одного до пяти.\n\nЧитается из ИМЕНИ КЛАССА: div.rating5 значит пять. Перечисление закрыто по наблюдению - площадка сама перечислила все пять уровней в выпадающем списке фильтра отзывов.\n\nОбёрнута в Observed, а не отдана числом: узлов оценки в строке два (широкий и узкий макет), и разойдись они - это ненаблюдённое значение с причиной, а не выбор наугад."
     },
     "author_name": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Отображаемое имя автора. Свободный текст, ключом быть не может: имена меняются."
     },
     "author_href": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес профиля автора. Форма адреса объявлена в spec/extraction/reviews.yaml, и разбирать из неё идентификатор контракт разрешает - это единственное такое место.\n\nСверен со вторым адресом, тем что на аватаре: разошлись - ненаблюдённое значение с причиной author_href_mismatch, а не первый попавшийся."
     },
     "order_href": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес заказа, к которому отзыв относится. Единственный ключ, по которому отзыв сопоставляется с записью списка продаж."
     },
     "text": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Текст отзыва. Отзыв без текста не наблюдался, и обязательным текст поэтому не объявлен: отсутствие значит «не прочитали», а не «его нет»."
     },
     "date_text": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Дата в том виде, в каком её показала площадка. Строкой, а НЕ моментом времени: тридцать один знак с буквами, цифрами и пунктуацией - человеческая запись, форма которой меняется вместе с локалью.\n\nСтрока, которую нельзя разобрать, честнее момента, угаданного по одной локали из трёх."
     },
     "detail_text": {
-      "$ref": "https://funora.dev/spec/0.18.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.19.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Подпись под отзывом: что купили и почём. Локализована, отдаётся строкой по той же причине, что и дата."
     }

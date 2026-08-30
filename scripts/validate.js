@@ -921,6 +921,61 @@ function checkValueShapes() {
  *
  * @returns {number} Сколько наблюдений перечислено.
  */
+/**
+ * Проверяет, что объявленные наборы векторов существуют.
+ *
+ * Объявление вида `vectors: spec/conformance/что-то.vectors.json` - это
+ * обещание, что поведение сверяется между реализациями. Файл, которого нет,
+ * превращает обещание в украшение: раннер соответствия молча пропускает набор,
+ * которого не нашёл, и сборка остаётся зелёной.
+ *
+ * Поймано на outbound-governor.vectors.json: он объявлен в budget.yaml и не
+ * существует, а проверка спецификации этого не замечала.
+ *
+ * @returns {number} Сколько объявлений проверено.
+ */
+function checkDeclaredVectors() {
+  let counted = 0
+  const walk = (node, rel) => {
+    if (!node || typeof node !== 'object') return
+    if (Array.isArray(node)) {
+      node.forEach((one) => walk(one, rel))
+      return
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'vectors' && typeof value === 'string') {
+        counted += 1
+        if (!fs.existsSync(path.join(ROOT, value))) {
+          fail(rel, `объявлен набор векторов ${value}, а файла нет. Раннер ` +
+            'соответствия пропускает ненайденный набор молча, и обещание ' +
+            'сверять поведение между реализациями остаётся украшением')
+        }
+      } else {
+        walk(value, rel)
+      }
+    }
+  }
+
+  // SPEC здесь - АБСОЛЮТНЫЙ путь, в отличие от compat.js, где он относительный.
+  // Обход ведётся по абсолютному, а в сообщение идёт относительный: путь от
+  // корня репозитория человек найдёт, путь от корня диска - нет.
+  const seen = []
+  const scan = (abs) => {
+    if (!fs.existsSync(abs)) return
+    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
+      const full = path.join(abs, entry.name)
+      if (entry.isDirectory()) scan(full)
+      else if (full.endsWith('.yaml')) seen.push(full)
+    }
+  }
+  scan(SPEC)
+
+  for (const abs of seen) {
+    walk(readYaml(abs), path.relative(ROOT, abs).split(path.sep).join('/'))
+  }
+  return counted
+}
+
 function checkObservationsNeeded() {
   const rel = 'spec/conformance/observations-needed.yaml'
   const file = path.join(SPEC, 'conformance', 'observations-needed.yaml')
@@ -3023,6 +3078,7 @@ function main() {
   const carriers = checkStatusCarriers()
   const citations = checkPlatformRuleCitations()
   const observations = checkObservationsNeeded()
+  const vectors = checkDeclaredVectors()
   const schemaIds = checkSchemaIdVersion(
     (readYaml(path.join(SPEC, 'version.yaml')) || {}).spec_version)
   const extractionTypes = checkExtractionTypes(KNOWN_TYPES)
@@ -3035,7 +3091,7 @@ function main() {
     `событий: ${events} | идентификаторов: ${naming.checked} | ` +
     `правил извлечения: ${extraction.rules} в ${extraction.files} файлах, ` +
     `наблюдённых селекторов: ${extraction.selectors.length} | носителей состояния: ${carriers} | ссылок на правила: ${citations} | адресов схем: ${schemaIds} | нужных наблюдений: ${observations} | типов в извлечении: ${extractionTypes} | объявленных форм: ${shapes} | ` +
-    `вердиктов: ${responseRows}`)
+    `вердиктов: ${responseRows} | наборов векторов: ${vectors}`)
 
   if (warnings.length) {
     console.log('')
