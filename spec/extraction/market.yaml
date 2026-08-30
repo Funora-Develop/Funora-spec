@@ -1,0 +1,193 @@
+# Публичный список предложений раздела: /lots/{id}/.
+#
+# То, что видит ПОКУПАТЕЛЬ, ищущий товар. Не витрина продавца и не страница
+# управления: здесь предложения многих продавцов в одном разделе, и потому
+# здесь есть колонка, которой нет больше нигде, - сам продавец.
+#
+# Снимок наблюдён 28.08.2026: три тысячи одна строка, семь с половиной
+# мегабайт. В фикстурах лежит ОБРЕЗАННЫЙ снимок - двадцать пять строк, - и
+# обрезка описана у него в происхождении. Числа остались за наблюдением.
+
+rows:
+  selector: "a.tc-item"
+  confidence: observed
+  count_observed: 25
+  count_in_the_observation: 3001
+  scope: document
+  evidence: market-offers.trimmed.logged.ru
+  attributes:
+    offer_href:
+      name: href
+      confidence: observed
+      evidence: market-offers.trimmed.logged.ru
+      observed_shape: "https://funpay.com/lots/offer?{query}"
+      role: >-
+        Идентификатор предложения лежит в СТРОКЕ ЗАПРОСА, и скелет заменяет её
+        одной подписью. Здесь его не наблюдать - ровно как на витрине.
+
+        Взять его можно только со страницы своих лотов, где он лежит атрибутом.
+        Но там только СВОИ лоты, а здесь чужие: идентификатора чужого
+        предложения в проекте нет ниоткуда.
+    filter_type:
+      name: data-f-type
+      type: opaque
+      confidence: observed
+      evidence: market-offers.trimmed.logged.ru
+      why_no_signature: >-
+        Подпись не объявлена НАРОЧНО: длина значения непостоянна, и у разных
+        строк одного снимка она разная. Одна объявленная подпись была бы
+        утверждением о снимке, снимку противоречащим, - а такое утверждение
+        хуже отсутствующего: следующий читатель построит на нём разбор.
+    server_id:
+      name: data-server
+      type: entity_id
+      confidence: observed
+      evidence: market-offers.trimmed.logged.ru
+      why_no_signature: >-
+        Тот же довод, что у filter_type: разрядность номера непостоянна, и
+        объявлять одну подпись значило бы соврать о снимке.
+
+# --- Ловушка: атрибут с именем «user» продавца не обозначает -----------------
+seller_trap:
+  attribute: data-user
+  selector: "a.tc-item"
+  confidence: observed
+  evidence: market-offers.trimmed.logged.ru
+  observed: true
+  observed_at: "2026-08-30"
+  what: >-
+    Атрибут data-user есть у строки ТОГДА И ТОЛЬКО ТОГДА, когда предложение
+    поднято. Продавцом он при этом не является в том смысле, в каком нужен
+    разбору: у большинства строк его просто нет.
+  counted: >-
+    Совпадение точное и в обе стороны: семьдесят строк с классом offer-promo -
+    и ровно у этих семидесяти есть data-user; две тысячи девятьсот тридцать
+    одна строка без класса - и ни у одной из них его нет.
+  the_cost: >-
+    Разбор, читающий продавца из data-user, отдал бы его у СЕМИДЕСЯТИ
+    предложений из трёх тысяч одного - двух процентов, - и выглядел бы
+    работающим: поля заполняются, ошибок нет, поднятые предложения показываются
+    первыми и попадают в глаза первыми.
+  where_the_seller_really_is: >-
+    Ссылка на профиль в атрибуте data-href узла .avatar-photo ВНУТРИ СТРОКИ.
+    Наблюдено: она есть у всех трёх тысяч одной строки, и различных значений
+    четыреста семьдесят восемь.
+
+    Против четырёх различных data-user у поднятых. Числа расходятся на два
+    порядка, и это и есть доказательство, что читать надо не тот атрибут.
+
+    ИСКАТЬ НАДО В СТРОКЕ, а не по документу. Узлов .avatar-photo на странице три
+    тысячи двадцать пять - на двадцать четыре больше, чем строк, - и у части
+    внешних ссылки нет вовсе. Счёт по документу дал бы четыреста семьдесят
+    девять различных значений, и лишним оказалось бы пустое.
+
+fields:
+  server_text:
+    selector: ".tc-server"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+  description_text:
+    selector: ".tc-desc-text"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+    why_not_the_outer_cell: >-
+      Читается ВЛОЖЕННЫЙ узел, а не ячейка .tc-desc: внутри ячейки лежит обёртка
+      .tc-visible-inside с дублем колонки сервера, и полный текст ячейки равен
+      имени сервера, приклеенному спереди к описанию.
+
+      Та же ловушка, что на странице своих лотов, и та же цена: ошибка на всех
+      строках сразу, и правдоподобная.
+  seller_link:
+    selector: ".avatar-photo"
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+    attributes:
+      seller_href:
+        name: data-href
+        confidence: observed
+        evidence: market-offers.trimmed.logged.ru
+        observed_shape: "https://funpay.com/users/{n}/"
+        role: >-
+          НАСТОЯЩИЙ продавец строки. Ссылка, а не идентификатор: числовая часть
+          лежит в пути и наблюдается номером внутри документа.
+  seller_name:
+    selector: ".media-user-name"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+  price_cell:
+    selector: ".tc-price"
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+    attributes:
+      sort_value:
+        name: data-s
+        type: opaque
+        confidence: observed
+        evidence: market-offers.trimmed.logged.ru
+  price_text:
+    selector: ".tc-price > div"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+  currency_symbol_text:
+    selector: ".tc-price .unit"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+
+# --- Признаки строки ---------------------------------------------------------
+markers:
+  promoted:
+    classes: [offer-promo, offer-promoted]
+    observed: true
+    what: >-
+      ВИДИМЫЙ СЛЕД ПОДНЯТИЯ ЛОТА, и это единственное место в проекте, где его
+      видно.
+
+      Классов два, и они не одно и то же: offer-promo наблюдён у семидесяти
+      строк, offer-promoted - у ОДНОЙ, и она же первая на странице.
+    what_is_not_known: >-
+      Что означает различие между ними - не установлено. Правдоподобно, что
+      offer-promoted помечает верхнюю строку блока, а offer-promo - весь блок,
+      но наблюдалась одна страница, и одна поднятая строка на ней.
+
+      Объявлять смысл по одному наблюдению нельзя.
+  lazy:
+    classes: [lazyload-hidden]
+    observed: true
+    what: >-
+      Класс несут две тысячи восемьсот одна строка из трёх тысяч одной, начиная
+      с двухсотой.
+    why_it_is_not_truncation: >-
+      РАЗМЕТКА ОТДАНА ЦЕЛИКОМ. Строки с этим классом присутствуют в теле ответа
+      наравне с прочими и разбираются наравне с прочими; класс говорит о
+      показе, а не о наличии.
+
+      Это важно отличить от усечения: усечённый список пришлось бы догружать, а
+      этот прочитан весь одним ответом. Проверяется счётом - строк ровно три
+      тысячи одна и все несут ячейки.
+  online:
+    attribute: data-online
+    selector: "a.tc-item"
+    confidence: observed
+    evidence: market-offers.trimmed.logged.ru
+    observed: true
+    what: >-
+      Признак «продавец в сети». Есть у двух тысяч ста восьмидесяти двух строк
+      и ОТСУТСТВУЕТ у восьмисот девятнадцати.
+    how_to_read_it: >-
+      Читается НАЛИЧИЕМ атрибута, а не его значением: значение наблюдалось одно
+      на всех строках, где атрибут есть. Отсутствие означает «не в сети», и это
+      единственный случай в проекте, где отсутствие атрибута читается значением,
+      - потому что наблюдены обе стороны: и строки с ним, и строки без него, на
+      одной странице.
