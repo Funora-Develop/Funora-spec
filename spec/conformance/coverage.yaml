@@ -247,6 +247,18 @@ files:
       сверял никто.
     not_implemented:
       - chats_sending_form
+  spec/extraction/lots.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы страницы своих лотов, имена атрибутов, доводы
+      кнопки поднятия. Плюс tests/test_own_lots.py: двадцать строк, двадцать
+      РАЗЛИЧНЫХ идентификаторов, ячейки читаются внутри строки.
+
+      Раздел absent проверяется отдельно и обратной проверкой: у модели не
+      должно быть поля показа лота в выдаче. На странице признака нет ни одного,
+      и узел с говорящим именем .tc-visible-inside им не является - тот же класс
+      есть на публичной витрине.
+
   spec/extraction/observed-selectors.json:
     mechanism: verified
     note: >-
@@ -374,6 +386,19 @@ files:
     mechanism: verified
     note: >-
       tests/test_whoami.py: профиль называет каждую возможность контракта.
+
+  spec/models/own-lot.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: поля схемы сверяются с полями класса OwnLot в
+      обе стороны. Отдельная проверка требует, чтобы поля показа лота в выдаче в
+      модели НЕ БЫЛО: признака на странице нет ни одного.
+
+  spec/models/own-lots-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_own_lots.py: полнота, число строк, доводы кнопки поднятия.
+      Страница, а не голый массив: голый массив делает неполноту незаметной.
 
   spec/models/send-result.schema.json:
     mechanism: verified

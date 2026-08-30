@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.16.0/own-lots-page.schema.json",
+  "x-funora-spec-version": "0.16.0",
+  "title": "OwnLotsPage",
+  "description": "Собственные лоты продавца в одном разделе.\n\nСТРАНИЦА, А НЕ ГОЛЫЙ МАССИВ. Операция объявлялась returns: Lot[], и голый массив делает неполноту незаметной: половина строк, принятая за целое, выглядит как «у меня столько лотов». Тот же довод уже записан у чтения списка диалогов и переписки.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "completeness",
+    "reason",
+    "observed_at",
+    "rows_total",
+    "rows_accepted",
+    "raise_game_id",
+    "raise_node_id",
+    "defects",
+    "lots"
+  ],
+  "properties": {
+    "completeness": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "unknown"
+      ],
+      "x-funora-closed": true,
+      "description": "Полнота прочитанного. На сегодня всегда partial: витрина не объявляется полной ни разу."
+    },
+    "reason": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машиночитаемая причина. Наблюдаемые значения: sections_look_capped - есть разделы ровно с предельным числом строк; showcase_cap_unobserved - таких разделов нет, но признака полноты тоже нет; page_defects."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа."
+    },
+    "rows_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько строк нашлось."
+    },
+    "rows_accepted": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько собрано."
+    },
+    "raise_game_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Игра из кнопки поднятия лотов. Самого запроса поднятия никто не наблюдал, и операции нет; довод, лежащий на странице, объявлен затем, что без него наблюдение поднятия пришлось бы делать вслепую."
+    },
+    "raise_node_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Раздел из кнопки поднятия лотов."
+    },
+    "defects": {
+      "type": "array",
+      "items": {
+        "$ref": "https://funora.dev/spec/0.16.0/models/defect.schema.json"
+      },
+      "description": "Замеченные повреждения."
+    },
+    "lots": {
+      "type": "array",
+      "items": {
+        "$ref": "own-lot.schema.json"
+      },
+      "description": "Лоты раздела в порядке появления."
+    }
+  }
+}
