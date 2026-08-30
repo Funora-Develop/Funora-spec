@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.16.0/own-lot.schema.json",
+  "x-funora-spec-version": "0.16.0",
+  "title": "OwnLot",
+  "description": "Одно собственное предложение продавца на странице раздела.\n\nПОЛЯ is_active ЗДЕСЬ НЕТ НАМЕРЕННО. Признака «лот показывается в выдаче» на странице не наблюдалось ни одного: все строки структурно одинаковы, различающего класса нет, переключателя у строки нет.\n\nУзел .tc-visible-inside по имени похож на такой признак, но им не является - тот же класс есть на ПУБЛИЧНОЙ витрине профиля, которую видит любой посетитель.\n\nВыдумать поле значило бы сказать продавцу «лот скрыт» о показанном либо наоборот. Модель Lot требует is_active обязательным и потому со страницы не собирается вовсе - см. пометку x-funora-not-implemented на ней.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "offer_id",
+    "offer_href",
+    "server_text",
+    "description_text",
+    "price_text",
+    "currency_symbol_text",
+    "sort_value",
+    "row_index"
+  ],
+  "properties": {
+    "offer_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор предложения. РАДИ НЕГО СТРАНИЦА И ЧИТАЕТСЯ: витрина его не даёт - там он лежит в строке запроса ссылки, а строку запроса скелет заменяет одной подписью."
+    },
+    "offer_href": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Ссылка на правку предложения."
+    },
+    "server_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Название сервера, как показано."
+    },
+    "description_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Описание, как показано. Свободный текст продавца."
+    },
+    "price_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Цена БЕЗ знака валюты, как показана. Знак отделён нарочно: общий текст ячейки склеил бы их, а разделить потом нечем - знак валюты у разных валют разной длины."
+    },
+    "currency_symbol_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Знак валюты из ячейки цены."
+    },
+    "sort_value": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Значение сортировки из атрибута ячейки цены. Числом не объявляется: наблюдалась подпись, а не значение, и что именно площадка кладёт в атрибут - формат цены, копейки, иное - не проверялось."
+    },
+    "row_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Место строки на странице, считая с нуля."
+    }
+  }
+}

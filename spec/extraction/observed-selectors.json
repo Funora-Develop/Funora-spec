@@ -663,6 +663,13 @@
   {
     "selector": ".tc-desc-text",
     "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.fields.description_text"
+  },
+  {
+    "selector": ".tc-desc-text",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/showcase.yaml:showcase.offers.fields.description_text",
@@ -744,6 +751,13 @@
   {
     "selector": ".tc-price",
     "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.fields.price_cell"
+  },
+  {
+    "selector": ".tc-price",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.amount_text",
@@ -771,6 +785,13 @@
   {
     "selector": ".tc-price .unit",
     "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.fields.currency_symbol_text"
+  },
+  {
+    "selector": ".tc-price .unit",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.fields.currency_symbol_text",
@@ -789,6 +810,13 @@
   {
     "selector": ".tc-price > div",
     "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.fields.price_text"
+  },
+  {
+    "selector": ".tc-price > div",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/showcase.yaml:showcase.offers.fields.price_text",
@@ -803,6 +831,13 @@
     "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text",
     "count_observed": 1,
     "scope": "row"
+  },
+  {
+    "selector": ".tc-server",
+    "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.fields.server_text"
   },
   {
     "selector": ".tc-server",
@@ -955,6 +990,15 @@
   {
     "selector": "a.tc-item",
     "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.rows",
+    "count_observed": 20,
+    "scope": "document"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
       "orders-trade.logged.ru"
     ],
     "where": "spec/extraction/orders.yaml:orders.row",
@@ -1009,6 +1053,15 @@
       "user.logged.ru"
     ],
     "where": "spec/extraction/reviews.yaml:reviews.pagination.continue_button",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "button.js-lot-raise",
+    "evidence": [
+      "lots-trade.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.controls.raise_button",
     "count_observed": 1,
     "scope": "document"
   },

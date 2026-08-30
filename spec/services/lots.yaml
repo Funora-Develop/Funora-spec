@@ -47,10 +47,30 @@ operations:
     capability: lots.list_own
     safety: safe
     request_class: interactive
-    returns: Lot[]
+    returns: OwnLotsPage
+    returns_schema: spec/models/own-lots-page.schema.json
+    notes:
+      - >-
+          Возвращается СТРАНИЦА, а не голый массив. Голый массив делает неполноту
+          незаметной: половина строк, принятая за целое, выглядит как «у меня
+          столько лотов». Тот же довод записан у чтения списка диалогов.
+      - >-
+          Модель Lot со страницы НЕ СОБИРАЕТСЯ: она требует is_active
+          обязательным, а признака показа лота в выдаче на странице нет ни
+          одного. Подробности - spec/extraction/lots.yaml, раздел absent.
+      - >-
+          Читается ради ИДЕНТИФИКАТОРА предложения. Витрина на профиле даёт те же
+          лоты и даже больше полей, но идентификатора не даёт: там он лежит в
+          строке запроса ссылки.
+      - >-
+          Отказ unexpected_response объявлен отдельно: он СЕСТРА protocol.changed,
+          а не потомок, и старый перехват его не ловит. Тот же довод уже записан у
+          чтения списка продаж, и здесь он тот же - страница раздела вправе
+          ответить не тем: чужим разделом либо страницей входа.
     errors:
       - funora.auth.session_expired
       - funora.protocol.changed
+      - funora.protocol.unexpected_response
       - funora.transport
 
   lots.activate:
