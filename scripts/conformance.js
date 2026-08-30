@@ -371,6 +371,51 @@ function capabilitiesCases(version) {
 }
 
 /**
+ * Собирает случаи набора outbound-governor.
+ *
+ * Набор был объявлен в budget.yaml и не существовал: раннер пропускает
+ * ненайденные векторы молча, и обещание сверять поведение между реализациями
+ * оставалось украшением.
+ *
+ * Сверяется ПОСЛЕДОВАТЕЛЬНОСТЬ решений, а не одно из них. Ограничитель хранит
+ * историю, и вопрос «пустит ли он сейчас» без предыдущих отправок смысла не
+ * имеет.
+ *
+ * @param {number} version Версия протокола.
+ * @returns {object[]} Пары «что уезжает реализации» и «чем сверять».
+ */
+function outboundGovernorCases(version) {
+  const doc = vectorFile('outbound-governor.vectors.json', version)
+  if (doc === null) return []
+
+  return doc.scenarios.map((scenario, index) => {
+    const want = scenario.expected
+    if (!Array.isArray(want) || want.length === 0) {
+      refuse(`outbound-governor scenarios[${index}] «${scenario.name}» не объявил `
+        + 'ожидаемых решений: судить его нечем')
+    }
+
+    const sends = (scenario.events || []).filter((one) => one.kind === 'send').length
+    if (sends !== want.length) {
+      refuse(`outbound-governor scenarios[${index}] «${scenario.name}»: попыток `
+        + `отправки ${sends}, а ожидаемых решений ${want.length}. Сценарий, у `
+        + 'которого их разное число, судит не то, что делает')
+    }
+
+    return {
+      ask: {
+        id: `outbound-governor/${scenario.name}`,
+        suite: 'outbound_governor',
+        kind: 'outbound_governor',
+        vector: `scenarios[${index}]`,
+        ...(scenario.why === undefined ? {} : { why: scenario.why }),
+      },
+      judge: { decisions: want },
+    }
+  })
+}
+
+/**
  * Собирает случаи набора rate-budget.
  *
  * @param {number} version Версия протокола.
@@ -545,6 +590,18 @@ function verdict(one, answer, answers) {
 
   if (judge.trace !== undefined) return checkTrace(answer, judge.trace)
 
+  if (judge.decisions !== undefined) {
+    const got = answer.decisions
+    if (!Array.isArray(got)) {
+      return `решения не пришли вовсе: ${JSON.stringify(got)}`
+    }
+    if (JSON.stringify(got) !== JSON.stringify(judge.decisions)) {
+      return `решения ${JSON.stringify(got)}, ожидались `
+        + `${JSON.stringify(judge.decisions)}`
+    }
+    return ''
+  }
+
   if (judge.steps !== undefined) {
     const got = JSON.stringify(answer.steps)
     const need = JSON.stringify(judge.steps)
@@ -613,6 +670,7 @@ function main() {
     ...canonicalCases(version),
     ...resumeCases(version),
     ...rateBudgetCases(version),
+    ...outboundGovernorCases(version),
     ...capabilitiesCases(version),
   ]
   const answers = ask(command, cases)
