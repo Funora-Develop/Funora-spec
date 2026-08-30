@@ -322,7 +322,7 @@ files:
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
     not_implemented:
-      - runner_action_empty_subscription
+      - runner_action_minimal_subscription
       - runner_error_shape
       - updates_channel
   spec/legal/platform-rules.yaml:
