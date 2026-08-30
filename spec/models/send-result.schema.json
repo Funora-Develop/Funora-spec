@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.16.0/send-result.schema.json",
+  "x-funora-spec-version": "0.16.0",
+  "title": "SendResult",
+  "description": "Чем окончилось обращение к каналу с действием.\n\nНЕ СООБЩЕНИЕ, А КВИТАНЦИЯ. Операции отправки прежде объявлялись returns: Message, а схема Message помечена x-funora-not-implemented и сама говорит, что её не собирает ни одна реализация. Два обязательных её поля из ответа канала не заполняются вовсе: text - в ответе лежит готовая разметка, значения которой не наблюдают намеренно, а origin отвечает там на другой вопрос.\n\nЗдесь только заполнимое из наблюдённого.\n\nИСХОДА ТРИ, и третий - честное незнание, а не третий род неудачи. Двузначный ответ вынудил бы реализацию выбрать одно из двух зол: объявить успехом всякий ответ с кодом 200 либо однажды отправить второй раз.\n\nПравило чтения: подтверждение читается признаком, а не истинностью самой квитанции. У неё три значения, и молчаливое приведение к булеву прочло бы неподтверждённое как успех.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "outcome",
+    "reason",
+    "channel_message_id",
+    "node",
+    "messages_in_answer",
+    "reconciled"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "refused",
+        "unconfirmed"
+      ],
+      "x-funora-closed": true,
+      "description": "Исход. Перечень закрыт: значения выводит наш же классификатор, и запасного варианта у него быть не может по определению - всякий неразобранный случай уже назван unconfirmed."
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "confirmed_by_channel",
+        "channel_reported_error",
+        "body_not_json",
+        "body_not_an_object",
+        "response_not_an_object",
+        "no_chat_node_in_answer",
+        "node_mismatch",
+        "empty_message_list"
+      ],
+      "x-funora-closed": true,
+      "description": "Машиночитаемая причина решения. Перечень закрыт и повторяет reasons из spec/protocol/send-outcome.yaml; там же кодогенератор сверяет его с шагами порядка в обе стороны - причина без шага есть обещание исхода, которого не бывает. Не пояснение для человека, а то, по чему вызывающий принимает решение."
+    },
+    "channel_message_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "integer",
+      "description": "Идентификатор сообщения В ОТВЕТЕ КАНАЛА. Имя нарочно не message_id: в разметке идентификатор - строка, в канале число, и что это одно значение, НЕ НАБЛЮДАЛОСЬ. Сложить их в одно поле значило бы утверждать непроверенное."
+    },
+    "node": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Имя диалога, подтверждённое площадкой. Не эхо запроса: значение берётся из ответа."
+    },
+    "messages_in_answer": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Сколько сообщений пришло в ответе."
+    },
+    "reconciled": {
+      "type": "string",
+      "enum": [
+        "not_attempted",
+        "delivered",
+        "absent_from_history",
+        "undetermined"
+      ],
+      "x-funora-closed": true,
+      "description": "Чем окончилась сверка по истории переписки. Значение not_attempted означает, что сверка НЕ ДЕЛАЛАСЬ, и это не пробел: при подтверждённом исходе читать историю незачем - ответ канала сам несёт новое сообщение. Прочие три значения повторяют вердикты spec/protocol/reconciliation.yaml. Вердикта отрицания среди них нет: отсутствие в истории - свидетельство отрицательное, и объявлять по нему «не отправлено» значило бы подтолкнуть вызывающего написать второй раз."
+    }
+  }
+}

@@ -85,7 +85,8 @@ operations:
     safety: unsafe
     request_class: interactive
     requires_reconciliation: true
-    returns: Message
+    returns: SendResult
+    returns_schema: spec/models/send-result.schema.json
     governor: outbound_message
     notes:
       - >-
@@ -111,7 +112,8 @@ operations:
     safety: unsafe
     request_class: interactive
     requires_reconciliation: true
-    returns: Message
+    returns: SendResult
+    returns_schema: spec/models/send-result.schema.json
     governor: outbound_message
     notes:
       - Если возможность реализуется через внешний файлообменник, это столкновение

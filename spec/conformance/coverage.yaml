@@ -322,7 +322,6 @@ files:
       выходил из-под сверки молча: пометка observed стояла, а проверить её было
       нечем.
     not_implemented:
-      - runner_action_minimal_subscription
       - runner_error_shape
       - updates_channel
   spec/legal/platform-rules.yaml:
@@ -375,6 +374,17 @@ files:
     mechanism: verified
     note: >-
       tests/test_whoami.py: профиль называет каждую возможность контракта.
+
+  spec/models/send-result.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: поля схемы сверяются с полями класса SendResult
+      в обе стороны, и модель числится собираемой - то есть пометка
+      x-funora-not-implemented на ней запрещена.
+
+      Заведена взамен Message: та помечена неосуществимой и сама говорит почему -
+      два её обязательных поля из ответа канала не заполняются вовсе. В квитанции
+      только заполнимое из наблюдённого.
 
   spec/models/session-health.schema.json:
     mechanism: verified
