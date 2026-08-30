@@ -498,6 +498,7 @@ function checkSinglePipelineDeclaration() {
   const HOMES = [
     'spec/protocol/response-classes.yaml',
     'spec/protocol/send-outcome.yaml',
+    'spec/protocol/reconciliation.yaml',
   ]
   let checked = 0
 
