@@ -602,6 +602,11 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/review-result.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._review_write.ReviewResult в обе стороны.
   spec/models/reviews-page.schema.json:
     mechanism: verified
     note: >-

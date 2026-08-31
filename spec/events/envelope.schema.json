@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.35.0/events/envelope.schema.json",
-  "x-funora-spec-version": "0.35.0",
+  "$id": "https://funora.dev/spec/0.36.0/events/envelope.schema.json",
+  "x-funora-spec-version": "0.36.0",
   "title": "EventEnvelope",
   "description": "Общая оболочка любого события. Полезная нагрузка лежит в payload и типизирована отдельной схемой.",
   "type": "object",
