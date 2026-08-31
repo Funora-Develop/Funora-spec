@@ -959,6 +959,13 @@
     "scope": "row"
   },
   {
+    "selector": ".user-cy-switcher",
+    "evidence": [
+      "account-balance.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.balances.currency_switcher"
+  },
+  {
     "selector": ".user-link-name",
     "evidence": [
       "chat.logged.ru",
