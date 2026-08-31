@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.37.0/payment-method.schema.json",
+  "x-funora-spec-version": "0.37.0",
+  "title": "PaymentMethod",
+  "description": "Один способ оплаты и цена покупателя при нём.\n\nИМЯ НЕ РАЗБИРАЕТСЯ И НЕ КЛАССИФИЦИРУЕТСЯ: это текст на локали интерфейса. Выводить из него способ оплаты значило бы строить разбор на переводе, а перевод площадка меняет когда хочет.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "price_text",
+    "currency_symbol",
+    "sort"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Название способа оплаты на локали интерфейса, как есть."
+    },
+    "price_text": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Цена покупателя текстом, как её назвала площадка. Числом не отдаётся: разделитель дробной части не наблюдался."
+    },
+    "currency_symbol": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Знак валюты этой цены. Перевод в код ISO 4217 делает currency_of_symbol - набор валют площадки замкнут тремя."
+    },
+    "sort": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "int",
+      "description": "Порядковое число, которым площадка сортирует способы."
+    }
+  }
+}

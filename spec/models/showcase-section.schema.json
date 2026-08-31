@@ -1,31 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.36.0/models/showcase-section.schema.json",
-  "x-funora-spec-version": "0.36.0",
+  "$id": "https://funora.dev/spec/0.37.0/models/showcase-section.schema.json",
+  "x-funora-spec-version": "0.37.0",
   "title": "ShowcaseSection",
   "description": "Один раздел витрины - предложения продавца в одной категории.\n\nЗаголовок раздела лежит НЕ внутри контейнера строк, а рядом с ним, в общей обёртке. Обёртка при этом носит класс, который на профиле носит и блок отзывов: разделов витрины тринадцать, а узлов с этим классом четырнадцать.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "title_text": {
-      "$ref": "https://funora.dev/spec/0.36.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.37.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Название раздела."
     },
     "category_href": {
-      "$ref": "https://funora.dev/spec/0.36.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.37.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес раздела."
     },
     "manage_href": {
-      "$ref": "https://funora.dev/spec/0.36.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.37.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес страницы управления лотами этого раздела.\n\nВиден только своему профилю; на чужом его быть не должно, но это не наблюдено. Отсюда же берётся номер раздела для наблюдения страницы управления - другого места, где он лежит, на профиле нет."
     },
     "offers": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.36.0/models/showcase-offer.schema.json"
+        "$ref": "https://funora.dev/spec/0.37.0/models/showcase-offer.schema.json"
       },
       "description": "Предложения раздела в порядке появления."
     },

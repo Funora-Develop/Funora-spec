@@ -11,6 +11,36 @@
 service: chips
 
 operations:
+  chips.calculate_prices:
+    summary: Считает цену покупателя на рынке по количеству.
+    capability: chips.calculate_prices
+    safety: safe
+    request_class: interactive
+    returns: PriceCalculation
+    request_provenance:
+      confidence: third_party_report
+      source: >-
+        FunPayAPI (бот FunPayCardinal), account.py, calc.
+      rests_on_it: >-
+        Адрес, имена полей запроса и ключи ответа. НАБЛЮДЁН НАМИ только итог
+        расчёта на странице правки лота - таблица .table-buyers-prices, которую
+        эта же точка и перерисовывает - но на странице ЛОТА, не чипов. Здесь
+        непроверено и то, и другое.
+    notes:
+      - >-
+          ТА ЖЕ ТОЧКА, ЧТО У ЛОТОВ, НО ДРУГОЙ ДОВОД. Лоты спрашивают по разделу,
+          чипы - по ИГРЕ: имя поля и адрес различаются, а ответ устроен
+          одинаково.
+
+          Различие наблюдено не нами: у чипов и раздел, и игра лежат на странице
+          рядом (data-game и data-section), и который из двух ждёт эта точка -
+          мы не проверяли.
+    errors:
+      - funora.capability.unsupported
+      - funora.auth.session_expired
+      - funora.protocol.changed
+      - funora.transport
+
 
   chips.offers:
     summary: Читает публичные предложения раздела чипов.
