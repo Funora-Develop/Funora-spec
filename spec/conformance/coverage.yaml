@@ -494,6 +494,18 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/market-snapshot.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_market_snapshot.py: отпечаток запроса, полнота и правило о том,
+      что отсутствия считаются только по двум полным снимкам.
+
+  spec/models/market-snapshot-entry.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: набор полей схемы сверяется с полями
+      funora._snapshot.SnapshotEntry - объявление против объявления.
+
   spec/models/market-offer.schema.json:
     mechanism: verified
     note: >-
