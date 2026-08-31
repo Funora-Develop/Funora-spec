@@ -79,7 +79,35 @@ operations:
     safety: idempotent
     request_class: automation
     idempotency_key_from: [account_id, lot_id, target_state]
-    returns: Lot
+    preconditions:
+      - id: expected_revision
+        required: true
+        kind: input
+        summary: >-
+          Обязательное предусловие, и по той же причине, что у правки цены:
+          операция отправляет ПРОЧИТАННУЮ форму целиком, меняя один флажок.
+          Без отпечатка параллельная правка - из другого процесса, из
+          мобильного приложения, из веб-интерфейса - была бы перетёрта молча,
+          и перетёрта не флажком, а описанием лота и сообщением покупателю.
+    request_provenance:
+      confidence: third_party_report
+      source: >-
+        FunPayAPI (бот FunPayCardinal), types.py, LotFields.renew_fields.
+      rests_on_it: >-
+        Вид запроса при СНЯТОМ флажке active. Оба наших снимка сохранения сняты
+        с отмеченным; сторонний источник шлёт поле всегда, при выключенном лоте
+        - пустой строкой, тогда как наше рассуждение говорило, что снятый флажок
+        не уходит вовсе.
+      why_opt_in: >-
+        Ошибка здесь не возвращает пустой результат. Она включает выключенный
+        лот либо оставляет включённым тот, который просили снять, - и узнает об
+        этом не разработчик, а продавец, из своей же витрины.
+    returns: LotForm
+    returns_note: >-
+      НЕ Lot, и по той же причине, по которой Lot перестал быть итогом правки
+      цены. Lot требует обязательным price типа Money, Money требует КОДА
+      валюты, а со страницы читается знак. Собрать Lot значило бы выдумать
+      валюту чужому лоту.
     reversible_by: lots.deactivate
     errors:
       - funora.capability.unsupported
@@ -93,7 +121,31 @@ operations:
     safety: idempotent
     request_class: automation
     idempotency_key_from: [account_id, lot_id, target_state]
-    returns: Lot
+    preconditions:
+      - id: expected_revision
+        required: true
+        kind: input
+        summary: >-
+          Обязательное предусловие, как у включения и у правки цены: уходит
+          прочитанная форма целиком, и без отпечатка параллельная правка была
+          бы перетёрта молча.
+    request_provenance:
+      confidence: third_party_report
+      source: >-
+        FunPayAPI (бот FunPayCardinal), types.py, LotFields.renew_fields.
+      rests_on_it: >-
+        Вид запроса при СНЯТОМ флажке active. Оба наших снимка сохранения сняты
+        с отмеченным; сторонний источник шлёт поле всегда, при выключенном лоте
+        - пустой строкой, тогда как наше рассуждение говорило, что снятый флажок
+        не уходит вовсе.
+      why_opt_in: >-
+        Ошибка здесь не возвращает пустой результат. Она включает выключенный
+        лот либо оставляет включённым тот, который просили снять, - и узнает об
+        этом не разработчик, а продавец, из своей же витрины.
+    returns: LotForm
+    returns_note: >-
+      НЕ Lot, по той же причине, что у lots.activate и lots.update_price:
+      Money требует кода валюты, а страница даёт знак.
     reversible_by: lots.activate
     guards:
       - id: requires_known_stock

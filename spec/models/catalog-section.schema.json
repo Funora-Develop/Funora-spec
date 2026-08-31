@@ -1,29 +1,29 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.31.0/models/catalog-section.schema.json",
-  "x-funora-spec-version": "0.31.0",
+  "$id": "https://funora.dev/spec/0.32.0/models/catalog-section.schema.json",
+  "x-funora-spec-version": "0.32.0",
   "title": "CatalogSection",
   "description": "Раздел игры в каталоге.\n\nНЕ Category и намеренно отличается от неё типом. Category требует локали отображения, а корень площадки её у раздела не показывает - только у страницы целиком.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "href": {
-      "$ref": "https://funora.dev/spec/0.31.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.32.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес раздела целиком."
     },
     "kind": {
-      "$ref": "https://funora.dev/spec/0.31.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.32.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Вид раздела из сегмента пути. Наблюдены два: lots и chips.\n\nСТРУКТУРНОГО ПРИЗНАКА ВИДА НЕ СУЩЕСТВУЕТ, и это наблюдение, а не удобство: все пять тысяч ссылок укладываются в четыре структурных отпечатка, и три из четырёх несут оба вида вперемешку. У самого узла ссылки нет ни класса, ни data-атрибута - только адрес.\n\nЧто означает второй вид - неизвестно, и контракт смысла ему не приписывает."
     },
     "section_id": {
-      "$ref": "https://funora.dev/spec/0.31.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.32.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор раздела из адреса."
     },
     "title_text": {
-      "$ref": "https://funora.dev/spec/0.31.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.32.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Название раздела. Локализовано."
     },
