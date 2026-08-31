@@ -602,6 +602,16 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/price-calculation.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._calc.PriceCalculation в обе стороны.
+  spec/models/payment-method.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._calc.PaymentMethod в обе стороны.
   spec/models/review-result.schema.json:
     mechanism: verified
     note: >-

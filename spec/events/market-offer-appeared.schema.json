@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.36.0/events/market-offer-appeared.schema.json",
-  "x-funora-spec-version": "0.36.0",
+  "$id": "https://funora.dev/spec/0.37.0/events/market-offer-appeared.schema.json",
+  "x-funora-spec-version": "0.37.0",
   "x-funora-event-type": "market.offer_appeared",
   "title": "MarketOfferAppearedEvent",
   "description": "На витрине появилось предложение, подходящее под наблюдаемый запрос.\n\nЭТОТ ВИД СОБЫТИЯ ПОКА НЕ ПОРОЖДАЕТ НИ ОДНА РЕАЛИЗАЦИЯ. Схема описывает намерение, а не наблюдение. Реализация обязана отказывать в подписке на него вслух, а не принимать обработчик, который не выполнится никогда.\n\nНагрузка - указатель на сущность, а не её копия: идентификаторы и то, что переменилось, но не содержимое. Прежняя редакция требовала вложить сюда модель целиком, а модель обязывает нести текст сообщения, имена людей и суммы. Событие уходит обработчику, а оттуда в журнал, в очередь, в чужую систему, и нести туда чужую переписку незачем: кому нужны подробности, тот читает страницу сам и знает, что делает.",
@@ -21,7 +21,7 @@
       "description": "Продавец предложения."
     },
     "price": {
-      "$ref": "https://funora.dev/spec/0.36.0/models/money.schema.json"
+      "$ref": "https://funora.dev/spec/0.37.0/models/money.schema.json"
     },
     "query_fingerprint": {
       "type": "string",
