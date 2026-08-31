@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.38.0/currency-switch.schema.json",
+  "x-funora-spec-version": "0.38.0",
+  "title": "CurrencySwitch",
+  "description": "Исход смены валюты показа.\n\nДВЕ ВЕТКИ, И РАЗЛИЧАТЬ ИХ ОБЯЗАТЕЛЬНО. Либо площадка сменила валюту сразу, либо вернула окно подтверждения - и тогда смены НЕ БЫЛО.\n\nРеализация никогда не подтверждает за пользователя: в запросе она всегда шлёт отрицание. Вторая ветка отдаётся исходом, а не проглатывается.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "switched",
+    "confirmation_required",
+    "confirmation_text",
+    "requested",
+    "observed_at"
+  ],
+  "properties": {
+    "switched": {
+      "type": "boolean",
+      "description": "Сменила ли площадка валюту. Ложь при возвращённом окне подтверждения означает, что смены не было."
+    },
+    "confirmation_required": {
+      "type": "boolean",
+      "description": "Вернула ли площадка окно подтверждения.\n\nИстина означает: смены НЕ БЫЛО, и площадка хочет согласия. Давать его вправе только человек."
+    },
+    "confirmation_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Текст окна подтверждения, КАК ЕСТЬ.\n\nНЕ РАЗБИРАЕТСЯ. Внутри лежит курс обмена, и сторонняя реализация достаёт его регулярным выражением из текста на локали интерфейса. Смена языка аккаунта ломает такой разбор молча.\n\nПрочитать текст глазами человек может; вывести из него число реализация не станет."
+    },
+    "requested": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Код валюты, о котором просили. По ISO 4217, прописными."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа."
+    }
+  }
+}
