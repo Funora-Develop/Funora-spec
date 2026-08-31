@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.25.0/models/offer.schema.json",
-  "x-funora-spec-version": "0.25.0",
+  "$id": "https://funora.dev/spec/0.26.0/models/offer.schema.json",
+  "x-funora-spec-version": "0.26.0",
   "title": "Offer",
   "description": "Предложение на витрине.\n\nНИ ОДНА РЕАЛИЗАЦИЯ ЭТОГО НЕ СОБИРАЕТ. Страница витрины не наблюдалась ни разу, и раздела извлечения для неё нет.\n\nПометка стоит здесь затем же, зачем у схем непорождаемых событий: схема без реализации описывает намерение, а читается как контракт. Второй SDK, написанный по ней, выдумает то, чего не наблюдал.",
   "type": "object",
@@ -14,10 +14,10 @@
       "x-funora-type": "entity_id"
     },
     "seller": {
-      "$ref": "https://funora.dev/spec/0.25.0/models/user.schema.json"
+      "$ref": "https://funora.dev/spec/0.26.0/models/user.schema.json"
     },
     "price": {
-      "$ref": "https://funora.dev/spec/0.25.0/models/money.schema.json"
+      "$ref": "https://funora.dev/spec/0.26.0/models/money.schema.json"
     },
     "display_title": {
       "type": "string",

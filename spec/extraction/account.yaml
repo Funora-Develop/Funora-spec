@@ -355,3 +355,85 @@ pagination:
       возможно, но требует большего.
 
       Пара на одной странице подтвердила бы вывод прямо.
+
+# --- Вывод средств -----------------------------------------------------------
+#
+# ФОРМА НАБЛЮДЕНА, ЗАПРОС - НЕТ. Операции нет и не будет: вывод необратим и
+# требует второго множителя, а ответа на отправку никто не видел.
+#
+# Объявлено ради полей: по адресу без них запроса не собрать, и три недели
+# область числилась ненаблюдённой при том, что адрес лежал в снимке.
+withdraw:
+  form:
+    selector: "form[action$='/withdraw/withdraw']"
+    confidence: observed
+    count_observed: 1
+    evidence: account-balance.v9.logged.ru
+    observed_at: "2026-08-31"
+  endpoint: /withdraw/withdraw
+  fields:
+    csrf_token:
+      name: csrf_token
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: Защитный токен площадки.
+    preview:
+      name: preview
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: >-
+        Скрытое поле, по имени - признак предварительного просмотра. Что
+        означают его значения, не наблюдалось: правдоподобно, что вывод идёт в
+        два шага, но «правдоподобно» операцией не объявляют.
+    wallet:
+      name: wallet
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: Кошелёк получателя.
+    amount_int:
+      name: amount_int
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: Сумма списания.
+    amount_ext:
+      name: amount_ext
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: Сумма зачисления.
+    twofactor_code:
+      name: twofactor_code
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      role: >-
+        Код второго множителя. САМ ПО СЕБЕ ЯВЛЯЕТСЯ ПРИЧИНОЙ не писать операцию
+        без решения владельца: обращаться с ним автоматически - значит хранить
+        либо порождать его, а этого фреймворк не делает нигде.
+    currency_id:
+      name: currency_id
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      count_observed: 3
+      role: >-
+        Валюта списания, перечнем из ТРЁХ вариантов.
+
+        Число значимо: оно подтверждает, что набор валют площадки - три, и
+        именно на этом стоит вывод текущей валюты дополнением по переключателю
+        в шапке. Прежде набор был известен только по нашему же types.yaml.
+    ext_currency_id:
+      name: ext_currency_id
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      count_observed: 0
+      role: >-
+        Валюта зачисления. Вариантов НОЛЬ - перечень наполняется в зависимости
+        от выбранного кошелька, и наблюдён он в исходном состоянии формы.
+    wallet_extra:
+      name: wallet_extra
+      confidence: observed
+      evidence: account-balance.v9.logged.ru
+      count_observed: 232
+      role: Уточнение кошелька - банк либо платёжная система.
+  what_is_not_observed: >-
+    Ответ на отправку, поведение поля preview и правила заполнения. Вывод
+    необратим и требует второго множителя; наблюдать его настоящей отправкой
+    может только владелец счёта и только по своему решению.
