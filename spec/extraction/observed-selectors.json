@@ -9,6 +9,13 @@
   {
     "selector": ".avatar-photo",
     "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.seller_link"
+  },
+  {
+    "selector": ".avatar-photo",
+    "evidence": [
       "market-offers.trimmed.logged.ru"
     ],
     "where": "spec/extraction/market.yaml:market.fields.seller_link"
@@ -261,6 +268,13 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/chats.yaml:chats.contact_list.fields.counterparty_name"
+  },
+  {
+    "selector": ".media-user-name",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.seller_name"
   },
   {
     "selector": ".media-user-name",
@@ -643,9 +657,25 @@
   {
     "selector": ".tc-amount",
     "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.amount_text",
+    "count_observed": 12,
+    "scope": "row"
+  },
+  {
+    "selector": ".tc-amount",
+    "evidence": [
       "user.logged.ru"
     ],
     "where": "spec/extraction/showcase.yaml:showcase.offers.optional_columns.amount"
+  },
+  {
+    "selector": ".tc-amount .unit",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.amount_unit_text"
   },
   {
     "selector": ".tc-date-left",
@@ -822,6 +852,13 @@
   {
     "selector": ".tc-price .unit",
     "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.currency_symbol_text"
+  },
+  {
+    "selector": ".tc-price .unit",
+    "evidence": [
       "lots-trade.logged.ru"
     ],
     "where": "spec/extraction/lots.yaml:lots.fields.currency_symbol_text"
@@ -856,6 +893,13 @@
   {
     "selector": ".tc-price > div",
     "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.price_text"
+  },
+  {
+    "selector": ".tc-price > div",
+    "evidence": [
       "lots-trade.logged.ru"
     ],
     "where": "spec/extraction/lots.yaml:lots.fields.price_text"
@@ -884,6 +928,13 @@
     "where": "spec/extraction/orders.yaml:orders.fields.seller_sum_text",
     "count_observed": 1,
     "scope": "row"
+  },
+  {
+    "selector": ".tc-server",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.fields.server_text"
   },
   {
     "selector": ".tc-server",
@@ -1053,6 +1104,22 @@
       "chat-thread.logged.ru"
     ],
     "where": "spec/extraction/updates.yaml:updates.positions"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.rows",
+    "count_observed": 12,
+    "scope": "document"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.markers.online"
   },
   {
     "selector": "a.tc-item",

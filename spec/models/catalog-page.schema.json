@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.27.0/models/catalog-page.schema.json",
-  "x-funora-spec-version": "0.27.0",
+  "$id": "https://funora.dev/spec/0.28.0/models/catalog-page.schema.json",
+  "x-funora-spec-version": "0.28.0",
   "title": "CatalogPage",
   "description": "Результат чтения каталога с корня площадки.\n\nЧИТАЕТСЯ ТОЛЬКО ОСНОВНОЙ СПИСОК. Списков на странице два, и все восемь карточек избранного повторяют карточки основного - пересечение восемь из восьми, шестьдесят три адреса разделов тоже все есть в каталоге.\n\nИзбранное не пропускается по небрежности: оно наблюдено и признано не дающим новых сведений. Обход по документу вместо обхода внутри каталога удвоил бы восемь игр - молча, при полноте и нуле повреждений.",
   "type": "object",
@@ -49,14 +49,14 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.27.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.28.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения."
     },
     "games": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.27.0/models/catalog-game.schema.json"
+        "$ref": "https://funora.dev/spec/0.28.0/models/catalog-game.schema.json"
       },
       "description": "Игры каталога вместе с их вариантами."
     }

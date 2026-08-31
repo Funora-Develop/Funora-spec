@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.27.0/models/session-health.schema.json",
-  "x-funora-spec-version": "0.27.0",
+  "$id": "https://funora.dev/spec/0.28.0/models/session-health.schema.json",
+  "x-funora-spec-version": "0.28.0",
   "title": "SessionHealth",
   "description": "Пригодность сессии, установленная самым дешёвым доступным способом.\n\nТИП БЫЛ ОБЪЯВЛЕН ВОЗВРАЩАЕМЫМ И НЕ ИМЕЛ СХЕМЫ до 0.14.0. Реализовать проверку по контракту было нельзя, и сверить ответы двух SDK нечем: имя типа есть, формы нет.\n\nПроверка НЕ выполняет деловой операции ради проверки - лишний запрос это лишний след. Она читает ту же страницу, что и чтение аккаунта, и отвечает по её классу.",
   "type": "object",

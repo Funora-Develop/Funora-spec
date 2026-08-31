@@ -260,6 +260,15 @@ files:
       сверял никто.
     not_implemented:
       - chats_sending_form
+  spec/extraction/chips.yaml:
+    mechanism: generated
+    note: >-
+      extraction.py: селекторы и имена атрибутов второго рынка.
+
+      tests/test_chips.py: разбор строки целиком - количество отдельно от
+      единицы измерения, цена отдельно от знака валюты, идентификатор из строки
+      запроса.
+
   spec/extraction/lot-edit.yaml:
     mechanism: generated
     note: >-
@@ -670,6 +679,11 @@ files:
       - chats_send_governor
       - cursor_pagination
       - domain_not_found
+  spec/services/chips.yaml:
+    mechanism: generated
+    note: >-
+      operations.py.
+
   spec/services/lots.yaml:
     mechanism: generated
     note: >-
