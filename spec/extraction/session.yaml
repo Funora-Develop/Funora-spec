@@ -258,7 +258,23 @@ identity:
         type: x-funora-plain
         confidence: observed
         evidence: [chat.logged.ru, lots-trade.logged.ru]
-        observed_keys: [csrf-token, locale, runnerCoordId, userId, webpush]
+        observed_keys: [csrf-token, locale, runnerCoordId, uploadOptions, userId, webpush]
+    # ШЕСТОЙ КЛЮЧ ДОБАВЛЕН 31.08.2026. Перечень числился полным из пяти, а
+    # uploadOptions лежал в снимке страницы правки лота всё это время - просто
+    # перечень собирали по другому снимку и больше не перечитывали.
+    #
+    # Внутри него fileSizeMax - наибольший размер выгружаемого файла в байтах, и
+    # fileSizeMaxStr - он же строкой для человека. На первом стоит предохранитель
+    # отправки картинки: предел ЧИТАЕТСЯ, а не заводится нами.
+    upload_options:
+      confidence: observed
+      evidence: [lot-edit.logged.ru]
+      observed_at: "2026-08-31"
+      keys: [fileSizeMax, fileSizeMaxStr]
+      role: >-
+        Наибольший размер выгружаемого файла, как его объявила площадка. Свой
+        предел отверг бы то, что площадка приняла бы, и отверг бы молча - на
+        нашей стороне, где вызывающему нечего возразить.
     role: >-
       Настройки страницы одним объектом JSON. Отсюда берётся ЗАЩИТНЫЙ ТОКЕН, без
       которого не собрать ни одного запроса записи.
