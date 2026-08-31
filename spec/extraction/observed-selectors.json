@@ -1179,6 +1179,13 @@
   {
     "selector": "a.tc-item",
     "evidence": [
+      "lots-trade.off.logged.ru"
+    ],
+    "where": "spec/extraction/lots.yaml:lots.visibility.marker"
+  },
+  {
+    "selector": "a.tc-item",
+    "evidence": [
       "market-offers.trimmed.logged.ru"
     ],
     "where": "spec/extraction/market.yaml:market.rows",
