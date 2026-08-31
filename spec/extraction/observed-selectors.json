@@ -211,6 +211,13 @@
     "scope": "document"
   },
   {
+    "selector": ".control-label",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.label"
+  },
+  {
     "selector": ".dyn-table",
     "evidence": [
       "user.logged.ru"
@@ -260,6 +267,45 @@
     ],
     "where": "spec/extraction/catalog.yaml:catalog.game.title.within_card",
     "count_observed": 872,
+    "scope": "document"
+  },
+  {
+    "selector": ".lot-field",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.fields",
+    "count_observed": 2,
+    "scope": "document"
+  },
+  {
+    "selector": ".lot-field-input",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.input"
+  },
+  {
+    "selector": ".lot-field-radio-box",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.kinds.choice"
+  },
+  {
+    "selector": ".lot-field-range-box",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.kinds.range"
+  },
+  {
+    "selector": ".lot-fields",
+    "evidence": [
+      "catalog-fields.logged.ru"
+    ],
+    "where": "spec/extraction/catalog.yaml:catalog.field_schema.container",
+    "count_observed": 1,
     "scope": "document"
   },
   {

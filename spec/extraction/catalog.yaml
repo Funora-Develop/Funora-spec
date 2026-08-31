@@ -311,3 +311,85 @@ totality:
 
     Кнопки догрузки на странице нет; сама по себе её ненаходка доводом не
     является - это правило проекта, - но здесь она и не нужна.
+
+# --- Схема полей раздела: наблюдена 31.08.2026 --------------------------------
+#
+# ГДЕ ОНА ЛЕЖИТ - в форме фильтра на странице раздела, а не отдельным запросом.
+# Прежде здесь значилось «страницы раздела никто не снимал»; страницу сняли, и
+# схема нашлась в ней.
+field_schema:
+  container:
+    selector: ".lot-fields"
+    scope: document
+    confidence: observed
+    count_observed: 1
+    evidence: catalog-fields.logged.ru
+    observed_at: "2026-08-31"
+  fields:
+    selector: ".lot-field"
+    scope: document
+    confidence: observed
+    count_observed: 2
+    evidence: catalog-fields.logged.ru
+    attributes:
+      field_id:
+        name: data-id
+        type: entity_id
+        confidence: observed
+        evidence: catalog-fields.logged.ru
+        role: >-
+          Идентификатор поля. Имя поля в запросе складывается из него: f-{id}.
+          Наблюдено на двух полях раздела 922 - выбор и диапазон.
+  label:
+    selector: ".control-label"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: catalog-fields.logged.ru
+    role: >-
+      Подпись поля, как её видит человек. Есть НЕ У ВСЕХ: у поля-выбора её на
+      снимке нет - подписью служат сами кнопки вариантов.
+  input:
+    selector: ".lot-field-input"
+    scope: row
+    confidence: observed
+    evidence: catalog-fields.logged.ru
+    attributes:
+      input_name:
+        name: name
+        confidence: observed
+        evidence: catalog-fields.logged.ru
+        role: Имя поля в запросе - f-{id}.
+  kinds:
+    choice:
+      selector: ".lot-field-radio-box"
+      confidence: observed
+      evidence: catalog-fields.logged.ru
+      what: >-
+        Поле-выбор. Варианты лежат кнопками; значение каждой - в атрибуте value,
+        и пустое значение у первой означает «любой».
+      options_selector: "button[value]"
+      options_count_observed: 3
+      options_note: >-
+        Трёх кнопок на одном поле: «любой» с пустым значением и два варианта.
+        Число относится к КНОПКАМ, а не к самому полю-выбору - его на снимке
+        одно.
+    range:
+      selector: ".lot-field-range-box"
+      confidence: observed
+      evidence: catalog-fields.logged.ru
+      what: >-
+        Поле-диапазон. Два видимых поля - от и до, - и одно скрытое, в котором
+        собирается итоговое значение.
+  values_on_rows:
+    what: >-
+      Значения полей лежат и НА СТРОКАХ предложений - атрибутами того же имени с
+      приставкой data-: data-f-type, data-f-members.
+
+      Значит фильтровать выдачу можно, не спрашивая площадку заново.
+    confidence: observed
+    evidence: catalog-fields.logged.ru
+  what_is_still_missing: >-
+    Наблюдён ОДИН раздел с ДВУМЯ полями. Бывают ли поля других видов - список,
+    дата, свободный текст - неизвестно, и объявлять перечень видов закрытым
+    нельзя.

@@ -1,19 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.28.0/models/balance.schema.json",
-  "x-funora-spec-version": "0.28.0",
+  "$id": "https://funora.dev/spec/0.29.0/models/balance.schema.json",
+  "x-funora-spec-version": "0.29.0",
   "title": "Balance",
   "description": "Один баланс аккаунта, как показала страница.\n\nНЕ Money и намеренно отличается от него типом. Money требует кода валюты, а страница даёт только знак; соответствие между знаком и кодом не однозначно, и приписать код значило бы приписать чужую валюту.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "value_text": {
-      "$ref": "https://funora.dev/spec/0.28.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.29.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Сумма, как показана. Строкой: разбирать её в число значило бы угадывать разделители, а они меняются вместе с локалью."
     },
     "marker_text": {
-      "$ref": "https://funora.dev/spec/0.28.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.29.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Узел, стоящий ПЕРЕД суммой.\n\nНазван тем, что о нём известно, а не тем, чем он вероятно является. Строение перечня - три таких узла на три значения, первый перед первым значением - исключает прочтение «разделитель между значениями»: разделяющий знак дал бы два на три.\n\nЧто это именно знак валюты - правдоподобно и не наблюдено: сам знак в снимке замаскирован подписью."
     },
