@@ -695,7 +695,8 @@ files:
     note: >-
       operations.py.
     not_implemented:
-      - lots_service_operations
+      - lot_visibility_request_unobserved
+      - promote_success_shape_unobserved
       - domain_conflict_error
       - lots_deactivate_guards
   spec/services/market.yaml:

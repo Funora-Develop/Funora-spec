@@ -2000,6 +2000,48 @@ function checkServices(caps, errIds) {
       }
       if (!op.capability) fail(rel, `${id}: не привязана ни к одной возможности`)
 
+      // ПРОИСХОЖДЕНИЕ ЗАПРОСА - отдельная ось от возможности, и путать их
+      // нельзя. Возможность говорит о ПЛОЩАДКЕ: есть ли у аккаунта право.
+      // Происхождение говорит о НАС: своими ли глазами мы видели тот запрос,
+      // который операция отправляет.
+      //
+      // Ось заведена 31.08.2026, когда выяснилось, что вид запроса при снятом
+      // флажке известен нам от чужой реализации, а не из своего снимка. Прежде
+      // такое знание пришлось бы либо выдать за наблюдение, либо выбросить.
+      const prov = op.request_provenance
+      if (prov !== undefined) {
+        if (typeof prov !== 'object' || prov === null || Array.isArray(prov)) {
+          fail(rel, `${id}: request_provenance обязано быть объектом`)
+        } else {
+          const PROV_LEVELS = new Set(['observed', 'third_party_report'])
+          if (!PROV_LEVELS.has(prov.confidence)) {
+            fail(rel, `${id}: request_provenance.confidence «${prov.confidence}» ` +
+              'неизвестно. Допустимы observed и third_party_report')
+          }
+          // Вторичный источник обязан назвать себя - иначе он неотличим от
+          // выдумки, и проверить его нечем.
+          if (prov.confidence === 'third_party_report' && typeof prov.source !== 'string') {
+            fail(rel, `${id}: request_provenance third_party_report без source`)
+          }
+          // И обязан сказать, ЧТО ИМЕННО на нём стоит. Без этого читающий не
+          // знает, какая часть запроса непроверена, и переносит недоверие либо
+          // на всё сразу, либо ни на что.
+          if (prov.confidence === 'third_party_report' && typeof prov.rests_on_it !== 'string') {
+            fail(rel, `${id}: request_provenance third_party_report без rests_on_it: ` +
+              'непроверенной обязана быть названа конкретная часть запроса')
+          }
+          // ЧИТАТЬ МОЖНО, ПИСАТЬ - ТОЛЬКО С СОГЛАСИЯ. Операция чтения на
+          // вторичном источнике ошибётся видимо; операция записи ошибётся
+          // деньгами, лимитом или чужим лотом, и обратно не отыграется.
+          if (prov.confidence === 'third_party_report' && op.safety !== 'safe' &&
+              typeof prov.why_opt_in !== 'string') {
+            fail(rel, `${id}: операция записи на third_party_report обязана ` +
+              'объяснить в why_opt_in, чем грозит ошибка. Согласие спрашивается ' +
+              'у вызывающего, и спросить его без причины нельзя')
+          }
+        }
+      }
+
       if (op.safety === 'idempotent' && !Array.isArray(op.idempotency_key_from)) {
         fail(rel, `${id}: operation объявлена idempotent, но не задан idempotency_key_from - ` +
           `без ключа она ведёт себя как unsafe`)
