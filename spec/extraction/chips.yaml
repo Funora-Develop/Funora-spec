@@ -1,0 +1,179 @@
+# Второй рынок площадки: /chips/{id}/.
+#
+# ЧТО ЭТО И ЧЕМ ОТЛИЧАЕТСЯ ОТ /lots/. Лот - штучное предложение с описанием:
+# аккаунт, ключ, услуга. Чип - предложение ПО КОЛИЧЕСТВУ: игровая валюта,
+# ресурсы, внутриигровые единицы. Продаётся не «вот эта вещь», а «столько-то по
+# такой цене».
+#
+# Разница видна в разметке одним узлом и одним пропуском:
+#
+#   .tc-amount ЕСТЬ здесь и нет у лотов - количество с единицей измерения;
+#   .tc-desc НЕТ здесь и есть у лотов - описания у чипа не бывает.
+#
+# Всё прочее совпадает до класса: строка, продавец, цена, знак валюты, признак
+# присутствия. Поэтому правила извлечения здесь свои, а устройство - то же.
+#
+# Снимок наблюдён 31.08.2026 гостем: сто семнадцать строк, раздел 1. В фикстурах
+# лежит ОБРЕЗАННЫЙ снимок - двенадцать строк двух форм.
+
+rows:
+  selector: "a.tc-item"
+  confidence: observed
+  count_observed: 12
+  count_in_the_observation: 117
+  scope: document
+  evidence: chips.trimmed.guest.ru
+  observed_at: "2026-08-31"
+  attributes:
+    offer_href:
+      name: href
+      confidence: observed
+      evidence: chips.trimmed.guest.ru
+      observed_shape: "https://funpay.com/chips/offer?{query}"
+      role: >-
+        Ссылка на предложение. Путь отличается от лотового: /chips/offer против
+        /lots/offer. Это первое, что показывает - рынки два, а не один с
+        разделами.
+    offer_id:
+      name: href
+      reads: "?id"
+      type: entity_id
+      confidence: observed
+      evidence: chips.trimmed.guest.ru
+      observed_at: "2026-08-31"
+      count_observed: 12
+      count_in_the_observation: 117
+      role: >-
+        Идентификатор предложения, и лежит он там же, где у лотов, - в строке
+        запроса. Наблюдён у ВСЕХ 117 строк.
+      why_no_signature: >-
+        Значение в снимке заменено номером, а не мерой длины: номер различает
+        строки между собой, чего и требует разбор.
+    server_id:
+      name: data-server
+      type: entity_id
+      confidence: observed
+      evidence: chips.trimmed.guest.ru
+      why_no_signature: >-
+        Разрядность номера непостоянна, и объявлять одну подпись значило бы
+        соврать о снимке.
+
+# --- Поля строки -------------------------------------------------------------
+fields:
+  seller_link:
+    selector: ".avatar-photo"
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    attributes:
+      seller_href:
+        name: data-href
+        confidence: observed
+        evidence: chips.trimmed.guest.ru
+        role: >-
+          Ссылка на профиль продавца. Тот же носитель, что и на рынке лотов, и
+          по той же причине: атрибут data-user есть только у поднятых строк.
+  seller_name:
+    selector: ".media-user-name"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+  server_text:
+    selector: ".tc-server"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+  amount_text:
+    selector: ".tc-amount"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    count_observed: 12
+    count_in_the_observation: 117
+    role: >-
+      КОЛИЧЕСТВО - то, чего у лота нет вовсе. Здесь продаётся не вещь, а объём:
+      столько-то единиц по такой цене.
+
+      Читается ТЕКСТОМ вместе с единицей измерения. Делить их разбором нельзя:
+      единица лежит вложенным узлом .unit, и общий текст ячейки склеивает их без
+      разделителя.
+  amount_unit_text:
+    selector: ".tc-amount .unit"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    role: >-
+      Единица измерения количества - штуки, тысячи, миллионы. Своя у каждой
+      игры, и перечня их площадка не даёт.
+  price_text:
+    selector: ".tc-price > div"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    role: >-
+      Цена ЗА ЕДИНИЦУ, а не за предложение целиком - так устроен этот рынок.
+      Общая сумма покупателем и площадкой считается, а на странице её нет.
+
+      Селектор смотрит на ВЛОЖЕННЫЙ div, а не на саму ячейку: у ячейки
+      собственного текста нет, число лежит уровнем ниже. У количества иначе -
+      там число лежит прямо в ячейке, и потому селекторы у них разной глубины.
+  currency_symbol_text:
+    selector: ".tc-price .unit"
+    reads: text
+    scope: row
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    role: >-
+      Знак валюты. Кода нет, как и везде на площадке.
+
+# --- Признаки строки ---------------------------------------------------------
+markers:
+  online:
+    attribute: data-online
+    selector: "a.tc-item"
+    confidence: observed
+    evidence: chips.trimmed.guest.ru
+    observed: true
+    what: >-
+      Признак присутствия продавца. Читается НАЛИЧИЕМ атрибута, а не значением:
+      из двух наблюдённых форм строки одна его несёт, другая нет.
+
+# --- Чего на этой странице НЕТ -----------------------------------------------
+absent:
+  description:
+    what: Описания предложения.
+    observed: true
+    evidence: chips.trimmed.guest.ru
+    why_it_matters: >-
+      У лотов описание есть и несёт .tc-desc-text. Здесь узла .tc-desc нет ни у
+      одной строки, и это не упущение снимка, а устройство рынка: чип
+      описывается количеством и ценой, а не текстом.
+
+      Записано положительно затем, чтобы разбор не искал описание и не объявлял
+      строку повреждённой из-за его отсутствия.
+  lazy_loading:
+    what: Ленивой загрузки строк.
+    observed: true
+    evidence: chips.trimmed.guest.ru
+    why_it_matters: >-
+      На рынке лотов больше тысячи строк несут lazyload-hidden. Здесь таких нет
+      ни одной из ста семнадцати - список короче, и площадка показывает его
+      целиком.
+
+      Из этого НЕ следует, что ленивой загрузки не бывает на длинном разделе
+      чипов: наблюдался один раздел, и в нём сто семнадцать строк.
+  promotion:
+    what: Признака поднятия.
+    observed: true
+    evidence: chips.trimmed.guest.ru
+    why_it_matters: >-
+      Классов offer-promo и offer-promoted нет ни у одной строки. Отсюда НЕ
+      следует, что поднятия на этом рынке не бывает: на снимке рынка лотов от
+      31.08.2026 их тоже не оказалось, а на снимке от 28.08.2026 было семьдесят.
+
+      Отсутствие поднятых - свойство минуты, а не разметки.

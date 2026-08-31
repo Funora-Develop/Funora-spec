@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.27.0/models/thread.schema.json",
-  "x-funora-spec-version": "0.27.0",
+  "$id": "https://funora.dev/spec/0.28.0/models/thread.schema.json",
+  "x-funora-spec-version": "0.28.0",
   "title": "Thread",
   "description": "Результат чтения переписки одного диалога.\n\nЗаписи отдаются МЕТОДОМ, а не полем. Открытый список делает неполноту незаметной: вызывающий берёт его и не спрашивает про полноту, а неполный список неотличим от полного. Метод отказывается отдавать записи неполного результата без явного признания неполноты.",
   "type": "object",
@@ -44,14 +44,14 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.27.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.28.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения. Пустой список означает, что повреждений не нашлось, а не что их не искали."
     },
     "messages": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.27.0/models/thread-message.schema.json"
+        "$ref": "https://funora.dev/spec/0.28.0/models/thread-message.schema.json"
       },
       "description": "Собранные сообщения в порядке появления на странице.\n\nПорядок значим: восстановить его по идентификатору нельзя - числовая форма идентификатора догадка, а не наблюдение. Два сообщения одного диалога, пришедшие в обратном порядке, - это выданный не тот товар."
     }
