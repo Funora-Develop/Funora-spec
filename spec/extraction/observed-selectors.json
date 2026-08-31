@@ -1251,6 +1251,24 @@
     "scope": "document"
   },
   {
+    "selector": "form[action$='/orders/refund']",
+    "evidence": [
+      "order.v9.logged.ru"
+    ],
+    "where": "spec/extraction/order.yaml:order.refund.form",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
+    "selector": "form[action$='/withdraw/withdraw']",
+    "evidence": [
+      "account-balance.v9.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.withdraw.form",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form[action$=\"/orders/refund\"]",
     "evidence": [
       "order.logged.ru"
