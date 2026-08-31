@@ -2853,7 +2853,7 @@ function checkExtraction() {
   const dir = path.join(SPEC, 'extraction')
   if (!fs.existsSync(dir)) return { files: 0, rules: 0, selectors: [] }
 
-  const LEVELS = new Set(['observed', 'inferred', 'assumed'])
+  const LEVELS = new Set(['observed', 'inferred', 'assumed', 'third_party_report'])
   const selectors = []
   let files = 0
   let rules = 0
@@ -2908,6 +2908,24 @@ function checkExtraction() {
         if (node.confidence === 'observed' && !evidence) {
           fail(rel, `${pointer}: пометка observed без ссылки на снимок ни в самом ` +
             'правиле, ни у любого из его предков')
+        }
+        // Вторичный источник обязан себя назвать. «Известно от третьих лиц» без
+        // имени реализации, файла и метода проверить нечем и спросить не у
+        // кого - то есть от выдумки такая пометка неотличима.
+        if (node.confidence === 'third_party_report' && typeof node.source !== 'string') {
+          fail(rel, `${pointer}: пометка third_party_report без поля source. ` +
+            'Вторичный источник обязан назвать реализацию, файл и метод: без ' +
+            'имени сообщение чужой реализации неотличимо от выдумки')
+        }
+        // ОТСУТСТВИЕ ПО ЧУЖОМУ МОЛЧАНИЮ НЕ ОБЪЯВЛЯЕТСЯ. Чужая реализация молчит
+        // о поле не потому, что поля нет, а потому, что оно ей не понадобилось.
+        // Ровно это правило проект однажды нарушил и получил три недели неправды
+        // в модели, в проверке и в документации хором.
+        if (node.confidence === 'third_party_report' &&
+            Array.isArray(node.absent_in) && node.absent_in.length > 0) {
+          fail(rel, `${pointer}: пометка third_party_report при absent_in. ` +
+            'Отсутствие объявляется только по положительному признаку, а ' +
+            'молчание чужой реализации положительным признаком не является')
         }
       }
 
