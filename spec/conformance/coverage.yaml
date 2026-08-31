@@ -494,6 +494,23 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py: модель помечена неосуществимой, и проверка следит, чтобы пометка не осталась на той, которую реализация собирает.
+  spec/models/market-offer.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_market.py: разбор строки списка целиком - продавец из ссылки на
+      профиль, а не из data-user; признак присутствия наличием атрибута;
+      идентификатор из строки запроса.
+
+      tests/test_market_offer_id.py: идентификатор есть у каждой строки снимка, а
+      значение его в снимке замаскировано.
+
+  spec/models/market-page.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_market.py: полнота, счётчики строк и ленивая загрузка. Числа
+      сверяются с описанием захвата наблюдения - два счёта одного, сделанные
+      разным кодом.
+
   spec/models/message.schema.json:
     mechanism: verified
     note: >-

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.24.0/market-offer.schema.json",
+  "x-funora-spec-version": "0.24.0",
+  "title": "MarketOffer",
+  "description": "Одно предложение в публичном списке раздела - то, что видит ПОКУПАТЕЛЬ.\n\nЗАЧЕМ ОТДЕЛЬНАЯ МОДЕЛЬ, КОГДА ЕСТЬ Offer. Offer требует обязательным price типа Money, а Money требует КОДА валюты. Страница отдаёт ЗНАК и не отдаёт кода нигде - ни ссылкой переключателя, ни полем в data-app-data, где ключей ровно четыре. Проверено наблюдением 31.08.2026.\n\nСобрать Offer отсюда значило бы выдумать валюту чужому предложению. Возвращается то, что страница вправду дала.\n\nЗДЕСЬ ЖЕ ЕДИНСТВЕННОЕ МЕСТО В КОНТРАКТЕ, где виден чужой продавец: на витрине профиля продавец один и известен заранее, на странице своих лотов он мы сами.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "offer_id",
+    "offer_href",
+    "seller_href",
+    "seller_name_text",
+    "seller_online",
+    "server_text",
+    "server_id",
+    "filter_type",
+    "description_text",
+    "price_text",
+    "currency_symbol_text",
+    "sort_value",
+    "promoted",
+    "row_index"
+  ],
+  "properties": {
+    "offer_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор предложения.\n\nЛЕЖИТ ОН В СТРОКЕ ЗАПРОСА ССЫЛКИ И БОЛЬШЕ НИГДЕ - параметром id, значением в восемь цифр. Наблюдено у ВСЕХ 1417 строк снимка 31.08.2026.\n\nДо формата скелета v9 объявить это правило было нечем: снимок заменял строку запроса одной подписью, и проверить объявление значило бы гадать. Из-за этого market.offers не собиралась вовсе, а причиной называли модель."
+    },
+    "offer_href": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Ссылка на предложение целиком."
+    },
+    "seller_href": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Ссылка на профиль продавца.\n\nНАСТОЯЩИЙ НОСИТЕЛЬ ПРОДАВЦА, и это стоило отдельного наблюдения. У строки есть атрибут data-user, и по имени он ровно то, что нужно; он не то. Атрибут есть у строки ТОГДА И ТОЛЬКО ТОГДА, когда предложение поднято - совпадение точное и в обе стороны.\n\nРазбор, читающий продавца оттуда, отдал бы его у двух процентов строк и выглядел бы работающим: поля заполняются, ошибок нет, а поднятые показываются первыми и попадают в глаза первыми."
+    },
+    "seller_name_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Отображаемое имя продавца."
+    },
+    "seller_online": {
+      "type": "boolean",
+      "description": "Наблюдался ли признак «в сети».\n\nЧитается НАЛИЧИЕМ атрибута, а не значением: значение наблюдалось одно на всех строках, где атрибут есть."
+    },
+    "server_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Название сервера, как показано."
+    },
+    "server_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор сервера из атрибута."
+    },
+    "filter_type": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Значение фильтра строки."
+    },
+    "description_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Описание предложения, как показано."
+    },
+    "price_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Цена БЕЗ знака валюты, как показана.\n\nЗнак отделён нарочно: общий текст ячейки склеил бы их, а разделить потом нечем - разделителем служит вёрстка, а не символ."
+    },
+    "currency_symbol_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Знак валюты.\n\nЗНАК, А НЕ КОД. Кода на странице нет, и это единственная причина, по которой предложение не собирается в Offer."
+    },
+    "sort_value": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Значение сортировки ячейки цены, как его выставила площадка."
+    },
+    "promoted": {
+      "type": "boolean",
+      "description": "Помечено ли предложение поднятым.\n\nВИДИМЫЙ СЛЕД ПОДНЯТИЯ, и это единственное место в контракте, где он есть. Классов два - offer-promo и offer-promoted, - и что означает различие между ними, не установлено: наблюдалась одна страница и одна строка со вторым классом."
+    },
+    "row_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Место строки в списке, считая с нуля.\n\nИМЕЕТ СМЫСЛ ТОЛЬКО ВНУТРИ ОДНОГО ЧТЕНИЯ. Между двумя чтениями оно несравнимо: список пересобирается площадкой, и поднятое предложение меняет места всем."
+    }
+  }
+}
