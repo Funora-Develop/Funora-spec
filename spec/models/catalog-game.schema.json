@@ -1,24 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.28.0/models/catalog-game.schema.json",
-  "x-funora-spec-version": "0.28.0",
+  "$id": "https://funora.dev/spec/0.29.0/models/catalog-game.schema.json",
+  "x-funora-spec-version": "0.29.0",
   "title": "CatalogGame",
   "description": "Игра каталога либо один её вариант.\n\nВАРИАНТОВ У КАРТОЧКИ БЫВАЕТ НЕСКОЛЬКО. Заголовков на странице 872 при 842 карточках: четырнадцать карточек несут по нескольку - семь по два, шесть по три, одна по четыре, - и лишние двадцать два помечены классом hidden.\n\nЭто настоящие варианты: у каждого свой идентификатор, свой список разделов и своя кнопка переключателя. Класс hidden говорит, какой вариант показан переключателем СЕЙЧАС, а не что узел служебный. Фильтр по нему потерял бы двадцать два варианта.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "game_id": {
-      "$ref": "https://funora.dev/spec/0.28.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.29.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор игры из атрибута data-id.\n\nРедкость среди наблюдённых страниц: обычно идентификатор лежит только в адресе. Продублирован на списке разделов и на кнопке переключателя - по нему они и сопоставляются."
     },
     "title_text": {
-      "$ref": "https://funora.dev/spec/0.28.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.29.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Название игры. Локализовано."
     },
     "href": {
-      "$ref": "https://funora.dev/spec/0.28.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.29.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес главного раздела игры."
     },
@@ -34,7 +34,7 @@
     "sections": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.28.0/models/catalog-section.schema.json"
+        "$ref": "https://funora.dev/spec/0.29.0/models/catalog-section.schema.json"
       },
       "description": "Разделы этого варианта.\n\nСписок сопоставляется с заголовком ПО data-id, а не по соседству: порядок детей карточки - сначала все заголовки, потом переключатель, потом все списки, и соседство держится лишь в 836 случаях из 872."
     }

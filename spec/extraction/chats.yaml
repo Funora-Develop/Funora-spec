@@ -389,3 +389,77 @@ not_observed:
   - Сообщение с вложением
   - Смысл ярлыка автора
   - Поведение позиции при удалении сообщения или диалога
+
+# --- Отправка картинки: протокол наблюдён 31.08.2026 --------------------------
+#
+# ДВА ЗАПРОСА, И ПЕРВЫЙ БЫЛ НЕИЗВЕСТЕН. Прежде здесь значилось: адрес загрузки
+# наблюдён, а сам запрос - нет, и потому image_id взять неоткуда.
+#
+# Теперь наблюдены оба.
+send_image:
+  upload:
+    endpoint: /file/addChatImage
+    method: POST
+    confidence: observed
+    evidence: network.send-image
+    observed_at: "2026-08-31"
+    body_kind: multipart
+    fields:
+      file:
+        confidence: observed
+        evidence: network.send-image
+        role: >-
+          Сам файл, и поле ровно одно. Ни имени, ни размера, ни признака
+          диалога рядом не уходит - загрузка о переписке не знает.
+    request_headers:
+      - accept
+      - x-requested-with
+    headers_note: >-
+      Заголовка content-type в записи НЕТ, и это осмысленно: при multipart его
+      ставит браузер вместе с границей частей. Реализация обязана поступить так
+      же - выставленный вручную, он разойдётся с телом.
+    response:
+      kind: json
+      fields:
+        fileId: int
+      confidence: observed
+      evidence: network.send-image
+      note: >-
+        Ответ - объект с одним числовым полем fileId. Оно и есть то, что уходит
+        дальше как image_id.
+  send:
+    endpoint: /runner/
+    method: POST
+    confidence: observed
+    evidence: network.send-image
+    observed_at: "2026-08-31"
+    action: chat_message
+    note: >-
+      ТО ЖЕ ДЕЙСТВИЕ, ЧТО У ТЕКСТА, и та же форма запроса. Отличий два: поле
+      image_id несёт fileId из загрузки, а content уходит ПУСТЫМ.
+    data_fields:
+      content:
+        confidence: observed
+        evidence: network.send-image
+        observed_shape: "пусто"
+        role: >-
+          Текст сообщения. При отправке картинки наблюдён пустым. Уходит ли
+          вместе с картинкой непустой текст - не наблюдалось.
+      image_id:
+        confidence: observed
+        evidence: network.send-image
+        observed_shape: "целое"
+        role: Значение fileId, полученное загрузкой.
+      node:
+        confidence: observed
+        evidence: network.send-image
+        role: Диалог, читается из атрибута data-name.
+      last_message:
+        confidence: observed
+        evidence: network.send-image
+        role: Позиция последнего сообщения, читается из атрибута data-node-msg.
+  what_is_still_missing: >-
+    Как выглядит ОТКАЗ - при слишком большом файле, при неподдержанном виде, при
+    отправке в закрытый диалог. Наблюдалась одна удачная отправка.
+
+    И уходит ли картинка вместе с текстом: content наблюдён только пустым.
