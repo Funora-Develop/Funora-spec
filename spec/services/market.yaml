@@ -24,7 +24,18 @@ operations:
     safety: safe
     request_class: monitoring
     transport_lane: public_read
-    returns: Offer[]
+    returns: MarketPage
+    returns_note: >-
+      НЕ Offer[], и не голый массив вовсе.
+
+      Offer требует обязательным price типа Money, Money требует КОДА валюты, а
+      страница отдаёт ЗНАК и не отдаёт кода нигде - проверено наблюдением
+      31.08.2026: ни ссылки переключателя, ни поля в data-app-data. Собрать
+      Offer отсюда значило бы выдумать валюту чужому предложению.
+
+      И не массив: голый список делает неполноту незаметной. По этому списку
+      принимают решение о ЦЕНЕ, и увидев половину предложений, бот посчитает
+      себя дешевле всех.
     cost_hint: 1
     pagination: cursor
     errors:
