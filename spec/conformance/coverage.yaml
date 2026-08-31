@@ -595,6 +595,12 @@ files:
       tests/test_reviews.py: полнота, причины и счётчики строк сверяются со
       схемой на снимке user.logged.ru.
 
+  spec/models/raise-result.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_promote.py: признак отказа обязателен, отказ площадки остаётся
+      исходом и несёт срок следующего поднятия, повтора не бывает.
+
   spec/models/review.schema.json:
     mechanism: verified
     note: >-
