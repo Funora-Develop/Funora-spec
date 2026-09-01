@@ -1371,6 +1371,15 @@
     "where": "spec/extraction/orders.yaml:orders.empty_list.filter_stays"
   },
   {
+    "selector": "form.orders-filter",
+    "evidence": [
+      "orders-trade.v8.logged.ru"
+    ],
+    "where": "spec/extraction/orders.yaml:orders.filters.form",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form.promo-games-filter",
     "evidence": [
       "root.logged.ru"
