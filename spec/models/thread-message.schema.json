@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.41.0/models/thread-message.schema.json",
-  "x-funora-spec-version": "0.41.0",
+  "$id": "https://funora.dev/spec/0.42.0/models/thread-message.schema.json",
+  "x-funora-spec-version": "0.42.0",
   "title": "ThreadMessage",
   "description": "Сообщение переписки, каким его отдаёт чтение истории.\n\nИмя не Message: под тем именем в спецификации лежит модель другой формы, которую из наблюдённой разметки собрать нельзя. Различие в имени намеренное - два разных типа не должны выглядеть одним.\n\nИдентификатора диалога здесь нет: сообщение приходит внутри Thread, и привязка живёт там. Класть её в каждое сообщение значило бы повторять одно и то же значение столько раз, сколько сообщений на странице.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "message_id": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор сообщения. Служит версией сущности в отпечатке события и ключом в курсоре переписки. Ненаблюдённый идентификатор даёт повреждение и не порождает события: событие без версии неотличимо от повтора."
     },
@@ -28,32 +28,32 @@
       "description": "Кем написано сообщение. Определяется СТРУКТУРНО - по наличию ссылки на автора, - а не по тексту: догадка по тексту даёт собеседнику право выдать своё сообщение за системное.\n\nЗначение system НЕ является подтверждением оплаты: системным выглядит и уведомление об открытии спора.\n\nЗначение unknown означает, что признак не выведен, - это честное незнание, а не третий род отправителя."
     },
     "author_name": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Имя автора текстом."
     },
     "author_href": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес профиля автора."
     },
     "text": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Текст сообщения."
     },
     "time_text": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Время сообщения текстом, как показано. Метка относительная."
     },
     "time_full_text": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Полное время из подсказки, если оно есть. Тоже текст: разбирать его в момент времени без наблюдения формата было бы догадкой."
     },
     "external_links": {
-      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.42.0/models/observed.schema.json",
       "x-funora-observed-value": "links",
       "description": "Ссылки из текста, ведущие за пределы площадки. Собираются, чтобы вызывающий их видел; ходить по ним нельзя - их пишет собеседник, и переход означал бы, что содержимое переписки управляет поведением клиента.\n\nПустая последовательность означает «посмотрели, ссылок нет»; ненаблюдённое - «текст не прочитан». Это разные ответы."
     }

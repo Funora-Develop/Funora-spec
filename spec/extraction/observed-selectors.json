@@ -1328,6 +1328,24 @@
     "scope": "document"
   },
   {
+    "selector": "div.tc-amount[data-s]",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.numeric_carriers.amount",
+    "count_observed": 12,
+    "scope": "document"
+  },
+  {
+    "selector": "div.tc-price[data-s]",
+    "evidence": [
+      "chips.trimmed.guest.ru"
+    ],
+    "where": "spec/extraction/chips.yaml:chips.numeric_carriers.price",
+    "count_observed": 12,
+    "scope": "document"
+  },
+  {
     "selector": "div.withdraw-box[data-data]",
     "evidence": [
       "account-balance.v9.logged.ru"
