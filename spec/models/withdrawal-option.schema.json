@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/schemas/0.43.0/withdrawal-option.schema.json",
-  "x-funora-spec-version": "0.43.0",
+  "$id": "https://funora.dev/schemas/0.44.0/withdrawal-option.schema.json",
+  "x-funora-spec-version": "0.44.0",
   "title": "WithdrawalOption",
   "description": "Один способ вывода средств, как его объявила площадка.\n\nПЕРЕЧЕНЬ ЧИТАЕТСЯ, А НЕ ЗАШИВАЕТСЯ. Независимая реализация того же протокола держит его рукописным списком из восьми; у площадки их тринадцать, и два из восьми неверны. Рукописный перечень чужой стороны устаревает молча - и наш устаревал бы так же.",
   "type": "object",
