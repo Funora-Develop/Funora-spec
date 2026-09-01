@@ -254,6 +254,7 @@ files:
       узлов.
     not_implemented:
       - dyn_table_continue_request
+      - withdraw_stays_unwritten
 
   spec/extraction/catalog.yaml:
     mechanism: generated
@@ -602,6 +603,11 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/refund-result.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._refund.RefundResult в обе стороны.
   spec/models/buyer-viewing.schema.json:
     mechanism: verified
     note: >-

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.43.0/models/capability-profile.schema.json",
-  "x-funora-spec-version": "0.43.0",
+  "$id": "https://funora.dev/spec/0.44.0/models/capability-profile.schema.json",
+  "x-funora-spec-version": "0.44.0",
   "title": "CapabilityProfile",
   "description": "Состояние каждой возможности адаптера и аккаунта.\n\nТИП БЫЛ ОБЪЯВЛЕН ВОЗВРАЩАЕМЫМ И НЕ ИМЕЛ СХЕМЫ до 0.14.0. Записано это было в реестре неисполненного прямым текстом: «тип CapabilityProfile назван, а схемы его нет: реализовать профиль по контракту нельзя и сверить профили двух SDK нечем».\n\nПрофиль собирается БЕЗ СЕТИ - из того, что уже наблюдалось. Неуспешная проба даёт unknown, а не unsupported: отсутствие объявляется только по положительному свидетельству.",
   "type": "object",
