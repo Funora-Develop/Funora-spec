@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.39.0/withdrawal-option.schema.json",
+  "x-funora-spec-version": "0.39.0",
+  "title": "WithdrawalOption",
+  "description": "Один способ вывода средств, как его объявила площадка.\n\nПЕРЕЧЕНЬ ЧИТАЕТСЯ, А НЕ ЗАШИВАЕТСЯ. Независимая реализация того же протокола держит его рукописным списком из восьми; у площадки их тринадцать, и два из восьми неверны. Рукописный перечень чужой стороны устаревает молча - и наш устаревал бы так же.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "key",
+    "name",
+    "unit",
+    "wallet_label",
+    "saved_wallets"
+  ],
+  "properties": {
+    "key": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Машинное имя способа, как его называет площадка: card_rub, fps, usdt_trc и прочие. Именно оно уходит в запрос вывода."
+    },
+    "name": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Название способа на локали интерфейса. Не разбирается."
+    },
+    "unit": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Единица, в которой способ выдаёт средства, как её назвала площадка."
+    },
+    "wallet_label": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Подпись поля адреса кошелька - то, что площадка просит ввести. Текст на локали; не разбирается."
+    },
+    "saved_wallets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-funora-plain": true
+      },
+      "description": "Сохранённые адреса этого способа.\n\nУ наблюдённого аккаунта пусты ВСЕ ТРИНАДЦАТЬ. Строение наблюдено, наполнение - нет: что лежит в непустом списке, неизвестно.\n\nПустой список здесь - положительный признак: площадка сказала «сохранённых кошельков нет», а не промолчала."
+    }
+  }
+}
