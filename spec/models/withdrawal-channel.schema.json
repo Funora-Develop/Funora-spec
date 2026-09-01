@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/schemas/0.42.0/withdrawal-channel.schema.json",
-  "x-funora-spec-version": "0.42.0",
+  "$id": "https://funora.dev/schemas/0.43.0/withdrawal-channel.schema.json",
+  "x-funora-spec-version": "0.43.0",
   "title": "WithdrawalChannel",
   "description": "Канал вывода: пара «валюта счёта - способ вывода» и сведения о комиссии.\n\nСЛОВА «КОМИССИЯ» В КОНТРАКТЕ ДО 31.08.2026 НЕ БЫЛО НИГДЕ - ни в правилах извлечения, ни в службах, ни в реестрах. Это первое место, где она названа.",
   "type": "object",

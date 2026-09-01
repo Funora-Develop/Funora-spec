@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.43.0/buyer-viewing.schema.json",
+  "x-funora-spec-version": "0.43.0",
+  "title": "BuyerViewing",
+  "description": "Что покупатель смотрит прямо сейчас.\n\nРАСКОЛ НАБЛЮДЕНИЯ. Подписка на этот объект наблюдена нами - она лежит в семи наших записях канала. Ответ на неё мы не видели ни разу: его состав известен от независимой реализации того же протокола.\n\nОтсюда устройство записи: разметка сохраняется как есть, а ссылка и подпись читаются из неё отдельными полями. Не разобралась - поля остаются ненаблюдёнными, а разметка при вызывающем.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "buyer_id",
+    "viewing",
+    "lot_href",
+    "lot_text",
+    "raw_html",
+    "observed_at"
+  ],
+  "properties": {
+    "buyer_id": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Идентификатор покупателя, о котором спрашивали."
+    },
+    "viewing": {
+      "type": "boolean",
+      "description": "Смотрит ли покупатель что-нибудь прямо сейчас.\n\nЛОЖЬ ЗДЕСЬ - НАБЛЮДЕНИЕ, а не неудача чтения: площадка прислала пустой признак, то есть сказала «не смотрит». Неудачу чтения выражает отказ."
+    },
+    "lot_href": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Ссылка на лот, прочитанная из разметки ответа."
+    },
+    "lot_text": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Подпись лота, как её показывает площадка. Текст на локали интерфейса; не разбирается."
+    },
+    "raw_html": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Разметка блока просмотра, КАК ЕСТЬ.\n\nСохраняется затем, что ответа этой точки мы не наблюдали: не разберись наши поля - у вызывающего останется то, из чего он поймёт сам."
+    },
+    "observed_at": {
+      "x-funora-type": "instant",
+      "description": "Момент получения ответа."
+    }
+  }
+}
