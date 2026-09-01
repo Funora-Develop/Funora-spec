@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://funora.dev/schemas/0.41.0/order-details.schema.json",
+  "x-funora-spec-version": "0.41.0",
+  "title": "OrderDetails",
+  "description": "Подробности одного заказа, прочитанные СТРУКТУРНО.\n\nНЕ Order, и различие принципиальное. Order не собирается ни одной реализацией из-за трёх причин сразу: сумма текстом, валюта знаком, покупатель и продавец неразделимы. Эта точка снимает все три - и всё же Order из неё не собирается.\n\nМодель контракта, построенная на ответе, которого никто не видел, - худший вид обещания: второй SDK прочтёт её как описание наблюдённого.\n\nПервое живое наблюдение это изменит.\n\nНАБЛЮДЕНО НЕ НАМИ. Ни одного живого ответа этой точки мы не видели; состав полей известен от независимой реализации того же протокола. Поэтому всё, что может отсутствовать, объявлено Observed, а состояние не приводится к нашему перечню насильно.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_uid",
+    "status_text",
+    "status",
+    "amount",
+    "currency",
+    "buyer_id",
+    "buyer_name",
+    "seller_id",
+    "seller_name",
+    "section_type",
+    "section_id"
+  ],
+  "properties": {
+    "order_uid": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Идентификатор заказа - тот же, что стоит в адресе страницы."
+    },
+    "status_text": {
+      "type": "string",
+      "x-funora-plain": true,
+      "description": "Состояние СТРОКОЙ, как его назвала площадка.\n\nОтдаётся всегда и как есть. Сторонний источник называет пять значений; наш перечень знает три - те, что наблюдены в разметке."
+    },
+    "status": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Состояние ЗНАЧЕНИЕМ НАШЕГО ПЕРЕЧНЯ - если оно там есть.\n\nНе совпало - остаётся ненаблюдённым, а строка выше сохраняется. Дописать в перечень по чужому слову значило бы выдать чужое знание за своё наблюдение."
+    },
+    "amount": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Сумма заказа, как её прислала площадка, приведённая к строке.\n\nЧИСЛОМ ОНА ЗДЕСЬ И ПРИХОДИТ - в отличие от разметки, где лежит текстом с неизвестным разделителем. Это половина того, чего не хватало Money.\n\nСтрокой она отдаётся затем, чтобы не потерять точность на двоичной дроби: 0.1 + 0.2 даёт 0.30000000000000004 всюду, где считают ей."
+    },
+    "currency": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Код валюты, как его прислала площадка.\n\nКОДОМ, А НЕ ЗНАКОМ - вторая половина того, чего не хватало Money."
+    },
+    "buyer_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор покупателя."
+    },
+    "buyer_name": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Отображаемое имя покупателя."
+    },
+    "seller_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Идентификатор продавца.\n\nРАЗДЕЛЕНИЕ СТОРОН - третье из того, чего не хватало Order. Страница заказа показывает ОДНОГО контрагента и не помечает структурно, на которой стороне мы сами."
+    },
+    "seller_name": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Отображаемое имя продавца."
+    },
+    "section_type": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Вид раздела: обычный лот либо рынок по количеству."
+    },
+    "section_id": {
+      "$ref": "observed.schema.json",
+      "x-funora-observed-value": "text",
+      "description": "Номер раздела."
+    }
+  }
+}

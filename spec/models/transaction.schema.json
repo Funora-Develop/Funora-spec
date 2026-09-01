@@ -1,49 +1,49 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.40.0/models/transaction.schema.json",
-  "x-funora-spec-version": "0.40.0",
+  "$id": "https://funora.dev/spec/0.41.0/models/transaction.schema.json",
+  "x-funora-spec-version": "0.41.0",
   "title": "Transaction",
   "description": "Одна операция по счёту, как показала страница баланса.\n\nТаблица едет на той же машинерии dyn-table, что список продаж и отзывы: идентификатор в атрибуте, состояние в имени класса строки, сумма отделена от знака валюты.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "transaction_id": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор операции. Девять цифр."
     },
     "status_class": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Состояние операции из ИМЕНИ КЛАССА строки, а не из текста.\n\nНаблюдено одно значение на двадцати пяти строках: все двадцать пять завершены. Фильтр над таблицей перечисляет четыре, но их имена - локализованный текст, и связать текст с классом нечем.\n\nНезнакомый класс даёт ненаблюдённое значение, а не догадку."
     },
     "status_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Состояние словами. Локализовано, разбору не подлежит; отдаётся затем, что состояний наблюдено одно, и вызывающий, встретивший незнакомый класс, увидит хотя бы подпись."
     },
     "title_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Описание операции. Локализовано, отдаётся строкой."
     },
     "date_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Дата операции в том виде, в каком показана. Строкой, а не моментом времени: запись локализована."
     },
     "date_left_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Вторая метка времени рядом с первой - похоже на «сколько назад». Локализована, отдаётся строкой."
     },
     "amount_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Сумма операции БЕЗ знака валюты: знак лежит отдельным узлом внутри ячейки, и текст целиком склеил бы их."
     },
     "currency_symbol_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Знак валюты операции."
     },
