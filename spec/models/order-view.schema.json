@@ -1,79 +1,79 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.40.0/models/order-view.schema.json",
-  "x-funora-spec-version": "0.40.0",
+  "$id": "https://funora.dev/spec/0.41.0/models/order-view.schema.json",
+  "x-funora-spec-version": "0.41.0",
   "title": "OrderView",
   "description": "Заказ в том виде, в каком его отдаёт страница /orders/{id}/.\n\nНЕ Order и намеренно отличается от него типом - по той же причине, по которой OrderListEntry отличается от Order. Полную запись со страницы собрать нельзя: там нет ни разделения сторон на покупателя и продавца, ни машиночитаемого времени.\n\nКОД ВАЛЮТЫ ИЗ ЭТОГО ПЕРЕЧНЯ УБРАН 31.08.2026: он читается. Соответствие знака коду ОДНОЗНАЧНО с 31.08.2026: набор валют площадки замкнут тремя (наблюдено дважды независимо - ключи eur/rub/usd в настройках вывода и переключатель, всякий раз дающий ровно две альтернативы), знаков в span.unit наблюдалось тоже три, столкновений нет. Перевод делает funora.currency_of_symbol и отказывает громко на четвёртом знаке.\n\nГЛАВНОЕ ПРО ЭТУ СТРАНИЦУ. Восемь её параметров подписаны локализованными метками в узлах без класса, и два из восьми совпадают ПОБАЙТОВО вместе с обёрткой и цепочкой предков. Различить их не может ничто, кроме порядка.\n\nПоэтому именованными полями отдаётся только то, у чего есть свой якорь - атрибут, класс, ссылка. Остальное отдаётся перечнем params как есть, без выдуманных имён: карточку заказа по нему показывают целиком и на любой локали, а разбор не врёт о том, чего не знает.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "order_number": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Номер заказа из атрибута data-order виджета отзыва. Восемь знаков латиницы с цифрами.\n\nЧитается из АТРИБУТА, а не из текста заголовка: заголовок его тоже несёт, но голым текстовым узлом до тега переноса, и читать оттуда значило бы резать строку по вёрстке."
     },
     "status": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "order_status",
       "description": "Состояние заказа.\n\nЧитается по тому же словарю цветовых классов, что и в списке продаж, но помечается как ВЫВЕДЕННОЕ, а не наблюдённое. Словарь снят со списка; что он верен и для страницы заказа - рассуждение, пусть и правдоподобное: класс тот же, оформление у площадки одно.\n\nНезнакомый класс даёт ненаблюдённое значение, а не ошибку и не догадку."
     },
     "status_class": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Имя класса, из которого прочитано состояние, как есть. Отдаётся затем, что состояний наблюдено ОДНО на одном заказе: вызывающий, встретивший незнакомое, увидит его имя и сможет сказать о нём, а не гадать."
     },
     "amount_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Сумма заказа, как показана. Строкой: разбирать её в число значило бы угадывать разделители, а они меняются вместе с локалью."
     },
     "currency_symbol_text": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Знак валюты. КОД валюты со страницы не читается: переключатель несёт локализованный текст, а машиночитаемое значение есть только у валют, НА КОТОРЫЕ можно переключиться - то есть у чужих, а не у текущей."
     },
     "category_href": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес раздела, к которому относится заказ. Единственный параметр, чьё значение - ссылка; тем и адресуется."
     },
     "counterparty_name": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Отображаемое имя контрагента. Ключом быть не может."
     },
     "counterparty_href": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Адрес профиля контрагента."
     },
     "counterparty_online": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "flag",
       "description": "В сети ли контрагент. Читается по наблюдённому словарю классов, а не по отрицанию: незнакомый класс даёт ненаблюдённое значение."
     },
     "counterparty_banned": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "flag",
       "description": "Заблокирована ли учётная запись контрагента.\n\nОТДЕЛЬНОЕ ПОЛЕ, а не третье значение присутствия. Присутствие отвечает на «в сети ли он сейчас», блокировка - на «жив ли аккаунт вообще», и на снимке узел несёт оба признака разом.\n\nКласс наблюдён впервые на этой странице: словарь, выведенный по списку продаж, знает только online и offline."
     },
     "chat_node_id": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор диалога по этому заказу.\n\nСАМОЕ ЦЕННОЕ НА СТРАНИЦЕ помимо самого заказа: по нему переписку читают целиком отдельной операцией. Без него диалог пришлось бы искать по имени контрагента, а имя ключом быть не может."
     },
     "refund_available": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "flag",
       "description": "Показала ли площадка форму возврата средств.\n\nПризнак ДОСТУПНОСТИ, а не операция: операций записи контракт в нынешней редакции не описывает. Наблюдено со стороны продавца; что форма означает для покупателя - неизвестно."
     },
     "review_rating": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "rating",
       "description": "Оценка в отзыве по заказу, если он есть.\n\nОТСУТСТВИЕ ОТЗЫВА ЧИТАЕТСЯ ПОЛОЖИТЕЛЬНО: атрибут data-rating присутствует и пуст. Это свидетельство, а не неудача поиска, и потому пустой отзыв - наблюдение empty, а не not_observed."
     },
     "review_author_id": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "text",
       "description": "Идентификатор автора отзыва, если отзыв есть."
     },
@@ -113,7 +113,7 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.40.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.41.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения. Пустой перечень означает, что повреждений не нашлось, а не что их не искали."
     }

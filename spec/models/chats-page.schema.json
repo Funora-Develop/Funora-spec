@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.40.0/models/chats-page.schema.json",
-  "x-funora-spec-version": "0.40.0",
+  "$id": "https://funora.dev/spec/0.41.0/models/chats-page.schema.json",
+  "x-funora-spec-version": "0.41.0",
   "title": "ChatsPage",
   "description": "Результат чтения списка переписок.\n\nЗаписи отдаются МЕТОДОМ, а не полем. Открытый список делает неполноту незаметной: вызывающий берёт его и не спрашивает про полноту, а неполный список неотличим от полного. Метод отказывается отдавать записи неполного результата без явного признания неполноты.",
   "type": "object",
@@ -44,19 +44,19 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.40.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.41.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения. Пустой список означает, что повреждений не нашлось, а не что их не искали."
     },
     "unread_badge_visible": {
-      "$ref": "https://funora.dev/spec/0.40.0/models/observed.schema.json",
+      "$ref": "https://funora.dev/spec/0.41.0/models/observed.schema.json",
       "x-funora-observed-value": "flag",
       "description": "Виден ли счётчик непрочитанного в шапке. Нужен затем, чтобы отличить «непрочитанного нет» от «признак непрочитанного вывести не удалось»: при пустом счётчике расхождение позиций у многих диалогов означает, что позиции значат не то, что мы думали."
     },
     "entries": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.40.0/models/chat-list-entry.schema.json"
+        "$ref": "https://funora.dev/spec/0.41.0/models/chat-list-entry.schema.json"
       },
       "description": "Собранные записи диалогов."
     }

@@ -602,6 +602,16 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/order-details.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._order_details.OrderDetails в обе стороны.
+  spec/models/order-details-batch.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._order_details.OrderDetailsBatch в обе стороны.
   spec/models/withdrawal-option.schema.json:
     mechanism: verified
     note: >-
