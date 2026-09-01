@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.39.0/models/orders-page.schema.json",
-  "x-funora-spec-version": "0.39.0",
+  "$id": "https://funora.dev/spec/0.40.0/models/orders-page.schema.json",
+  "x-funora-spec-version": "0.40.0",
   "title": "OrdersPage",
   "description": "Результат чтения списка продаж.\n\nЗаписи отдаются МЕТОДОМ, а не полем. Открытый список делает неполноту незаметной: вызывающий берёт его и не спрашивает про полноту, а неполный список неотличим от полного. Метод отказывается отдавать записи неполного результата без явного признания неполноты.",
   "type": "object",
@@ -44,16 +44,20 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.39.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.40.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения. Пустой список означает, что повреждений не нашлось, а не что их не искали."
     },
     "entries": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.39.0/models/order-list-entry.schema.json"
+        "$ref": "https://funora.dev/spec/0.40.0/models/order-list-entry.schema.json"
       },
       "description": "Собранные записи заказов."
+    },
+    "filters_available": {
+      "type": "boolean",
+      "description": "Есть ли на странице форма сужения списка.\n\nЧИТАЕТСЯ, А НЕ ПРЕДПОЛАГАЕТСЯ. В снимке 19.08.2026 формы нет вовсе, в снимке 28.08.2026 она есть - площадка показывает её не всегда.\n\nОтправить фильтр туда, где формы нет, значило бы получить несуженный список молча: вызывающий увидел бы чужие заказы там, где просил свои."
     }
   },
   "required": [
@@ -64,6 +68,7 @@
     "rows_accepted",
     "rows_rejected",
     "defects",
-    "entries"
+    "entries",
+    "filters_available"
   ]
 }
