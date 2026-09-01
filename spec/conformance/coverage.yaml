@@ -602,6 +602,11 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/buyer-viewing.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._viewing.BuyerViewing в обе стороны.
   spec/models/order-details.schema.json:
     mechanism: verified
     note: >-
