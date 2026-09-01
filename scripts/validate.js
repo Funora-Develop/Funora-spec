@@ -2013,6 +2013,29 @@ function checkServices(caps, errIds) {
         if (typeof prov !== 'object' || prov === null || Array.isArray(prov)) {
           fail(rel, `${id}: request_provenance обязано быть объектом`)
         } else {
+          // НАБОР КЛЮЧЕЙ ЗАКРЫТ, и закрыт он 01.09.2026 по поводу, который в
+          // этом проекте повторялся уже не раз: объявление, написанное с
+          // опечаткой в имени ключа, не объявляет НИЧЕГО и молчит об этом.
+          //
+          // Проверки ниже спрашивают ключи поимённо, и ключ, названный чуть
+          // иначе, для них просто не существует - а читающий спецификацию
+          // человек видит текст и считает, что тот работает.
+          const PROV_KEYS = new Set([
+            'confidence', 'source', 'rests_on_it', 'why_opt_in', 'self_check',
+          ])
+          for (const key of Object.keys(prov)) {
+            if (!PROV_KEYS.has(key)) {
+              fail(rel, `${id}: request_provenance.${key} - ключ неизвестен. ` +
+                'Объявление с опечаткой в имени ключа не значит ничего и молчит ' +
+                `об этом. Допустимы: ${[...PROV_KEYS].join(', ')}`)
+            }
+          }
+          // Сверка, если объявлена, обязана быть текстом: пустое либо истинное
+          // значение сказало бы «проверяем» и не сказало бы, ЧТО именно.
+          if (prov.self_check !== undefined && typeof prov.self_check !== 'string') {
+            fail(rel, `${id}: request_provenance.self_check обязано быть текстом, ` +
+              'называющим, какое именно чужое утверждение операция проверяет сама')
+          }
           const PROV_LEVELS = new Set(['observed', 'third_party_report'])
           if (!PROV_LEVELS.has(prov.confidence)) {
             fail(rel, `${id}: request_provenance.confidence «${prov.confidence}» ` +

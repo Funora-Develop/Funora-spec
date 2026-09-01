@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/spec/0.44.0/models/balance-page.schema.json",
-  "x-funora-spec-version": "0.44.0",
+  "$id": "https://funora.dev/spec/0.45.0/models/balance-page.schema.json",
+  "x-funora-spec-version": "0.45.0",
   "title": "BalancePage",
   "description": "Результат чтения страницы баланса: балансы и операции по счёту.\n\nБалансы отдаются полем, операции - методом. Разница не в прихоти: перечень балансов страница показывает целиком, а операции догружаются, и открытый список делал бы неполноту незаметной.\n\nСтраница снята ради балансов, а таблицу операций не искали вовсе: операции для неё в контракте не было объявлено ни одной.",
   "type": "object",
@@ -10,7 +10,7 @@
     "balances": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.44.0/models/balance.schema.json"
+        "$ref": "https://funora.dev/spec/0.45.0/models/balance.schema.json"
       },
       "description": "Балансы по валютам. Наблюдено три; порядок площадка не обещала, и искать нужную валюту следует по её знаку, а не по месту."
     },
@@ -51,14 +51,14 @@
     "defects": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.44.0/models/defect.schema.json"
+        "$ref": "https://funora.dev/spec/0.45.0/models/defect.schema.json"
       },
       "description": "Замеченные повреждения."
     },
     "entries": {
       "type": "array",
       "items": {
-        "$ref": "https://funora.dev/spec/0.44.0/models/transaction.schema.json"
+        "$ref": "https://funora.dev/spec/0.45.0/models/transaction.schema.json"
       },
       "description": "Собранные операции.\n\nПУСТОЙ ПЕРЕЧЕНЬ И ОТСУТСТВИЕ ИСТОРИИ - РАЗНЫЕ ОТВЕТЫ. Площадка вправе показать баланс и не показать историю; тогда балансы прочтутся, а операций не окажется. Отличить это от счёта без единой операции нечем: счёта без операций никто не видел, и полнота в таком случае объявляется unknown.\n\nПоле обязательно и всегда перечень - пустой либо нет. Пометки «может не наблюдаться» на нём поэтому не стоит: она означала бы, что поля может не быть вовсе, а перечень возвращается всегда.\n\nРазличие «истории нет» и «истории не показали» несёт не это поле, а пара completeness с reason: пустая таблица даёт unknown, потому что счёта без единой операции никто не видел."
     },

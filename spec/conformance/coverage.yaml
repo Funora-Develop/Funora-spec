@@ -42,7 +42,6 @@ files:
       называть неработающее состояние, списки не пересекаются, а состояние вне
       обоих допустимо ровно одно - unsupported.
     not_implemented:
-      - orders_events_capability
       - probe_laziness
       - probe_single_flight
       - capability_profile
@@ -603,6 +602,15 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/chat-history.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py и tests/test_chat_history.py: схема числится
+      собираемой, а разбор проверяется на ответе целиком.
+
+      Состав полей в обе стороны здесь НЕ сверяется, и не сверяется по той же
+      причине, что у thread: поле messages лежит за предохранителем неполноты и
+      называется в реализации иначе. Сверка имён отвергла бы предохранитель.
   spec/models/refund-result.schema.json:
     mechanism: verified
     note: >-
@@ -745,7 +753,6 @@ files:
       operations.py.
     not_implemented:
       - chats_send_return_type
-      - chats_service_operations
       - chats_send_governor
       - cursor_pagination
       - domain_not_found
