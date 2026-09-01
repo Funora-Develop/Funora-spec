@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/schemas/0.44.0/refund-result.schema.json",
-  "x-funora-spec-version": "0.44.0",
+  "$id": "https://funora.dev/schemas/0.45.0/refund-result.schema.json",
+  "x-funora-spec-version": "0.45.0",
   "title": "RefundResult",
   "description": "Исход возврата средств покупателю.\n\nСАМАЯ ОПАСНАЯ ИЗ НАПИСАННЫХ ОПЕРАЦИЙ. Деньги уходят покупателю, и площадка не предлагает вернуть их обратно ничем.\n\nСУММЫ ЗДЕСЬ НЕТ, и это не упущение: её не называет ни запрос, ни, по описанию стороннего источника, ответ. Сколько именно вернулось, вызывающий узнаёт только чтением заказа.",
   "type": "object",

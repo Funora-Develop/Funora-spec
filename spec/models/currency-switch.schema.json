@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://funora.dev/schemas/0.44.0/currency-switch.schema.json",
-  "x-funora-spec-version": "0.44.0",
+  "$id": "https://funora.dev/schemas/0.45.0/currency-switch.schema.json",
+  "x-funora-spec-version": "0.45.0",
   "title": "CurrencySwitch",
   "description": "Исход смены валюты показа.\n\nДВЕ ВЕТКИ, И РАЗЛИЧАТЬ ИХ ОБЯЗАТЕЛЬНО. Либо площадка сменила валюту сразу, либо вернула окно подтверждения - и тогда смены НЕ БЫЛО.\n\nРеализация никогда не подтверждает за пользователя: в запросе она всегда шлёт отрицание. Вторая ветка отдаётся исходом, а не проглатывается.",
   "type": "object",
