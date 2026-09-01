@@ -602,6 +602,16 @@ files:
     mechanism: verified
     note: >-
       tests/test_model_schemas.py.
+  spec/models/withdrawal-option.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._account.WithdrawalOption в обе стороны.
+  spec/models/withdrawal-channel.schema.json:
+    mechanism: verified
+    note: >-
+      tests/test_model_schemas.py: состав полей схемы сверяется с полями
+      funora._account.WithdrawalChannel в обе стороны.
   spec/models/currency-switch.schema.json:
     mechanism: verified
     note: >-

@@ -1328,6 +1328,15 @@
     "scope": "document"
   },
   {
+    "selector": "div.withdraw-box[data-data]",
+    "evidence": [
+      "account-balance.v9.logged.ru"
+    ],
+    "where": "spec/extraction/account.yaml:account.withdrawal_options.carrier",
+    "count_observed": 1,
+    "scope": "document"
+  },
+  {
     "selector": "form.dyn-table-form",
     "evidence": [
       "account-balance.logged.ru"
